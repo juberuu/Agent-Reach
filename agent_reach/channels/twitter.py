@@ -73,10 +73,10 @@ class TwitterChannel(Channel):
 
             # Detect unusable Jina responses for X/Twitter (JS-required pages)
             unusable_indicators = [
-                "this page doesn't exist",
-                "Don't miss what's happening",
+                "page doesn",  # "this page doesn't exist" (handles both ' and ')
+                "miss what",   # "Don't miss what's happening"
                 "Something went wrong. Try reloading",
-                "Log in</a>",
+                "Log in](",    # Markdown link: [Log in](...)
             ]
             if any(indicator in text for indicator in unusable_indicators):
                 return ReadResult(
