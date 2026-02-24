@@ -151,11 +151,77 @@ $ agent-reach doctor
 
 ## 设计理念
 
-**Agent Reach 是一个 Agent 初始化脚手架，不是框架。**
+**Agent Reach 是一个脚手架（scaffolding），不是框架。**
 
 你给一个新 Agent 装环境的时候，总要花时间去找工具、装依赖、调配置——Twitter 用什么读？Reddit 怎么绕封？YouTube 字幕怎么提取？每次都要重新踩一遍。
 
 Agent Reach 做的事情很简单：**帮你把这些选型和配置的活儿做完了。**
+
+### 🔌 每个渠道都是可插拔的
+
+每个平台对应一个独立的 Python 文件（~50–100 行），实现统一接口。**后端工具随时可以换**——哪天出了更好的工具，改一个文件就行，其他不用动。
+
+```
+channels/
+├── base.py         → 统一接口（Channel 基类）
+├── web.py          → Jina Reader     ← 可以换成 Firecrawl、Crawl4AI……
+├── twitter.py      → birdx           ← 可以换成 Nitter、官方 API……
+├── youtube.py      → yt-dlp           ← 可以换成 YouTube API、Whisper……
+├── github.py       → gh CLI          ← 可以换成 REST API、PyGithub……
+├── bilibili.py     → yt-dlp           ← 可以换成 bilibili-api……
+├── reddit.py       → JSON API + Exa  ← 可以换成 PRAW、Pushshift……
+├── xiaohongshu.py  → mcporter MCP    ← 可以换成其他 XHS 工具……
+├── rss.py          → feedparser       ← 可以换成 atoma……
+├── exa_search.py   → mcporter MCP    ← 可以换成 Tavily、SerpAPI……
+└── __init__.py     → 渠道注册（加一行就注册一个新渠道）
+```
+
+想换后端？打开对应文件，改掉 `read()` / `search()` 的实现就行。接口不变，其他代码不用动。
+
+### 🧩 添加新渠道（3 步）
+
+添加新渠道非常简单，3 步就能搞定：
+
+**第 1 步：** 新建 `channels/你的渠道.py`
+
+```python
+from .base import Channel, ReadResult, SearchResult
+
+class 你的渠道Channel(Channel):
+    name = "你的渠道"
+    description = "一句话描述"
+    backends = ["用了什么工具"]
+
+    def can_handle(self, url: str) -> bool:
+        return "你的域名" in url
+
+    async def read(self, url: str, config=None) -> ReadResult:
+        # 读取内容，返回 ReadResult
+        return ReadResult(title="...", content="...", url=url, platform=self.name)
+
+    def check(self, config=None):
+        return "ok", "一切正常"
+
+    # 可选：实现 search() 支持搜索
+```
+
+**第 2 步：** 在 `channels/__init__.py` 注册
+
+```python
+from .你的渠道 import 你的渠道Channel
+
+ALL_CHANNELS: List[Channel] = [
+    ...
+    你的渠道Channel(),  # 加这一行
+    WebChannel(),
+]
+```
+
+**第 3 步：** 没了。`agent-reach doctor` 自动识别，`agent-reach read` 自动路由。
+
+> 💡 **参考现有渠道：** `rss.py`（30 行，最简单）→ `web.py`（50 行）→ `youtube.py`（100 行，含搜索）
+
+### 当前选型
 
 | 场景 | 选型 | 为什么选它 |
 |------|------|-----------|
@@ -167,24 +233,7 @@ Agent Reach 做的事情很简单：**帮你把这些选型和配置的活儿做
 | 读 RSS | [feedparser](https://github.com/kurtmckee/feedparser) | Python 生态标准选择，2.3K Star |
 | 小红书 | [xiaohongshu-mcp](https://github.com/user/xiaohongshu-mcp) | 内部 API，不受反爬限制 |
 
-每个平台一个文件，每个文件 ~50 行代码。后端工具随时可以换——哪天出了更好的工具，改一个文件就行，其他不用动。
-
-<details>
-<summary>项目结构</summary>
-
-```
-agent_reach/channels/
-├── web.py          → Jina Reader
-├── twitter.py      → birdx
-├── youtube.py      → yt-dlp
-├── github.py       → GitHub API
-├── bilibili.py     → Bilibili API
-├── reddit.py       → Reddit JSON API
-├── xiaohongshu.py  → XHS Web API
-├── rss.py          → feedparser
-└── exa_search.py   → Exa Search API
-```
-</details>
+> 📌 这些都是「当前选型」。不满意？换掉对应文件就行。这正是脚手架的意义。
 
 ---
 
@@ -192,7 +241,25 @@ agent_reach/channels/
 
 欢迎提 [Issue](https://github.com/Panniantong/agent-reach/issues) 和 [PR](https://github.com/Panniantong/agent-reach/pulls)。
 
-想加新平台？复制任意一个 channel 文件，改改就行——每个文件只有 ~50 行。
+### 🆕 想添加新渠道？
+
+1. 复制 `agent_reach/channels/rss.py`（最简单的参考）
+2. 实现 `can_handle()` + `read()`，可选 `search()` 和 `check()`
+3. 在 `__init__.py` 注册
+
+就这么简单。不需要改框架代码，不需要了解其他渠道。
+
+**希望支持的渠道（欢迎 PR）：**
+
+- 📰 Hacker News — 科技新闻
+- 🐘 Mastodon / Fediverse — 去中心化社交
+- 📱 Telegram — 频道和群组
+- 🎵 Spotify / Apple Podcasts — 播客字幕
+- 📝 Medium / Substack — 付费墙文章
+- 🔬 arXiv / Semantic Scholar — 学术论文
+- 💬 Discord — 服务器消息
+- 📌 Pinterest — 图片搜索
+- …… 任何你觉得有用的平台！
 
 ## 致谢
 

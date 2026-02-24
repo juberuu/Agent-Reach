@@ -151,11 +151,75 @@ Status: 6/9 channels available
 
 ## Design Philosophy
 
-**Agent Reach is a setup scaffold, not a framework.**
+**Agent Reach is a scaffolding tool, not a framework.**
 
 Every time you spin up a new Agent, you spend time finding tools, installing deps, and debugging configs — what reads Twitter? How do you bypass Reddit blocks? How do you extract YouTube subtitles? Every time, you re-do the same work.
 
 Agent Reach does one simple thing: **it makes those tool selection and configuration decisions for you.**
+
+### 🔌 Every Channel is Pluggable
+
+Each platform is a single Python file (~50–100 lines) implementing a unified interface. **Backends can be swapped anytime** — when a better tool comes along, change one file and nothing else breaks.
+
+```
+channels/
+├── base.py         → Unified interface (Channel base class)
+├── web.py          → Jina Reader     ← swap to Firecrawl, Crawl4AI…
+├── twitter.py      → birdx           ← swap to Nitter, official API…
+├── youtube.py      → yt-dlp           ← swap to YouTube API, Whisper…
+├── github.py       → gh CLI          ← swap to REST API, PyGithub…
+├── bilibili.py     → yt-dlp           ← swap to bilibili-api…
+├── reddit.py       → JSON API + Exa  ← swap to PRAW, Pushshift…
+├── xiaohongshu.py  → mcporter MCP    ← swap to other XHS tools…
+├── rss.py          → feedparser       ← swap to atoma…
+├── exa_search.py   → mcporter MCP    ← swap to Tavily, SerpAPI…
+└── __init__.py     → Channel registry (one line to register a new channel)
+```
+
+Want to swap a backend? Open the file, change the `read()` / `search()` implementation. Interface stays the same, nothing else needs to change.
+
+### 🧩 Adding a New Channel (3 Steps)
+
+**Step 1:** Create `channels/your_channel.py`
+
+```python
+from .base import Channel, ReadResult, SearchResult
+
+class YourChannel(Channel):
+    name = "your_channel"
+    description = "One-line description"
+    backends = ["tool-name"]
+
+    def can_handle(self, url: str) -> bool:
+        return "yourdomain.com" in url
+
+    async def read(self, url: str, config=None) -> ReadResult:
+        # Fetch content, return ReadResult
+        return ReadResult(title="...", content="...", url=url, platform=self.name)
+
+    def check(self, config=None):
+        return "ok", "All good"
+
+    # Optional: implement search() for search support
+```
+
+**Step 2:** Register in `channels/__init__.py`
+
+```python
+from .your_channel import YourChannel
+
+ALL_CHANNELS: List[Channel] = [
+    ...
+    YourChannel(),  # add this line
+    WebChannel(),
+]
+```
+
+**Step 3:** Done. `agent-reach doctor` auto-detects it, `agent-reach read` auto-routes to it.
+
+> 💡 **Reference examples:** `rss.py` (30 lines, simplest) → `web.py` (50 lines) → `youtube.py` (100 lines, with search)
+
+### Current Tool Choices
 
 | Scenario | Tool | Why |
 |----------|------|-----|
@@ -167,24 +231,7 @@ Agent Reach does one simple thing: **it makes those tool selection and configura
 | Read RSS | [feedparser](https://github.com/kurtmckee/feedparser) | Python ecosystem standard, 2.3K stars |
 | XiaoHongShu | [xiaohongshu-mcp](https://github.com/user/xiaohongshu-mcp) | Internal API, bypasses anti-bot |
 
-One file per platform, ~50 lines each. Swap any backend by editing one file — everything else stays untouched.
-
-<details>
-<summary>Project structure</summary>
-
-```
-agent_reach/channels/
-├── web.py          → Jina Reader
-├── twitter.py      → birdx
-├── youtube.py      → yt-dlp
-├── github.py       → GitHub API
-├── bilibili.py     → Bilibili API
-├── reddit.py       → Reddit JSON API
-├── xiaohongshu.py  → XHS Web API
-├── rss.py          → feedparser
-└── exa_search.py   → Exa Search API
-```
-</details>
+> 📌 These are the *current* choices. Don't like one? Swap out the file. That's the whole point of scaffolding.
 
 ---
 
@@ -192,7 +239,25 @@ agent_reach/channels/
 
 [Issues](https://github.com/Panniantong/agent-reach/issues) and [PRs](https://github.com/Panniantong/agent-reach/pulls) welcome.
 
-Want to add a new platform? Copy any channel file, tweak it — each one is only ~50 lines.
+### 🆕 Want to Add a New Channel?
+
+1. Copy `agent_reach/channels/rss.py` (simplest reference)
+2. Implement `can_handle()` + `read()`, optionally `search()` and `check()`
+3. Register in `__init__.py`
+
+That's it. No framework code to modify, no need to understand other channels.
+
+**Channels we'd love to see (PRs welcome):**
+
+- 📰 Hacker News — tech news
+- 🐘 Mastodon / Fediverse — decentralized social
+- 📱 Telegram — channels and groups
+- 🎵 Spotify / Apple Podcasts — podcast transcripts
+- 📝 Medium / Substack — paywalled articles
+- 🔬 arXiv / Semantic Scholar — academic papers
+- 💬 Discord — server messages
+- 📌 Pinterest — image search
+- … anything you find useful!
 
 ## Credits
 
