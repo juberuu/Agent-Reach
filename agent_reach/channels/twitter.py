@@ -29,7 +29,6 @@ class TwitterChannel(Channel):
         if shutil.which("birdx"):
             return "ok", "搜索、时间线、发推全部可用"
         return "ok", "可读取推文。安装 birdx + 配置 Cookie 可解锁搜索和发推"
-        return "ok", "Jina Reader (single tweets only)"
 
     async def read(self, url: str, config=None) -> ReadResult:
         # Try birdx first
