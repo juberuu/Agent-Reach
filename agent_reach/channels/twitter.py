@@ -62,21 +62,56 @@ class TwitterChannel(Channel):
         )
 
     async def _read_jina(self, url: str) -> ReadResult:
-        resp = requests.get(
-            f"https://r.jina.ai/{url}",
-            headers={"Accept": "text/markdown"},
-            timeout=15,
-        )
-        resp.raise_for_status()
-        text = resp.text
-        title = text[:100] if text else url
+        try:
+            resp = requests.get(
+                f"https://r.jina.ai/{url}",
+                headers={"Accept": "text/markdown"},
+                timeout=15,
+            )
+            resp.raise_for_status()
+            text = resp.text
 
-        return ReadResult(
-            title=title,
-            content=text,
-            url=url,
-            platform="twitter",
-        )
+            # Detect unusable Jina responses for X/Twitter (JS-required pages)
+            unusable_indicators = [
+                "this page doesn't exist",
+                "Don't miss what's happening",
+                "Something went wrong. Try reloading",
+                "Log in</a>",
+            ]
+            if any(indicator in text for indicator in unusable_indicators):
+                return ReadResult(
+                    title="Twitter/X",
+                    content="⚠️ Could not read this tweet.\n"
+                            "The tweet may have been deleted, or the account is private.\n\n"
+                            "Tips:\n"
+                            "- Make sure the URL is correct\n"
+                            "- Try: birdx read <url> (if birdx is installed)\n"
+                            "- For protected tweets, configure Twitter cookies: "
+                            "agent-reach configure twitter-cookies AUTH_TOKEN CT0",
+                    url=url,
+                    platform="twitter",
+                )
+
+            title = text[:100] if text else url
+            return ReadResult(
+                title=title,
+                content=text,
+                url=url,
+                platform="twitter",
+            )
+        except Exception:
+            return ReadResult(
+                title="Twitter/X",
+                content="⚠️ Could not read this tweet.\n"
+                        "The tweet may have been deleted, or the account is private.\n\n"
+                        "Tips:\n"
+                        "- Make sure the URL is correct\n"
+                        "- Try: birdx read <url> (if birdx is installed)\n"
+                        "- For protected tweets, configure Twitter cookies: "
+                        "agent-reach configure twitter-cookies AUTH_TOKEN CT0",
+                url=url,
+                platform="twitter",
+            )
 
     async def search(self, query: str, config=None, **kwargs) -> List[SearchResult]:
         limit = kwargs.get("limit", 10)

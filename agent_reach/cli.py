@@ -532,7 +532,15 @@ async def _cmd_read(args):
                 print(f"👤 {result['author']}")
             print(f"\n{result.get('content', '')}")
     except Exception as e:
-        print(f"❌ Error: {e}", file=sys.stderr)
+        error_str = str(e)
+        if "400" in error_str and "Bad Request" in error_str:
+            print(f"❌ Invalid URL: {args.url}", file=sys.stderr)
+            print("   Please provide a valid URL (e.g., https://example.com)", file=sys.stderr)
+        elif "ConnectionError" in type(e).__name__ or "Timeout" in type(e).__name__:
+            print(f"❌ Could not connect to: {args.url}", file=sys.stderr)
+            print("   Check your internet connection or the URL.", file=sys.stderr)
+        else:
+            print(f"❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
