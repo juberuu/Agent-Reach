@@ -70,8 +70,8 @@ def main():
 
     # ── install ──
     p_install = sub.add_parser("install", help="One-shot installer with flags")
-    p_install.add_argument("--env", choices=["local", "server"], default="local",
-                           help="Environment: local computer or server/VPS")
+    p_install.add_argument("--env", choices=["local", "server", "auto"], default="auto",
+                           help="Environment: local, server, or auto-detect")
     p_install.add_argument("--search", choices=["yes", "no"], default="yes",
                            help="Enable web search (needs free Exa API key)")
     p_install.add_argument("--proxy", default="",
@@ -132,6 +132,16 @@ def _cmd_install(args):
     print("👁️  Agent Eyes Installer")
     print("=" * 40)
 
+    # Auto-detect environment
+    env = args.env
+    if env == "auto":
+        env = _detect_environment()
+    
+    if env == "server":
+        print(f"📡 Environment: Server/VPS (auto-detected)")
+    else:
+        print(f"💻 Environment: Local computer (auto-detected)")
+
     # Apply flags
     if args.exa_key:
         config.set("exa_api_key", args.exa_key)
@@ -143,16 +153,14 @@ def _cmd_install(args):
         print(f"✅ Proxy configured for Reddit + Bilibili")
 
     # Environment-specific advice
-    if args.env == "server":
-        print(f"📡 Environment: Server/VPS")
-        if not args.proxy:
-            print(f"⚠️  Reddit and Bilibili block server IPs.")
-            print(f"   To unlock: agent-eyes configure proxy http://user:pass@ip:port")
-            print(f"   Recommend: https://www.webshare.io ($1/month)")
-    else:
-        print(f"💻 Environment: Local computer")
+    if env == "server" and not args.proxy:
+        print()
+        print("💡 Tip: Reddit and Bilibili block server IPs.")
+        print("   Reddit search still works via Exa (free).")
+        print("   For full access: agent-eyes configure proxy http://user:pass@ip:port")
+        print("   Cheap option: https://www.webshare.io ($1/month)")
 
-    # Test zero-config features
+    # Test channels
     print()
     print("Testing channels...")
     results = check_all(config)
@@ -161,19 +169,58 @@ def _cmd_install(args):
     print(f"✅ {ok}/{total} channels active")
 
     # What's missing
-    if args.search == "yes" and not args.exa_key:
+    if args.search == "yes" and not args.exa_key and not config.get("exa_api_key"):
         print()
-        print("🔍 Search not yet configured. Run:")
+        print("🔍 Recommended: unlock search with a free Exa API key")
         print("   agent-eyes configure exa-key YOUR_KEY")
-        print("   (Get free key: https://exa.ai)")
+        print("   Get free key: https://exa.ai")
 
     # Final status
     print()
     print(format_report(results))
     print()
     print("✅ Installation complete!")
-    if ok < total:
-        print(f"   Run `agent-eyes configure` to unlock remaining channels.")
+
+
+def _detect_environment():
+    """Auto-detect if running on local computer or server."""
+    import os
+
+    # Check common server indicators
+    indicators = 0
+
+    # SSH session
+    if os.environ.get("SSH_CONNECTION") or os.environ.get("SSH_CLIENT"):
+        indicators += 2
+
+    # Docker / container
+    if os.path.exists("/.dockerenv") or os.path.exists("/run/.containerenv"):
+        indicators += 2
+
+    # No display (headless)
+    if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+        indicators += 1
+
+    # Cloud VM identifiers
+    for cloud_file in ["/sys/hypervisor/uuid", "/sys/class/dmi/id/product_name"]:
+        if os.path.exists(cloud_file):
+            try:
+                content = open(cloud_file).read().lower()
+                if any(x in content for x in ["amazon", "google", "microsoft", "digitalocean", "linode", "vultr", "hetzner"]):
+                    indicators += 2
+            except:
+                pass
+
+    # systemd-detect-virt
+    try:
+        import subprocess
+        result = subprocess.run(["systemd-detect-virt"], capture_output=True, text=True, timeout=3)
+        if result.returncode == 0 and result.stdout.strip() != "none":
+            indicators += 1
+    except:
+        pass
+
+    return "server" if indicators >= 2 else "local"
 
 
 def _cmd_configure(args):
