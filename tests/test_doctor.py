@@ -16,7 +16,7 @@ class TestDoctor:
         results = check_all(tmp_config)
         assert results["web"]["status"] == "ok"
         assert results["github"]["status"] == "ok"
-        assert results["bilibili"]["status"] == "ok"
+        assert results["bilibili"]["status"] in ("ok", "warn")  # warn on servers
         assert results["rss"]["status"] == "ok"
 
     def test_exa_off_without_key(self, tmp_config):

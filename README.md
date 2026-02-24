@@ -13,10 +13,10 @@ Agent Eyes 把最好的开源工具粘在一起，一次安装全部搞定。
 | 平台 | 能力 | 配置难度 | 说明 |
 |------|------|:--------:|------|
 | 🌐 **网页** | 阅读 | 零配置 | 任意 URL → 干净 Markdown（[Jina Reader](https://github.com/jina-ai/reader) ⭐9.8K 驱动） |
-| 🐦 **Twitter/X** | 阅读 · 搜索 · **发推 · 回复** | Cookie | 不花 $100/月 Twitter API，浏览器 Cookie 就能玩转（[birdx](https://github.com/runesleo/birdx) 驱动） |
+| 🐦 **Twitter/X** | 阅读 · 搜索 | 零配置 / Cookie | 单条推文零配置可读（Jina Reader）。装 [birdx](https://github.com/runesleo/birdx) + Cookie 解锁搜索、时间线、发推 |
 | 📕 **小红书** | 阅读 · 搜索 · **发帖 · 评论 · 点赞 · 收藏** | Cookie | 完整操作能力：发图文/视频笔记、回复评论、查看用户主页 |
 | 🔍 **全网搜索** | 搜索 | 免费 Key | AI 语义搜索，一个 Key 搜全网 + Reddit + Twitter（[Exa](https://exa.ai) 驱动） |
-| 📦 **GitHub** | 阅读 · 搜索 · **创建 Issue/PR · 评论 · Review · Fork · Star** | 零配置 | 完整 GitHub 操作（[gh CLI](https://cli.github.com/) 驱动） |
+| 📦 **GitHub** | 阅读 · 搜索 | 零配置 | 公开仓库代码、README、搜索（[GitHub API](https://docs.github.com/en/rest) 驱动）。设 token 可访问私有仓库 |
 | 📺 **YouTube** | 阅读 | 零配置 | 1800+ 视频网站字幕提取（[yt-dlp](https://github.com/yt-dlp/yt-dlp) ⭐148K 驱动） |
 | 📺 **B站** | 阅读 | 零配置 / 代理 | 视频信息 + 字幕。本地直接用，服务器需代理 |
 | 📡 **RSS** | 阅读 | 零配置 | 任意 RSS/Atom 源（[feedparser](https://github.com/kurtmckee/feedparser) ⭐2.3K 驱动） |
@@ -109,11 +109,24 @@ agent-eyes configure proxy http://用户名:密码@IP:端口
 $ agent-eyes doctor
 
 👁️  Agent Eyes Status
-✅ Web [Jina Reader]      ✅ GitHub [API]          ✅ RSS [feedparser]
-✅ YouTube [yt-dlp]       ✅ Bilibili [API]        ✅ Twitter [birdx]
-⬜ Search [need Exa key]  ⬜ XiaoHongShu [cookies] ⬜ Reddit [proxy]
+========================================
 
-6/9 active
+✅ Ready (no setup needed):
+  ✅ GitHub repos and code — Public repos only
+  ✅ Twitter/X posts — Full access (search + timeline + threads)
+  ✅ YouTube video transcripts — yt-dlp
+  ⚠️  Bilibili video info — May be blocked on servers
+  ✅ RSS and Atom feeds — feedparser
+  ✅ Web pages (any URL) — Jina Reader API
+
+🔍 Search (need free Exa API key):
+  ⬜ Semantic web search
+
+🔧 Optional (advanced setup):
+  ⬜ Reddit posts and comments — Need proxy
+  ⬜ XiaoHongShu (小红书) — Need cookies
+
+Status: 6/9 channels active
 ```
 
 ---

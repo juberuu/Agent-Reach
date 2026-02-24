@@ -16,7 +16,7 @@ import requests
 
 class TwitterChannel(Channel):
     name = "twitter"
-    description = "Twitter/X posts, search, timelines"
+    description = "Twitter/X posts"
     backends = ["birdx", "Jina Reader"]
     tier = 0  # Single tweet reading is zero-config
 
@@ -27,7 +27,8 @@ class TwitterChannel(Channel):
     def check(self, config=None):
         # Basic reading always works (Jina fallback)
         if shutil.which("birdx"):
-            return "ok", "birdx (full: search + timeline + threads)"
+            return "ok", "Full access (search + timeline + threads)"
+        return "ok", "Read-only (single tweets via Jina). Install birdx for search + timelines"
         return "ok", "Jina Reader (single tweets only)"
 
     async def read(self, url: str, config=None) -> ReadResult:

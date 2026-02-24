@@ -20,6 +20,23 @@ class BilibiliChannel(Channel):
         domain = urlparse(url).netloc.lower()
         return "bilibili.com" in domain or "b23.tv" in domain
 
+    def check(self, config=None):
+        proxy = config.get("bilibili_proxy") if config else None
+        if proxy:
+            return "ok", "Via proxy"
+        # Detect if we're on a server (same logic as cli._detect_environment)
+        import os
+        indicators = [
+            os.path.exists("/var/run/docker.sock"),
+            os.path.exists("/etc/cloud"),
+            "SSH_CONNECTION" in os.environ,
+            "container" in os.environ.get("container", ""),
+        ]
+        is_server = any(indicators)
+        if is_server:
+            return "warn", "May be blocked on servers. Fix: agent-eyes configure proxy URL"
+        return "ok", "Local access"
+
     async def read(self, url: str, config=None) -> ReadResult:
         # Proxy support (Bilibili blocks server IPs)
         proxy = config.get("bilibili_proxy") if config else None

@@ -13,7 +13,7 @@ from typing import List
 
 class GitHubChannel(Channel):
     name = "github"
-    description = "GitHub repos, issues, PRs, code"
+    description = "GitHub repos and code"
     backends = ["GitHub API"]
     tier = 0
 
@@ -25,6 +25,12 @@ class GitHubChannel(Channel):
         if token:
             h["Authorization"] = f"Bearer {token}"
         return h
+
+    def check(self, config=None):
+        token = config.get("github_token") if config else None
+        if token:
+            return "ok", "Full access (authenticated)"
+        return "ok", "Public repos only. Set github_token for private repos + higher rate limits"
 
     def can_handle(self, url: str) -> bool:
         domain = urlparse(url).netloc.lower()

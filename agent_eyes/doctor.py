@@ -37,11 +37,13 @@ def format_report(results: Dict[str, dict]) -> str:
     lines.append("")
     lines.append("✅ Ready (no setup needed):")
     for key, r in results.items():
-        if r["tier"] == 0 and r["status"] == "ok":
-            backends = ", ".join(r["backends"]) if r["backends"] else "built-in"
-            lines.append(f"  ✅ {r['name']} [{backends}]")
-        elif r["tier"] == 0 and r["status"] in ("warn", "off"):
-            lines.append(f"  ⚠️  {r['name']} — {r['message']}")
+        if r["tier"] == 0:
+            if r["status"] == "ok":
+                lines.append(f"  ✅ {r['name']} — {r['message']}")
+            elif r["status"] == "warn":
+                lines.append(f"  ⚠️  {r['name']} — {r['message']}")
+            elif r["status"] in ("off", "error"):
+                lines.append(f"  ❌ {r['name']} — {r['message']}")
 
     # Tier 1 — needs free key
     tier1 = {k: r for k, r in results.items() if r["tier"] == 1}
