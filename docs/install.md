@@ -2,7 +2,7 @@
 
 ## For Humans
 
-Copy and paste this to your AI Agent (Claude Code, OpenClaw, Cursor, ChatGPT, etc.):
+Copy and paste this to your AI Agent (Claude Code, OpenClaw, Cursor, etc.):
 
 ```
 Install and configure Agent Eyes by following the instructions here:
@@ -15,235 +15,113 @@ That's it. Your Agent will handle the rest.
 
 ## For AI Agents
 
-Welcome! You're about to give your user's Agent (that's you!) eyes to see the entire internet.
-Agent Eyes lets you search and read content across 10+ platforms with one install.
+You are installing Agent Eyes — a tool that gives you (the Agent) eyes to see the entire internet.
+Follow this decision tree exactly. Do not skip steps.
 
-### Step 0: Ask About Environment
+### Step 1: Ask user 3 questions
 
-Before installing, ask the user ONE question:
+Ask the user these questions to determine install flags:
 
-> "你是在自己的电脑上用，还是在服务器上用？（Are you running on your local computer or a server?）"
+**Q1: Are you on a local computer or a server/VPS?**
+- Local → `--env=local`
+- Server/VPS → `--env=server`
 
-**Why this matters:**
-- **Local computer** → Everything works out of the box. No extra setup needed.
-- **Server (VPS/cloud)** → Most things work fine, but **Reddit and Bilibili** block server IPs. They'll need a cheap residential proxy ($1/month) to access these two platforms. This is optional — everything else works without it.
+**Q2: Do you want web search? (free, recommended)**
+- Yes → `--search=yes`
+- No → `--search=no`
 
-Remember their answer for Step 5.
+**Q3: (Only if server) Do you have a residential proxy for Reddit/Bilibili?**
+- Yes → `--proxy=http://user:pass@ip:port` (ask user for the proxy URL)
+- No / Don't know → omit `--proxy`
+- Tell user: "Reddit and Bilibili block server IPs. You can get a proxy at https://www.webshare.io for $1/month. Want to set it up later?"
 
-### Step 1: Install Agent Eyes
+### Step 2: Install
 
 ```bash
 pip install git+https://github.com/Panniantong/agent-eyes.git
 ```
 
-If `pip` fails, try:
-```bash
-pip3 install git+https://github.com/Panniantong/agent-eyes.git
-```
+If fails, try `pip3` or add `--user`.
 
-If permission error, try:
-```bash
-pip install --user git+https://github.com/Panniantong/agent-eyes.git
-```
+### Step 3: Run installer with flags
 
-### Step 2: Verify Installation
+Based on answers from Step 1, construct and run ONE command:
 
 ```bash
-agent-eyes version
+agent-eyes install --env=<local|server> --search=<yes|no> [--proxy=<proxy_url>]
 ```
 
-Expected output: `Agent Eyes v1.0.0` (or higher)
+**Examples:**
+- Local, wants search: `agent-eyes install --env=local --search=yes`
+- Server, wants search, has proxy: `agent-eyes install --env=server --search=yes --proxy=http://user:pass@ip:port`
+- Server, wants search, no proxy: `agent-eyes install --env=server --search=yes`
+- Local, no search: `agent-eyes install --env=local --search=no`
 
-If this works, run a health check:
+### Step 4: Configure Exa key (only if --search=yes)
+
+The installer will tell you search needs a key. Ask the user:
+
+> "Web search needs a free API key. Go to https://exa.ai, sign up, copy your API Key, and send it to me."
+
+When user provides the key, run:
 
 ```bash
-agent-eyes doctor
+agent-eyes configure exa-key THE_KEY_USER_PROVIDED
 ```
 
-This shows which platforms are already available (many work with zero configuration).
+This automatically tests the key and confirms it works.
 
-### Step 3: Test Zero-Config Features
+### Step 5: Configure proxy (only if --env=server and user wants Reddit/Bilibili)
 
-These work immediately without any setup:
+If the user wants to set up a proxy (now or later), they need to:
+1. Go to https://www.webshare.io and sign up ($1/month for residential proxy)
+2. Get their proxy URL (format: `http://username:password@ip:port`)
+3. Send it to you
+
+Then run:
 
 ```bash
-# Read a web page
-agent-eyes read "https://example.com"
-
-# Read a GitHub repo
-agent-eyes read "https://github.com/Panniantong/agent-eyes"
-
-# Search GitHub
-agent-eyes search-github "AI agent framework" -n 3
+agent-eyes configure proxy THE_PROXY_URL
 ```
 
-Tell the user: "✅ Agent Eyes installed! I can now read web pages, GitHub, YouTube, Bilibili, RSS, and tweets. Want me to unlock search too? (free, takes 30 seconds)"
+This automatically tests the proxy against Reddit and confirms it works.
 
-### Step 4: Unlock Search (Optional, Recommended)
-
-Ask the user:
-
-> "I can unlock full web search, Reddit search, and Twitter search with one free API key. Want to set it up? It takes 30 seconds."
-
-If the user says yes:
-
-> "Please go to https://exa.ai, sign up (free), and copy your API key. Then send it to me."
-
-When the user provides the key:
-
-```bash
-# Write the key to config
-python3 -c "
-from agent_eyes.config import Config
-c = Config()
-c.set('exa_api_key', 'THE_KEY_USER_PROVIDED')
-print('✅ Exa API key saved!')
-"
-```
-
-Test it:
-```bash
-agent-eyes search "AI agent infrastructure" -n 3
-```
-
-Tell the user: "✅ Search unlocked! I can now search the entire web, Reddit, and Twitter for you."
-
-### Step 5: Server Proxy Setup (Only if user said "server" in Step 0)
-
-If the user is on a **server/VPS**, proactively tell them:
-
-> "因为你在服务器上，Reddit 和 B站会封服务器 IP。要解锁这两个平台，需要一个住宅代理（residential proxy）。推荐用 Webshare，$1/月，非常便宜。要配吗？"
-
-If the user says yes:
-
-> "步骤：
-> 1. 去 https://www.webshare.io 注册（有免费试用）
-> 2. 买一个 Residential Proxy（$1/月的套餐就够了）
-> 3. 在 Dashboard 里找到代理地址，格式类似：http://用户名:密码@IP:端口
-> 4. 把代理地址发给我"
-
-When the user provides the proxy:
-
-```bash
-python3 -c "
-from agent_eyes.config import Config
-c = Config()
-c.set('reddit_proxy', 'THE_PROXY_USER_PROVIDED')
-c.set('bilibili_proxy', 'THE_PROXY_USER_PROVIDED')
-print('✅ Proxy configured for Reddit and Bilibili!')
-"
-```
-
-Test it:
-```bash
-agent-eyes read "https://www.reddit.com/r/test" 2>&1 | head -5
-```
-
-If it works: "✅ Reddit 和 B站都可以用了！"
-If it fails: "代理可能有问题，请检查格式是否正确。不配也没关系——其他平台都正常工作，Reddit 内容也可以通过搜索引擎间接获取。"
-
-If the user is on a **local computer**, skip this step entirely.
-
-### Step 6: Optional — Advanced Channels
-
-Only offer these if the user asks or if relevant to their needs.
-
-#### Twitter Advanced (search timelines, read threads)
-
-Check if birdx is available:
-```bash
-which birdx && echo "already installed" || pip install birdx
-```
-
-If birdx is installed, it works automatically. If the user wants to configure cookie auth for deeper access, read the guide:
-`agent_eyes/guides/setup-twitter.md`
-
-#### Reddit Full Reader (read complete posts + comments)
-
-Reddit blocks many server IPs. Full reading requires a proxy.
-Read the guide: `agent_eyes/guides/setup-reddit.md`
-
-Without a proxy, you can still SEARCH Reddit content via Exa (Step 4).
-
-#### WeChat / XiaoHongShu (Chinese platforms)
-
-```bash
-pip install agent-eyes[browser]
-playwright install chromium
-```
-
-For XiaoHongShu, the user needs to log in once. Read: `agent_eyes/guides/setup-xiaohongshu.md`
-
-### Step 7: Final Health Check
+### Step 6: Final verification
 
 ```bash
 agent-eyes doctor
 ```
 
-Report the results to the user in a friendly way. Example:
+Report results to the user. Example:
 
-> "Here's what I can do now:
-> ✅ Read: Web, GitHub, YouTube, Bilibili, RSS, Tweets
-> ✅ Search: Web, GitHub, Reddit, Twitter
-> ⬜ Not configured: Reddit full reader, WeChat, XiaoHongShu
->
-> I'm ready to help! Ask me to search or read anything."
+> "✅ Agent Eyes is ready! Here's what I can do:
+> - 📖 Read: Web, GitHub, YouTube, Bilibili, RSS, Tweets
+> - 🔍 Search: Web, GitHub, Reddit, Twitter
+> 
+> Try it: ask me to search or read anything!"
 
-### Using Agent Eyes
+### Summary of commands
 
-After installation, you can use these commands anytime:
-
-```bash
-# Read any URL
-agent-eyes read "<url>"
-
-# Search the web
-agent-eyes search "<query>"
-
-# Search specific platforms
-agent-eyes search-github "<query>"
-agent-eyes search-reddit "<query>" --sub "<subreddit>"
-agent-eyes search-twitter "<query>"
-
-# Check status
-agent-eyes doctor
-```
-
-Or use the Python API:
-```python
-from agent_eyes import AgentEyes
-import asyncio
-
-eyes = AgentEyes()
-result = asyncio.run(eyes.read("https://any-url.com"))
-results = asyncio.run(eyes.search("any query"))
-```
-
-### MCP Server (for Claude Code, Cursor, etc.)
-
-If your platform supports MCP:
-```bash
-pip install agent-eyes[mcp]
-```
-
-Add to MCP config:
-```json
-{
-  "mcpServers": {
-    "agent-eyes": {
-      "command": "python3",
-      "args": ["-m", "agent_eyes.integrations.mcp_server"]
-    }
-  }
-}
-```
+| Action | Command |
+|--------|---------|
+| Install | `pip install git+https://github.com/Panniantong/agent-eyes.git` |
+| One-shot setup | `agent-eyes install --env=local --search=yes` |
+| Add Exa key | `agent-eyes configure exa-key YOUR_KEY` |
+| Add proxy | `agent-eyes configure proxy http://user:pass@ip:port` |
+| Add GitHub token | `agent-eyes configure github-token YOUR_TOKEN` |
+| Health check | `agent-eyes doctor` |
+| Read URL | `agent-eyes read <url>` |
+| Search web | `agent-eyes search "query"` |
+| Search GitHub | `agent-eyes search-github "query"` |
+| Search Reddit | `agent-eyes search-reddit "query"` |
+| Search Twitter | `agent-eyes search-twitter "query"` |
 
 ### Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
-| `pip: command not found` | Try `pip3` instead |
-| `Permission denied` | Add `--user` flag or use `sudo` |
-| `agent-eyes: command not found` | Run `python3 -m agent_eyes.cli doctor` instead |
-| Search returns "Exa API key not configured" | Run Step 4 above |
-| Reddit returns 403 | Need proxy (see `guides/setup-reddit.md`) |
+| `pip: command not found` | Try `pip3` |
+| `Permission denied` | Add `--user` flag |
+| `agent-eyes: command not found` | Use `python3 -m agent_eyes.cli` instead |
+| Search returns "Exa API key not configured" | `agent-eyes configure exa-key YOUR_KEY` |
+| Reddit returns 403 | `agent-eyes configure proxy http://user:pass@ip:port` |

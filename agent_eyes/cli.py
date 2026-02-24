@@ -68,6 +68,23 @@ def main():
     # ── setup ──
     sub.add_parser("setup", help="Interactive configuration wizard")
 
+    # ── install ──
+    p_install = sub.add_parser("install", help="One-shot installer with flags")
+    p_install.add_argument("--env", choices=["local", "server"], default="local",
+                           help="Environment: local computer or server/VPS")
+    p_install.add_argument("--search", choices=["yes", "no"], default="yes",
+                           help="Enable web search (needs free Exa API key)")
+    p_install.add_argument("--proxy", default="",
+                           help="Residential proxy for Reddit/Bilibili (http://user:pass@ip:port)")
+    p_install.add_argument("--exa-key", default="",
+                           help="Exa API key (get free at https://exa.ai)")
+
+    # ── configure ──
+    p_conf = sub.add_parser("configure", help="Set a config value")
+    p_conf.add_argument("key", choices=["exa-key", "proxy", "github-token", "groq-key"],
+                        help="What to configure")
+    p_conf.add_argument("value", help="The value to set")
+
     # ── doctor ──
     sub.add_parser("doctor", help="Check platform availability")
 
@@ -91,6 +108,10 @@ def main():
         _cmd_doctor()
     elif args.command == "setup":
         _cmd_setup()
+    elif args.command == "install":
+        _cmd_install(args)
+    elif args.command == "configure":
+        _cmd_configure(args)
     elif args.command == "read":
         asyncio.run(_cmd_read(args))
     elif args.command.startswith("search"):
@@ -98,6 +119,116 @@ def main():
 
 
 # ── Command handlers ────────────────────────────────
+
+
+def _cmd_install(args):
+    """One-shot deterministic installer."""
+    from agent_eyes.config import Config
+    from agent_eyes.doctor import check_all, format_report
+
+    config = Config()
+    print()
+    print("👁️  Agent Eyes Installer")
+    print("=" * 40)
+
+    # Apply flags
+    if args.exa_key:
+        config.set("exa_api_key", args.exa_key)
+        print(f"✅ Exa search key configured")
+
+    if args.proxy:
+        config.set("reddit_proxy", args.proxy)
+        config.set("bilibili_proxy", args.proxy)
+        print(f"✅ Proxy configured for Reddit + Bilibili")
+
+    # Environment-specific advice
+    if args.env == "server":
+        print(f"📡 Environment: Server/VPS")
+        if not args.proxy:
+            print(f"⚠️  Reddit and Bilibili block server IPs.")
+            print(f"   To unlock: agent-eyes configure proxy http://user:pass@ip:port")
+            print(f"   Recommend: https://www.webshare.io ($1/month)")
+    else:
+        print(f"💻 Environment: Local computer")
+
+    # Test zero-config features
+    print()
+    print("Testing channels...")
+    results = check_all(config)
+    ok = sum(1 for r in results.values() if r["status"] == "ok")
+    total = len(results)
+    print(f"✅ {ok}/{total} channels active")
+
+    # What's missing
+    if args.search == "yes" and not args.exa_key:
+        print()
+        print("🔍 Search not yet configured. Run:")
+        print("   agent-eyes configure exa-key YOUR_KEY")
+        print("   (Get free key: https://exa.ai)")
+
+    # Final status
+    print()
+    print(format_report(results))
+    print()
+    print("✅ Installation complete!")
+    if ok < total:
+        print(f"   Run `agent-eyes configure` to unlock remaining channels.")
+
+
+def _cmd_configure(args):
+    """Set a config value and test it."""
+    from agent_eyes.config import Config
+    import subprocess
+
+    config = Config()
+
+    key_map = {
+        "exa-key": "exa_api_key",
+        "proxy": ("reddit_proxy", "bilibili_proxy"),
+        "github-token": "github_token",
+        "groq-key": "groq_api_key",
+    }
+
+    config_key = key_map.get(args.key)
+    if isinstance(config_key, tuple):
+        for k in config_key:
+            config.set(k, args.value)
+    else:
+        config.set(config_key, args.value)
+
+    print(f"✅ {args.key} configured!")
+
+    # Auto-test
+    if args.key == "exa-key":
+        print("Testing search...", end=" ")
+        try:
+            import asyncio
+            from agent_eyes.core import AgentEyes
+            eyes = AgentEyes(config)
+            results = asyncio.run(eyes.search("test", num_results=1))
+            if results:
+                print("✅ Search works!")
+            else:
+                print("⚠️  No results, but API connected.")
+        except Exception as e:
+            print(f"❌ Failed: {e}")
+
+    elif args.key == "proxy":
+        print("Testing Reddit access...", end=" ")
+        try:
+            import requests
+            resp = requests.get(
+                "https://www.reddit.com/r/test.json?limit=1",
+                headers={"User-Agent": "Mozilla/5.0"},
+                proxies={"http": args.value, "https": args.value},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                print("✅ Reddit accessible!")
+            else:
+                print(f"❌ Reddit returned {resp.status_code}")
+        except Exception as e:
+            print(f"❌ Failed: {e}")
 
 
 def _cmd_doctor():
