@@ -23,7 +23,17 @@ agent-eyes install --env=auto
 
 Read the output. It tells you the detected environment (local/server) and what's already working.
 
-### Step 2: Set up cookies (the approach depends on environment)
+### Step 2: Set up search (highest value, free)
+
+> "Want to unlock web search? One free API key lets me search the web, Reddit, and Twitter.
+> Go to https://exa.ai → sign up (free, 1000 searches/month) → send me the key.
+> Or say 'skip' — I can still read any URL you give me."
+
+```bash
+agent-eyes configure exa-key THE_KEY
+```
+
+### Step 3: Set up cookies (the approach depends on environment)
 
 #### Path A: Local computer (auto-detected)
 
@@ -68,16 +78,6 @@ agent-eyes configure xhs-cookie "PASTED_COOKIE_STRING"
 
 **Bilibili** — export from https://www.bilibili.com :
 (On local computers Bilibili already works without cookies. On servers it needs a proxy — see Step 4.)
-
-### Step 3: Set up search
-
-> "Want to unlock web search? One free API key lets me search the web, Reddit, and Twitter.
-> Go to https://exa.ai → sign up (free, 1000 searches/month) → send me the key.
-> Or say 'skip' — everything else still works."
-
-```bash
-agent-eyes configure exa-key THE_KEY
-```
 
 ### Step 4: Server-only — proxy for Reddit/Bilibili
 
