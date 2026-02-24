@@ -80,11 +80,15 @@ def main():
                            help="Exa API key (get free at https://exa.ai)")
 
     # ── configure ──
-    p_conf = sub.add_parser("configure", help="Set a config value")
-    p_conf.add_argument("key", choices=["exa-key", "proxy", "github-token", "groq-key",
-                                        "twitter-cookies", "xhs-cookie", "youtube-cookies"],
-                        help="What to configure")
-    p_conf.add_argument("value", nargs="+", help="The value(s) to set")
+    p_conf = sub.add_parser("configure", help="Set a config value or auto-extract from browser")
+    p_conf.add_argument("key", nargs="?", default=None,
+                        choices=["exa-key", "proxy", "github-token", "groq-key",
+                                 "twitter-cookies", "xhs-cookie", "youtube-cookies"],
+                        help="What to configure (omit if using --from-browser)")
+    p_conf.add_argument("value", nargs="*", help="The value(s) to set")
+    p_conf.add_argument("--from-browser", metavar="BROWSER",
+                        choices=["chrome", "firefox", "edge", "brave", "opera"],
+                        help="Auto-extract ALL platform cookies from browser (chrome/firefox/edge/brave/opera)")
 
     # ── doctor ──
     sub.add_parser("doctor", help="Check platform availability")
@@ -224,11 +228,46 @@ def _detect_environment():
 
 
 def _cmd_configure(args):
-    """Set a config value and test it."""
+    """Set a config value and test it, or auto-extract from browser."""
     from agent_eyes.config import Config
 
     config = Config()
-    value = " ".join(args.value) if isinstance(args.value, list) else args.value
+
+    # ── Auto-extract from browser ──
+    if args.from_browser:
+        from agent_eyes.cookie_extract import configure_from_browser
+
+        browser = args.from_browser
+        print(f"🔍 Extracting cookies from {browser}...")
+        print()
+
+        results = configure_from_browser(browser, config)
+
+        found_any = False
+        for platform, success, message in results:
+            if success:
+                print(f"  ✅ {platform}: {message}")
+                found_any = True
+            else:
+                print(f"  ⬜ {platform}: {message}")
+
+        print()
+        if found_any:
+            print("✅ Cookies configured! Run `agent-eyes doctor` to see updated status.")
+        else:
+            print(f"No cookies found. Make sure you're logged into the platforms in {browser}.")
+        return
+
+    # ── Manual configure ──
+    if not args.key:
+        print("Usage: agent-eyes configure <key> <value>")
+        print("   or: agent-eyes configure --from-browser chrome")
+        return
+
+    value = " ".join(args.value) if args.value else ""
+    if not value:
+        print(f"Missing value for {args.key}")
+        return
 
     if args.key == "proxy":
         config.set("reddit_proxy", value)
