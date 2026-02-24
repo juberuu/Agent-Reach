@@ -2,6 +2,9 @@
 """
 AgentEyes — the unified entry point.
 
+Pure glue: routes URLs to the right channel, routes searches to the right engine.
+Every channel is a thin wrapper around an external tool. Swap any backend anytime.
+
 Usage:
     from agent_eyes import AgentEyes
 
@@ -14,7 +17,7 @@ import asyncio
 from typing import Any, Dict, List, Optional
 
 from agent_eyes.config import Config
-from agent_eyes.reader import UniversalReader
+from agent_eyes.channels import get_channel_for_url, get_channel, get_all_channels
 
 
 class AgentEyes:
@@ -22,7 +25,6 @@ class AgentEyes:
 
     def __init__(self, config: Optional[Config] = None):
         self.config = config or Config()
-        self.reader = UniversalReader()
 
     # ── Reading ─────────────────────────────────────────
 
@@ -31,89 +33,60 @@ class AgentEyes:
         Read content from any URL. Auto-detects platform.
 
         Supported: Web, GitHub, Reddit, Twitter, YouTube,
-        Bilibili, WeChat, XiaoHongShu, RSS, Telegram, etc.
+        Bilibili, RSS, and more.
 
         Returns:
-            Dict with title, content, url, author, etc.
+            Dict with title, content, url, author, platform, etc.
         """
-        content = await self.reader.read(url)
-        return content.to_dict()
+        if not url.startswith(("http://", "https://")):
+            url = f"https://{url}"
+
+        channel = get_channel_for_url(url)
+        result = await channel.read(url, config=self.config)
+        return result.to_dict()
 
     async def read_batch(self, urls: List[str]) -> List[Dict[str, Any]]:
         """Read multiple URLs concurrently."""
-        contents = await self.reader.read_batch(urls)
-        return [c.to_dict() for c in contents]
+        tasks = [self.read(url) for url in urls]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return [r for r in results if not isinstance(r, Exception)]
 
     def detect_platform(self, url: str) -> str:
         """Detect what platform a URL belongs to."""
-        return self.reader._detect_platform(url)
+        channel = get_channel_for_url(url)
+        return channel.name
 
     # ── Searching ───────────────────────────────────────
 
     async def search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
-        """
-        Semantic web search via Exa. Requires Exa API key.
+        """Semantic web search via Exa."""
+        ch = get_channel("exa_search")
+        results = await ch.search(query, config=self.config, limit=num_results)
+        return [r.to_dict() for r in results]
 
-        Args:
-            query: Search query
-            num_results: Number of results (max 10)
-        """
-        from agent_eyes.search.exa import search_web
-        return await search_web(query, num_results=num_results, config=self.config)
+    async def search_reddit(self, query: str, subreddit: Optional[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search Reddit via Exa (bypasses IP blocks)."""
+        ch = get_channel("exa_search")
+        q = f"site:reddit.com/r/{subreddit} {query}" if subreddit else f"site:reddit.com {query}"
+        results = await ch.search(q, config=self.config, limit=limit)
+        return [r.to_dict() for r in results]
 
-    async def search_reddit(
-        self,
-        query: str,
-        subreddit: Optional[str] = None,
-        limit: int = 10,
-    ) -> List[Dict[str, Any]]:
-        """
-        Search Reddit via Exa (bypasses IP blocks).
+    async def search_github(self, query: str, language: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
+        """Search GitHub repositories."""
+        ch = get_channel("github")
+        results = await ch.search(query, config=self.config, language=language, limit=limit)
+        return [r.to_dict() for r in results]
 
-        Args:
-            query: Search query
-            subreddit: Optional subreddit filter
-            limit: Number of results
-        """
-        from agent_eyes.search.reddit import search_reddit
-        return await search_reddit(query, subreddit=subreddit, num_results=limit, config=self.config)
-
-    async def search_github(
-        self,
-        query: str,
-        language: Optional[str] = None,
-        limit: int = 5,
-    ) -> List[Dict[str, Any]]:
-        """
-        Search GitHub repositories.
-
-        Args:
-            query: Search query
-            language: Filter by language
-            limit: Number of results
-        """
-        from agent_eyes.search.github import search_github
-        return await search_github(query, language=language, limit=limit, config=self.config)
-
-    async def search_twitter(
-        self,
-        query: str,
-        limit: int = 10,
-    ) -> List[Dict[str, Any]]:
-        """
-        Search Twitter. Uses birdx if available, else Exa.
-
-        Args:
-            query: Search query
-            limit: Number of results
-        """
-        from agent_eyes.search.twitter import search_twitter
-        return await search_twitter(query, limit=limit, config=self.config)
+    async def search_twitter(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search Twitter. Uses birdx if available, else Exa."""
+        ch = get_channel("twitter")
+        results = await ch.search(query, config=self.config, limit=limit)
+        return [r.to_dict() for r in results]
 
     # ── Health ──────────────────────────────────────────
 
     def doctor(self) -> Dict[str, dict]:
-        """Check all platform/feature availability."""
+        """Check all channel availability."""
         from agent_eyes.doctor import check_all
         return check_all(self.config)
 
