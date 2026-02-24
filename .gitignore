@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Environment
+.env
+
+# Telethon session
+*.session
+tg_session*
+
+# Data
+*.db
+*.log
+data/
+unified_inbox.json
+output/
+
+# Audio/video temp files
+/tmp/media_*
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
