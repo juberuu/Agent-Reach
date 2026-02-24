@@ -73,18 +73,14 @@ def main():
     p_install = sub.add_parser("install", help="One-shot installer with flags")
     p_install.add_argument("--env", choices=["local", "server", "auto"], default="auto",
                            help="Environment: local, server, or auto-detect")
-    p_install.add_argument("--search", choices=["yes", "no"], default="yes",
-                           help="Enable web search (needs free Exa API key)")
     p_install.add_argument("--proxy", default="",
                            help="Residential proxy for Reddit/Bilibili (http://user:pass@ip:port)")
-    p_install.add_argument("--exa-key", default="",
-                           help="Exa API key (get free at https://exa.ai)")
 
     # ── configure ──
     p_conf = sub.add_parser("configure", help="Set a config value or auto-extract from browser")
     p_conf.add_argument("key", nargs="?", default=None,
-                        choices=["exa-key", "proxy", "github-token", "groq-key",
-                                 "twitter-cookies", "xhs-cookie", "youtube-cookies"],
+                        choices=["proxy", "github-token", "groq-key",
+                                 "twitter-cookies", "youtube-cookies"],
                         help="What to configure (omit if using --from-browser)")
     p_conf.add_argument("value", nargs="*", help="The value(s) to set")
     p_conf.add_argument("--from-browser", metavar="BROWSER",
@@ -149,21 +145,14 @@ def _cmd_install(args):
         print(f"💻 Environment: Local computer (auto-detected)")
 
     # Apply explicit flags
-    if args.exa_key:
-        config.set("exa_api_key", args.exa_key)
-        print(f"✅ Exa search key configured")
-
     if args.proxy:
         config.set("reddit_proxy", args.proxy)
         config.set("bilibili_proxy", args.proxy)
         print(f"✅ Proxy configured for Reddit + Bilibili")
 
-    # Auto-detect Exa key from environment
-    if not config.get("exa_api_key") and not args.exa_key:
-        env_key = os.environ.get("EXA_API_KEY") or os.environ.get("exa_api_key")
-        if env_key:
-            config.set("exa_api_key", env_key)
-            print(f"✅ Exa key auto-detected from environment")
+    # ── mcporter (for Exa search + XiaoHongShu) ──
+    print()
+    _install_mcporter()
 
     # Auto-import cookies on local computers
     if env == "local":
@@ -204,18 +193,79 @@ def _cmd_install(args):
     ok = sum(1 for r in results.values() if r["status"] == "ok")
     total = len(results)
 
-    # What's missing — only mention Exa if not configured
-    if not config.get("exa_api_key"):
-        print()
-        print("🔍 Recommended: unlock search with a free Exa API key")
-        print("   agent-reach configure exa-key YOUR_KEY")
-        print("   Get free key: https://exa.ai")
-
     # Final status
     print()
     print(format_report(results))
     print()
     print(f"✅ Installation complete! {ok}/{total} channels active.")
+
+
+def _install_mcporter():
+    """Install mcporter and configure Exa + XiaoHongShu MCP servers."""
+    import shutil
+    import subprocess
+
+    print("📦 Setting up mcporter (search + XiaoHongShu backend)...")
+
+    if shutil.which("mcporter"):
+        print("  ✅ mcporter already installed")
+    else:
+        # Check for npm/npx
+        if not shutil.which("npm") and not shutil.which("npx"):
+            print("  ⚠️  mcporter requires Node.js. Install Node.js first:")
+            print("     https://nodejs.org/ or: curl -fsSL https://fnm.vercel.app/install | bash")
+            return
+        try:
+            subprocess.run(
+                ["npm", "install", "-g", "mcporter"],
+                capture_output=True, text=True, timeout=60,
+            )
+            if shutil.which("mcporter"):
+                print("  ✅ mcporter installed")
+            else:
+                print("  ❌ mcporter install failed. Try manually: npm install -g mcporter")
+                return
+        except Exception as e:
+            print(f"  ❌ mcporter install failed: {e}")
+            return
+
+    # Configure Exa MCP (free, no key needed)
+    try:
+        r = subprocess.run(
+            ["mcporter", "list"], capture_output=True, text=True, timeout=10
+        )
+        if "exa" not in r.stdout:
+            subprocess.run(
+                ["mcporter", "config", "add", "exa", "https://mcp.exa.ai/mcp"],
+                capture_output=True, text=True, timeout=10,
+            )
+            print("  ✅ Exa search configured (free, no API key needed)")
+        else:
+            print("  ✅ Exa search already configured")
+    except Exception:
+        print("  ⚠️  Could not configure Exa. Run manually: mcporter config add exa https://mcp.exa.ai/mcp")
+
+    # Check XiaoHongShu MCP (only if server is running)
+    try:
+        r = subprocess.run(
+            ["mcporter", "list"], capture_output=True, text=True, timeout=10
+        )
+        if "xiaohongshu" in r.stdout:
+            print("  ✅ XiaoHongShu MCP already configured")
+        else:
+            # Check if XHS MCP server is running on localhost:18060
+            import requests
+            try:
+                requests.get("http://localhost:18060/", timeout=3)
+                subprocess.run(
+                    ["mcporter", "config", "add", "xiaohongshu", "http://localhost:18060/mcp"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                print("  ✅ XiaoHongShu MCP auto-detected and configured")
+            except Exception:
+                print("  ⬜ XiaoHongShu MCP not detected (optional — install xiaohongshu-mcp for XHS support)")
+    except Exception:
+        pass
 
 
 def _detect_environment():
@@ -323,23 +373,6 @@ def _cmd_configure(args):
         except Exception as e:
             print(f"❌ Failed: {e}")
 
-    elif args.key == "exa-key":
-        config.set("exa_api_key", value)
-        print(f"✅ Exa key configured!")
-
-        print("Testing search...", end=" ")
-        try:
-            import asyncio
-            from agent_reach.core import AgentReach
-            eyes = AgentReach(config)
-            results = asyncio.run(eyes.search("test", num_results=1))
-            if results:
-                print("✅ Search works!")
-            else:
-                print("⚠️ No results, but API connected.")
-        except Exception as e:
-            print(f"❌ Failed: {e}")
-
     elif args.key == "twitter-cookies":
         # Accept two formats:
         # 1. auth_token ct0 (two separate values)
@@ -386,28 +419,6 @@ def _cmd_configure(args):
             print("   Accepted formats:")
             print("   1. agent-reach configure twitter-cookies AUTH_TOKEN CT0")
             print('   2. agent-reach configure twitter-cookies "auth_token=xxx; ct0=yyy; ..."')
-
-    elif args.key == "xhs-cookie":
-        config.set("xhs_cookie", value)
-        print(f"✅ XiaoHongShu cookie configured!")
-
-        print("Testing XHS access...", end=" ")
-        try:
-            import requests
-            resp = requests.get(
-                "https://www.xiaohongshu.com/",
-                headers={
-                    "User-Agent": "Mozilla/5.0",
-                    "Cookie": value,
-                },
-                timeout=10,
-            )
-            if resp.status_code == 200 and "xiaohongshu" in resp.text.lower():
-                print("✅ XiaoHongShu works!")
-            else:
-                print(f"⚠️ Got status {resp.status_code}, cookie might be expired")
-        except Exception as e:
-            print(f"❌ Failed: {e}")
 
     elif args.key == "youtube-cookies":
         config.set("youtube_cookies_from", value)

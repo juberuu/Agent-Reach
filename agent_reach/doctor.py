@@ -49,12 +49,12 @@ def format_report(results: Dict[str, dict]) -> str:
     tier1 = {k: r for k, r in results.items() if r["tier"] == 1}
     if tier1:
         lines.append("")
-        lines.append("🔍 搜索（免费 Exa Key 即可解锁）：")
+        lines.append("🔍 搜索（mcporter 即可解锁）：")
         for key, r in tier1.items():
             if r["status"] == "ok":
-                lines.append(f"  ✅ {r['name']}")
+                lines.append(f"  ✅ {r['name']} — {r['message']}")
             else:
-                lines.append(f"  ⬜ {r['name']} — 注册 exa.ai 获取免费 Key，配置一下就能用")
+                lines.append(f"  ⬜ {r['name']} — {r['message']}")
 
     # Tier 2 — optional setup
     tier2 = {k: r for k, r in results.items() if r["tier"] == 2}
