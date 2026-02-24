@@ -37,7 +37,7 @@ AI Agent 已经能访问互联网——但只是"能上网"而已。
 帮我安装 Agent Reach：https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
 ```
 
-复制给你的 Agent，30 秒后它就能读推特、搜 Reddit、看 B站了。
+复制给你的 Agent，几分钟后它就能读推特、搜 Reddit、看 B站了。
 
 ### ✅ 在你用之前，你可能想知道
 
@@ -69,7 +69,7 @@ AI Agent 已经能访问互联网——但只是"能上网"而已。
 
 ---
 
-## 30 秒上手
+## 快速上手
 
 复制给你的 AI Agent（Claude Code、OpenClaw、Cursor 等）：
 

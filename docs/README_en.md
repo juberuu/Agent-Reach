@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="#get-started-in-30-seconds">Quick Start</a> · <a href="../README.md">中文</a> · <a href="#supported-platforms">Platforms</a> · <a href="#design-philosophy">Philosophy</a>
+  <a href="#quick-start">Quick Start</a> · <a href="../README.md">中文</a> · <a href="#supported-platforms">Platforms</a> · <a href="#design-philosophy">Philosophy</a>
 </p>
 
 ---
@@ -37,7 +37,7 @@ To connect your Agent to these platforms, you'd have to find tools, install depe
 Install Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
 ```
 
-Copy that to your Agent. 30 seconds later, it can read tweets, search Reddit, and watch Bilibili.
+Copy that to your Agent. A few minutes later, it can read tweets, search Reddit, and watch Bilibili.
 
 ### ✅ Before you start, you might want to know
 
@@ -69,7 +69,7 @@ Copy that to your Agent. 30 seconds later, it can read tweets, search Reddit, an
 
 ---
 
-## Get Started in 30 Seconds
+## Quick Start
 
 Copy this to your AI Agent (Claude Code, OpenClaw, Cursor, etc.):
 
