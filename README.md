@@ -22,7 +22,7 @@ Your Agent reads the guide, installs everything, and configures itself. You just
 **Or install manually:**
 
 ```bash
-pip install git+https://github.com/Panniantong/agent-eyes.git
+pip install https://github.com/Panniantong/agent-eyes/archive/main.zip
 agent-eyes doctor    # See what's available
 agent-eyes setup     # Unlock more (optional)
 ```

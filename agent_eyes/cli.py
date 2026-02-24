@@ -523,6 +523,21 @@ async def _cmd_search(args):
         else:
             print(f"Unknown command: {args.command}", file=sys.stderr)
             sys.exit(1)
+    except Exception as e:
+        error_str = str(e)
+        if "401" in error_str or "Unauthorized" in error_str:
+            print("⚠️  Exa API key not configured or invalid.")
+            print("Get a free key at https://exa.ai (1000 searches/month free)")
+            print("Then run: agent-eyes configure exa-key YOUR_KEY")
+            sys.exit(1)
+        elif "exa" in error_str.lower() or "api_key" in error_str.lower():
+            print("⚠️  Exa API key not configured.")
+            print("Get a free key at https://exa.ai")
+            print("Then run: agent-eyes configure exa-key YOUR_KEY")
+            sys.exit(1)
+        else:
+            print(f"❌ Error: {e}", file=sys.stderr)
+            sys.exit(1)
 
         if not results:
             print("No results found.")

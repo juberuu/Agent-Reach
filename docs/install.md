@@ -17,7 +17,7 @@ Install Agent Eyes with minimal user effort. Goal: fewest questions, fewest step
 ### Step 1: Install and detect
 
 ```bash
-pip install git+https://github.com/Panniantong/agent-eyes.git || pip3 install git+https://github.com/Panniantong/agent-eyes.git
+pip install https://github.com/Panniantong/agent-eyes/archive/main.zip || pip3 install https://github.com/Panniantong/agent-eyes/archive/main.zip
 agent-eyes install --env=auto
 ```
 
