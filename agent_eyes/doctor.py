@@ -27,7 +27,7 @@ def check_all(config: Config) -> Dict[str, dict]:
 def format_report(results: Dict[str, dict]) -> str:
     """Format results as a readable text report."""
     lines = []
-    lines.append("👁️  Agent Eyes Status")
+    lines.append("👁️  Agent Eyes 状态")
     lines.append("=" * 40)
 
     ok_count = sum(1 for r in results.values() if r["status"] == "ok")
@@ -35,7 +35,7 @@ def format_report(results: Dict[str, dict]) -> str:
 
     # Tier 0 — zero config
     lines.append("")
-    lines.append("✅ Ready (no setup needed):")
+    lines.append("✅ 装好即用：")
     for key, r in results.items():
         if r["tier"] == 0:
             if r["status"] == "ok":
@@ -49,23 +49,33 @@ def format_report(results: Dict[str, dict]) -> str:
     tier1 = {k: r for k, r in results.items() if r["tier"] == 1}
     if tier1:
         lines.append("")
-        lines.append("🔍 Search (need free Exa API key):")
+        lines.append("🔍 搜索（免费 Exa Key 即可解锁）：")
         for key, r in tier1.items():
-            icon = "✅" if r["status"] == "ok" else "⬜"
-            lines.append(f"  {icon} {r['name']}")
+            if r["status"] == "ok":
+                lines.append(f"  ✅ {r['name']}")
+            else:
+                lines.append(f"  ⬜ {r['name']} — 注册 exa.ai 获取免费 Key，配置一下就能用")
 
     # Tier 2 — optional setup
     tier2 = {k: r for k, r in results.items() if r["tier"] == 2}
     if tier2:
         lines.append("")
-        lines.append("🔧 Optional (advanced setup):")
+        lines.append("🔧 配置后可用：")
         for key, r in tier2.items():
-            icon = "✅" if r["status"] == "ok" else "⬜"
-            lines.append(f"  {icon} {r['name']} — {r['message']}")
+            if r["status"] == "ok":
+                lines.append(f"  ✅ {r['name']} — {r['message']}")
+            else:
+                # Friendly message about what to configure
+                if "proxy" in str(r.get("message", "")):
+                    lines.append(f"  ⬜ {r['name']} — 配个代理就能用：agent-eyes configure proxy URL")
+                elif "cookie" in str(r.get("message", "")):
+                    lines.append(f"  ⬜ {r['name']} — 导入浏览器 Cookie 就能用：agent-eyes configure --from-browser chrome")
+                else:
+                    lines.append(f"  ⬜ {r['name']} — {r['message']}")
 
     lines.append("")
-    lines.append(f"Status: {ok_count}/{total} channels active")
+    lines.append(f"状态：{ok_count}/{total} 个渠道可用")
     if ok_count < total:
-        lines.append("Run `agent-eyes setup` to unlock more!")
+        lines.append("运行 `agent-eyes setup` 解锁更多渠道")
 
     return "\n".join(lines)

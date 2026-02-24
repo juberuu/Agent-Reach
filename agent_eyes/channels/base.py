@@ -118,14 +118,14 @@ class Channel(ABC):
         # Check required tools
         for tool in self.requires_tools:
             if not shutil.which(tool):
-                return "off", f"Install: pip install {tool}"
+                return "off", f"需要安装：pip install {tool}"
 
         # Check required config
         for key in self.requires_config:
             if config and not config.get(key):
-                return "off", f"Need config: {key}. Run: agent-eyes setup"
+                return "off", f"需要配置 {key}，运行 agent-eyes setup"
 
-        return "ok", f"{', '.join(self.backends) if self.backends else 'built-in'}"
+        return "ok", f"{'、'.join(self.backends) if self.backends else '内置'}"
 
     async def search(self, query: str, config=None, **kwargs) -> List[SearchResult]:
         """Search this platform. Override if supported."""

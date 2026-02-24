@@ -108,25 +108,25 @@ agent-eyes configure proxy http://用户名:密码@IP:端口
 ```
 $ agent-eyes doctor
 
-👁️  Agent Eyes Status
+👁️  Agent Eyes 状态
 ========================================
 
-✅ Ready (no setup needed):
-  ✅ GitHub repos and code — Public repos only
-  ✅ Twitter/X posts — Full access (search + timeline + threads)
-  ✅ YouTube video transcripts — yt-dlp
-  ⚠️  Bilibili video info — May be blocked on servers
-  ✅ RSS and Atom feeds — feedparser
-  ✅ Web pages (any URL) — Jina Reader API
+✅ 装好即用：
+  ✅ GitHub 仓库和代码 — 公开仓库可用。配置 github_token 可访问私有仓库
+  ✅ Twitter/X 推文 — 可读取推文。安装 birdx + 配置 Cookie 可解锁搜索和发推
+  ✅ YouTube 视频字幕 — yt-dlp
+  ⚠️  B站视频信息和字幕 — 服务器 IP 可能被封，配置代理即可解决
+  ✅ RSS/Atom 订阅源 — feedparser
+  ✅ 网页（任意 URL） — Jina Reader API
 
-🔍 Search (need free Exa API key):
-  ⬜ Semantic web search
+🔍 搜索（免费 Exa Key 即可解锁）：
+  ⬜ 全网语义搜索 — 注册 exa.ai 获取免费 Key，配置一下就能用
 
-🔧 Optional (advanced setup):
-  ⬜ Reddit posts and comments — Need proxy
-  ⬜ XiaoHongShu (小红书) — Need cookies
+🔧 配置后可用：
+  ⬜ Reddit 帖子和评论 — 配个代理就能用
+  ⬜ 小红书笔记 — 导入浏览器 Cookie 就能用
 
-Status: 6/9 channels active
+状态：6/9 个渠道可用
 ```
 
 ---

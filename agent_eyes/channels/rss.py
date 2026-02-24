@@ -12,7 +12,7 @@ from .base import Channel, ReadResult
 
 class RSSChannel(Channel):
     name = "rss"
-    description = "RSS and Atom feeds"
+    description = "RSS/Atom 订阅源"
     backends = ["feedparser"]
     tier = 0
 

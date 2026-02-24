@@ -12,7 +12,7 @@ from .base import Channel, ReadResult
 
 class BilibiliChannel(Channel):
     name = "bilibili"
-    description = "Bilibili video info and subtitles"
+    description = "B站视频信息和字幕"
     backends = ["Bilibili API"]
     tier = 0
 
@@ -23,7 +23,7 @@ class BilibiliChannel(Channel):
     def check(self, config=None):
         proxy = config.get("bilibili_proxy") if config else None
         if proxy:
-            return "ok", "Via proxy"
+            return "ok", "已配置代理，完整可用"
         # Detect if we're on a server (same logic as cli._detect_environment)
         import os
         indicators = [
@@ -34,8 +34,8 @@ class BilibiliChannel(Channel):
         ]
         is_server = any(indicators)
         if is_server:
-            return "warn", "May be blocked on servers. Fix: agent-eyes configure proxy URL"
-        return "ok", "Local access"
+            return "warn", "服务器 IP 可能被封，配置代理即可解决：agent-eyes configure proxy URL"
+        return "ok", "本地直连可用"
 
     async def read(self, url: str, config=None) -> ReadResult:
         # Proxy support (Bilibili blocks server IPs)

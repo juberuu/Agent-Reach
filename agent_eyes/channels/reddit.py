@@ -12,7 +12,7 @@ from .base import Channel, ReadResult
 
 class RedditChannel(Channel):
     name = "reddit"
-    description = "Reddit posts and comments"
+    description = "Reddit 帖子和评论"
     backends = ["Reddit JSON API"]
     requires_config = ["reddit_proxy"]
     tier = 2

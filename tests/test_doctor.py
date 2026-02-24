@@ -33,4 +33,4 @@ class TestDoctor:
         report = format_report(results)
         assert "Agent Eyes" in report
         assert "✅" in report
-        assert "channels active" in report
+        assert "渠道可用" in report

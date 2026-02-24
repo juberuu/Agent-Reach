@@ -16,7 +16,7 @@ from .base import Channel, ReadResult
 
 class YouTubeChannel(Channel):
     name = "youtube"
-    description = "YouTube video transcripts"
+    description = "YouTube 视频字幕"
     backends = ["yt-dlp"]
     requires_tools = ["yt-dlp"]
     tier = 0

@@ -13,7 +13,7 @@ from typing import List
 
 class ExaSearchChannel(Channel):
     name = "exa_search"
-    description = "Semantic web search (powers Reddit/Twitter search too)"
+    description = "全网语义搜索（同时支持 Reddit/Twitter 搜索）"
     backends = ["Exa API"]
     requires_config = ["exa_api_key"]
     tier = 1

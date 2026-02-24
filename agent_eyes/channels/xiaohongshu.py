@@ -14,7 +14,7 @@ from .base import Channel, ReadResult
 
 class XiaoHongShuChannel(Channel):
     name = "xiaohongshu"
-    description = "XiaoHongShu (小红书) notes"
+    description = "小红书笔记"
     backends = ["XHS Web API"]
     requires_config = ["xhs_cookie"]
     tier = 2

@@ -11,7 +11,7 @@ from .base import Channel, ReadResult
 
 class WebChannel(Channel):
     name = "web"
-    description = "Web pages (any URL)"
+    description = "网页（任意 URL）"
     backends = ["Jina Reader API"]
     tier = 0
 
