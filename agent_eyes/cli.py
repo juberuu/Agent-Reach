@@ -17,8 +17,17 @@ import sys
 import asyncio
 import argparse
 import json
+import os
 
 from agent_eyes import __version__
+
+
+def _configure_logging(verbose: bool = False):
+    """Suppress loguru output unless --verbose is set."""
+    from loguru import logger
+    logger.remove()  # Remove default stderr handler
+    if verbose:
+        logger.add(sys.stderr, level="INFO")
 
 
 def main():
@@ -26,6 +35,7 @@ def main():
         prog="agent-eyes",
         description="👁️ Give your AI Agent eyes to see the entire internet",
     )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Show debug logs")
     sub = parser.add_subparsers(dest="command", help="Available commands")
 
     # ── read ──
@@ -65,6 +75,9 @@ def main():
     sub.add_parser("version", help="Show version")
 
     args = parser.parse_args()
+
+    # Suppress loguru noise unless --verbose
+    _configure_logging(getattr(args, "verbose", False))
 
     if not args.command:
         parser.print_help()

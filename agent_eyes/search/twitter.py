@@ -38,46 +38,74 @@ async def _search_birdx(query: str, limit: int) -> List[Dict[str, Any]]:
     """Search Twitter via birdx CLI."""
     logger.info(f"birdx search: {query} (n={limit})")
     try:
+        # birdx --json returns [] for search, so use plain text output
         result = subprocess.run(
-            ["birdx", "search", query, "-n", str(limit), "--json"],
+            ["birdx", "search", query, "-n", str(limit)],
             capture_output=True, text=True, timeout=30,
         )
         if result.returncode != 0:
-            # birdx might not support --json, try plain output
-            result = subprocess.run(
-                ["birdx", "search", query, "-n", str(limit)],
-                capture_output=True, text=True, timeout=30,
-            )
-            return _parse_birdx_text(result.stdout)
-
-        data = json.loads(result.stdout)
-        if isinstance(data, list):
-            return data
-        return data.get("tweets", data.get("results", []))
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
+            logger.error(f"birdx search failed: {result.stderr}")
+            return []
+        return _parse_birdx_text(result.stdout)
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         logger.error(f"birdx search failed: {e}")
         return []
 
 
 def _parse_birdx_text(text: str) -> List[Dict[str, Any]]:
-    """Parse birdx plain text output into structured data."""
+    """Parse birdx plain text output into structured data.
+    
+    Format:
+        @handle (Display Name):
+        Tweet text here
+        possibly multiple lines
+        date: Mon Feb 24 12:00:00 +0000 2026
+        url: https://x.com/handle/status/123
+        ──────────────────────────────────────────────────
+    """
     results = []
-    current = {}
+    current: Dict[str, Any] = {}
+    text_lines = []
+
     for line in text.strip().split("\n"):
         line = line.strip()
-        if not line:
+
+        # Separator between tweets
+        if line.startswith("─"):
             if current:
+                if text_lines:
+                    current["text"] = "\n".join(text_lines).strip()
                 results.append(current)
                 current = {}
+                text_lines = []
             continue
-        if line.startswith("@"):
-            current["author"] = line.split()[0] if line else ""
-        elif line.startswith("http"):
-            current["url"] = line
-        else:
-            current["text"] = current.get("text", "") + " " + line
+
+        # Author line: @handle (Display Name):
+        if line.startswith("@") and line.endswith(":") and "(" in line:
+            handle = line.split()[0]
+            current["author"] = handle
+            continue
+
+        # Date line
+        if line.startswith("date:"):
+            current["date"] = line[5:].strip()
+            continue
+
+        # URL line
+        if line.startswith("url:"):
+            current["url"] = line[4:].strip()
+            continue
+
+        # Content line
+        if current:
+            text_lines.append(line)
+
+    # Last tweet
     if current:
+        if text_lines:
+            current["text"] = "\n".join(text_lines).strip()
         results.append(current)
+
     return results
 
 
