@@ -74,6 +74,10 @@ class RedditChannel(Channel):
 
         data = resp.json()
 
+        # Subreddit listing page: /r/sub/, /r/sub/hot, /r/sub/new, /r/sub/top
+        if isinstance(data, dict) and data.get("kind") == "Listing":
+            return self._parse_listing(data, url)
+
         if isinstance(data, list) and len(data) >= 1:
             # Post page: [post_listing, comments_listing]
             post = data[0]["data"]["children"][0]["data"]
@@ -102,6 +106,52 @@ class RedditChannel(Channel):
             )
 
         raise ValueError(f"Could not parse Reddit response for: {url}")
+
+    def _parse_listing(self, data: dict, url: str) -> ReadResult:
+        """Parse a subreddit listing (hot/new/top/rising)."""
+        children = data.get("data", {}).get("children", [])
+
+        # Extract subreddit name and sort from URL
+        parsed = urlparse(url)
+        path_parts = [p for p in parsed.path.strip("/").split("/") if p]
+        subreddit = path_parts[1] if len(path_parts) >= 2 else "reddit"
+        sort_type = path_parts[2] if len(path_parts) >= 3 else "hot"
+
+        lines = []
+        for i, child in enumerate(children, 1):
+            if child.get("kind") != "t3":
+                continue
+            post = child.get("data", {})
+            title = post.get("title", "")
+            author = post.get("author", "")
+            score = post.get("score", 0)
+            num_comments = post.get("num_comments", 0)
+            permalink = post.get("permalink", "")
+            post_url = post.get("url", "")
+            is_self = post.get("is_self", False)
+
+            lines.append(f"### {i}. {title}")
+            lines.append(f"👤 u/{author} · ⬆ {score} · 💬 {num_comments}")
+            if not is_self and post_url:
+                lines.append(f"🔗 {post_url}")
+            lines.append(f"📎 https://www.reddit.com{permalink}")
+            # Add selftext preview (first 200 chars)
+            selftext = post.get("selftext", "")
+            if selftext:
+                preview = selftext[:200].replace("\n", " ")
+                if len(selftext) > 200:
+                    preview += "..."
+                lines.append(f"> {preview}")
+            lines.append("")
+
+        content = "\n".join(lines) if lines else "No posts found."
+        return ReadResult(
+            title=f"r/{subreddit} — {sort_type}",
+            content=content,
+            url=url,
+            platform="reddit",
+            extra={"subreddit": subreddit, "sort": sort_type, "count": len(children)},
+        )
 
     def _extract_comments(self, comments_data: dict, depth: int = 0, max_depth: int = 3) -> str:
         """Recursively extract comments."""

@@ -36,6 +36,7 @@ def main():
         description="👁️ Give your AI Agent eyes to see the entire internet",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Show debug logs")
+    parser.add_argument("--version", action="version", version=f"Agent Reach v{__version__}")
     sub = parser.add_subparsers(dest="command", help="Available commands")
 
     # ── read ──
