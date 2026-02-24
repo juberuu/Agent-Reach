@@ -1,247 +1,160 @@
-# x-reader
+# 👁️ Agent Eyes
+
+**Give your AI Agent eyes to see the entire internet.**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Universal content reader — fetch, transcribe, and digest content from any platform.
+Agent Eyes is an open-source infrastructure tool that gives any AI Agent the ability to **search** and **read** the entire internet. One install, 10+ platforms, unified output.
 
-Give it a URL (article, video, podcast, tweet), get back structured content. Works as CLI, Python library, MCP server, or Claude Code skills.
+> 🙏 Built on the shoulders of [x-reader](https://github.com/runesleo/x-reader) by [@runes_leo](https://x.com/runes_leo). Thank you for the foundation!
 
-## What It Does
+## Why Agent Eyes?
 
-```
-Any URL → Platform Detection → Fetch Content → Unified Output
-              ↓                      ↓
-         auto-detect           text: Jina Reader
-         7+ platforms          video: yt-dlp subtitles
-                               audio: Whisper transcription
-                               API: Bilibili / RSS / Telegram
-```
+Your AI Agent is blind. It can only see what you manually feed it.
 
-The Python layer handles text fetching and YouTube subtitle extraction. The **Claude Code skills** (optional) add full Whisper transcription for video/podcast and AI-powered content analysis.
+Agent Eyes gives it **eyes** — the ability to:
+- **Search** the web, Reddit, GitHub with a single command
+- **Read** any URL from 10+ platforms (articles, videos, tweets, posts)
+- **Transcribe** videos and podcasts to text
 
-## Three Layers
+Without this, your Agent is a chatbot waiting for instructions.  
+With this, it can autonomously find and consume information — just like you do.
 
-x-reader is composable. Use the layers you need:
-
-| Layer | What | Format | Install |
-|-------|------|--------|---------|
-| **Python CLI/Library** | Basic content fetching + unified schema | See [Install](#install) | Required |
-| **Claude Code Skills** | Video transcription + AI analysis | Copy `skills/` to `~/.claude/skills/` | Optional |
-| **MCP Server** | Expose reading as MCP tools | `python mcp_server.py` | Optional |
-
-### Layer 1: Python CLI
+## Quick Start
 
 ```bash
-# Fetch any URL
-x-reader https://mp.weixin.qq.com/s/abc123
+# Install
+pip install git+https://github.com/Panniantong/agent-eyes.git
 
-# Fetch a tweet
-x-reader https://x.com/elonmusk/status/123456
+# Search the web
+agent-eyes search "AI agent framework 2026"
 
-# Fetch multiple URLs
-x-reader https://url1.com https://url2.com
+# Read any URL
+agent-eyes read https://reddit.com/r/LocalLLaMA/comments/xxx
+agent-eyes read https://github.com/openai/codex
+agent-eyes read https://mp.weixin.qq.com/s/xxx
+agent-eyes read https://x.com/elonmusk/status/xxx
 
-# Login to a platform (one-time, for browser fallback)
-x-reader login xhs
-
-# View inbox
-x-reader list
-```
-
-### Layer 2: Claude Code Skills
-
-> Requires cloning the repo (not included in pip install).
-
-For video/podcast transcription and content analysis:
-
-```
-skills/
-├── video/       # YouTube/Bilibili/podcast → full transcript via Whisper
-└── analyzer/    # Any content → structured analysis report
-```
-
-Install:
-```bash
-cp -r skills/video ~/.claude/skills/video
-cp -r skills/analyzer ~/.claude/skills/analyzer
-```
-
-Then in Claude Code, just send a YouTube/Bilibili/podcast link — the video skill auto-triggers and produces a full transcript + summary.
-
-### Layer 3: MCP Server
-
-> Requires cloning the repo (mcp_server.py is not included in pip install).
-
-```bash
-git clone https://github.com/runesleo/x-reader.git
-cd x-reader
-pip install -e ".[mcp]"
-python mcp_server.py
-```
-
-Tools exposed:
-- `read_url(url)` — fetch any URL
-- `read_batch(urls)` — fetch multiple URLs concurrently
-- `list_inbox()` — view previously fetched content
-- `detect_platform(url)` — identify platform from URL
-
-Claude Code config (`~/.claude/claude_desktop_config.json`):
-```json
-{
-    "mcpServers": {
-        "x-reader": {
-            "command": "python",
-            "args": ["/path/to/x-reader/mcp_server.py"]
-        }
-    }
-}
+# Your Agent now has eyes 👁️
 ```
 
 ## Supported Platforms
 
-| Platform | Text Fetch | Video/Audio Transcript |
-|----------|-----------|----------------------|
-| YouTube | ✅ Jina | ✅ yt-dlp subtitles → Groq Whisper fallback |
-| Bilibili (B站) | ✅ API | ✅ via Claude Code skill |
-| X / Twitter | ✅ Jina → Playwright | — |
-| WeChat (微信公众号) | ✅ Jina → Playwright | — |
-| Xiaohongshu (小红书) | ✅ Jina → Playwright* | — |
-| Telegram | ✅ Telethon | — |
-| RSS | ✅ feedparser | — |
-| 小宇宙 (Xiaoyuzhou) | — | ✅ via Claude Code skill |
-| Apple Podcasts | — | ✅ via Claude Code skill |
-| Any web page | ✅ Jina fallback | — |
+| Platform | Read URL | Search | Notes |
+|----------|:--------:|:------:|-------|
+| 🔍 Web (any) | ✅ | ✅ Exa | Semantic search across the entire web |
+| 🟠 Reddit | ✅ | ✅ | Posts + comments. Proxy support via `REDDIT_PROXY` |
+| 🐙 GitHub | ✅ | ✅ | Repos (README), Issues, PRs |
+| 🐦 X / Twitter | ✅ | — | Tweets and threads |
+| 💬 WeChat (微信公众号) | ✅ | — | Anti-scraping bypass via Playwright |
+| 📕 Xiaohongshu (小红书) | ✅ | — | Session persistence for login-gated content |
+| ▶️ YouTube | ✅ | — | Subtitles + Whisper transcription |
+| 📺 Bilibili (B站) | ✅ | — | Official API |
+| ✈️ Telegram | ✅ | — | Channel message sync |
+| 📡 RSS | ✅ | — | Any RSS/Atom feed |
+| 🎙️ Podcasts | ✅ | — | 小宇宙, Apple Podcasts (via Whisper) |
 
-> \*XHS requires a one-time login: `x-reader login xhs` (saves session for Playwright fallback)
->
-> YouTube Whisper transcription requires `GROQ_API_KEY` — get a free key from [Groq](https://console.groq.com/keys)
+## Three Layers
 
-## Install
+Use the layers you need:
 
-```bash
-# From GitHub (recommended)
-pip install git+https://github.com/runesleo/x-reader.git
+| Layer | What | For |
+|-------|------|-----|
+| **CLI** | `agent-eyes read/search` | Quick command-line use |
+| **MCP Server** | 7 tools for any AI Agent | OpenClaw, Claude Code, etc. |
+| **Python Library** | `from agent_eyes import UniversalReader` | Custom integrations |
 
-# With Telegram support
-pip install "x-reader[telegram] @ git+https://github.com/runesleo/x-reader.git"
-
-# With browser fallback (Playwright — for XHS/WeChat anti-scraping)
-pip install "x-reader[browser] @ git+https://github.com/runesleo/x-reader.git"
-playwright install chromium
-
-# With all optional dependencies
-pip install "x-reader[all] @ git+https://github.com/runesleo/x-reader.git"
-playwright install chromium
-```
-
-Or clone and install locally:
-```bash
-git clone https://github.com/runesleo/x-reader.git
-cd x-reader
-pip install -e ".[all]"
-playwright install chromium
-```
-
-### Dependencies for video/audio (optional)
+### As MCP Server (recommended for Agents)
 
 ```bash
-# macOS
-brew install yt-dlp ffmpeg
+# Start the server
+python mcp_server.py
 
-# Linux
-pip install yt-dlp
-apt install ffmpeg
+# Or with SSE transport
+python mcp_server.py --transport sse
 ```
 
-For Whisper transcription, get a free API key from [Groq](https://console.groq.com/keys) and set:
-```bash
-export GROQ_API_KEY=your_key_here
-```
+MCP Tools exposed:
 
-## Use as Library
+| Tool | Description |
+|------|-------------|
+| `read_url(url)` | Read any URL → structured content |
+| `read_batch(urls)` | Read multiple URLs concurrently |
+| `search(query)` | Semantic web search (Exa) |
+| `search_reddit(query, subreddit?)` | Search Reddit |
+| `search_github(query)` | Search GitHub repos |
+| `list_inbox()` | View previously fetched content |
+| `detect_platform(url)` | Identify platform from URL |
+
+### As Python Library
 
 ```python
 import asyncio
-from x_reader.reader import UniversalReader
+from agent_eyes.reader import UniversalReader
 
 async def main():
     reader = UniversalReader()
-    content = await reader.read("https://mp.weixin.qq.com/s/abc123")
+    
+    # Read any URL
+    content = await reader.read("https://github.com/openai/codex")
     print(content.title)
-    print(content.content[:200])
+    print(content.content[:500])
 
 asyncio.run(main())
 ```
 
-## Configuration
-
-Copy `.env.example` to `.env`:
+## Install
 
 ```bash
-cp .env.example .env
+# Basic install
+pip install git+https://github.com/Panniantong/agent-eyes.git
+
+# With browser fallback (for WeChat/XHS anti-scraping)
+pip install "agent-eyes[browser] @ git+https://github.com/Panniantong/agent-eyes.git"
+playwright install chromium
+
+# With Telegram support
+pip install "agent-eyes[telegram] @ git+https://github.com/Panniantong/agent-eyes.git"
+
+# Everything
+pip install "agent-eyes[all] @ git+https://github.com/Panniantong/agent-eyes.git"
+playwright install chromium
 ```
+
+## Configuration
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `EXA_API_KEY` | For search | Free key from [exa.ai](https://exa.ai) |
+| `REDDIT_PROXY` | For Reddit (if IP blocked) | `http://user:pass@host:port` |
+| `GITHUB_TOKEN` | No (higher rate limits) | GitHub personal access token |
+| `GROQ_API_KEY` | For Whisper | Free key from [groq.com](https://console.groq.com/keys) |
 | `TG_API_ID` | Telegram only | From https://my.telegram.org |
 | `TG_API_HASH` | Telegram only | From https://my.telegram.org |
-| `GROQ_API_KEY` | Whisper only | From https://console.groq.com/keys (free) |
-| `INBOX_FILE` | No | Path to inbox JSON (default: `./unified_inbox.json`) |
-| `OUTPUT_DIR` | No | Directory for Markdown output (default: disabled) |
-| `OBSIDIAN_VAULT` | No | Path to Obsidian vault (writes to `01-收集箱/x-reader-inbox.md`) |
 
-## Architecture
+## What's New (vs x-reader)
 
-```
-x-reader/
-├── x_reader/              # Python package
-│   ├── cli.py             # CLI entry point
-│   ├── reader.py          # URL dispatcher (UniversalReader)
-│   ├── schema.py          # Unified data model (UnifiedContent + Inbox)
-│   ├── login.py           # Browser login manager (saves sessions)
-│   ├── fetchers/
-│   │   ├── jina.py        # Jina Reader (universal fallback)
-│   │   ├── browser.py     # Playwright headless (anti-scraping fallback)
-│   │   ├── bilibili.py    # Bilibili API
-│   │   ├── youtube.py     # yt-dlp subtitle extraction
-│   │   ├── rss.py         # feedparser
-│   │   ├── telegram.py    # Telethon
-│   │   ├── twitter.py     # Jina-based
-│   │   ├── wechat.py      # Jina → Playwright fallback
-│   │   └── xhs.py         # Jina → Playwright + session fallback
-│   └── utils/
-│       └── storage.py     # JSON + Markdown dual output
-├── skills/                # Claude Code skills
-│   ├── video/             # Video/podcast → transcript + summary
-│   └── analyzer/          # Content → structured analysis
-├── mcp_server.py          # MCP server entry point
-└── pyproject.toml
-```
+Agent Eyes extends x-reader with:
 
-## How the Layers Work Together
+- 🟠 **Reddit support** — Read posts + comments, search subreddits. Proxy support for blocked IPs.
+- 🐙 **GitHub support** — Read repos (README), issues, PRs. Search repositories.
+- 🔍 **Web search** — Semantic search across the entire web via Exa.
+- 🎯 **Agent-first design** — MCP Server with 7 tools, ready to plug into any AI Agent.
 
-```
-User sends URL
-    │
-    ├─ Text content (article, tweet, WeChat)
-    │   └─ Python fetcher → UnifiedContent → inbox
-    │
-    ├─ Video (YouTube, Bilibili, X video)
-    │   ├─ Python fetcher → metadata (title, description)
-    │   └─ Video skill → full transcript via subtitles/Whisper
-    │
-    ├─ Podcast (小宇宙, Apple Podcasts)
-    │   └─ Video skill → full transcript via Whisper
-    │
-    └─ Analysis requested
-        └─ Analyzer skill → structured report + action items
-```
+## Philosophy
 
-## Author
+This is **Agent infrastructure**. In the Web 4.0 era where AI Agents act on behalf of humans, the first capability they need is the ability to **see the world**.
 
-Built by [@runes_leo](https://x.com/runes_leo) — more AI tools at [leolabs.me](https://leolabs.me)
+Agent Eyes is the sensory layer — the eyes — that every Agent needs.
+
+## Credits
+
+- [x-reader](https://github.com/runesleo/x-reader) by [@runes_leo](https://x.com/runes_leo) — the original universal content reader that inspired and powers the core of Agent Eyes
+- [Jina Reader](https://jina.ai/reader/) — universal web content extraction
+- [Exa](https://exa.ai) — semantic web search API
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) — video/audio extraction
 
 ## License
 
-MIT
+MIT — use it, fork it, build on it.

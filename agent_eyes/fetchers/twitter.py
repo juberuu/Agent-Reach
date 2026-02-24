@@ -15,7 +15,7 @@ import requests
 from loguru import logger
 from typing import Dict, Any
 
-from x_reader.fetchers.jina import fetch_via_jina
+from agent_eyes.fetchers.jina import fetch_via_jina
 
 
 OEMBED_URL = "https://publish.twitter.com/oembed"
@@ -75,7 +75,7 @@ async def _fetch_via_playwright(url: str) -> Dict[str, Any]:
             "  playwright install chromium"
         )
 
-    from x_reader.fetchers.browser import get_session_path
+    from agent_eyes.fetchers.browser import get_session_path
     from pathlib import Path
 
     session_path = get_session_path("twitter")

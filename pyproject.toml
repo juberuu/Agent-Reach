@@ -1,14 +1,15 @@
 [project]
-name = "x-reader"
-version = "0.2.0"
-description = "Universal content reader — fetch, normalize, and digest content from 7+ platforms"
+name = "agent-eyes"
+version = "1.0.0"
+description = "Give your AI Agent eyes to see the entire internet — search, read, and extract content from 10+ platforms"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "Leo", email = "runes.leo@gmail.com"}
+    {name = "Neo Reid"},
+    {name = "Leo (x-reader)", email = "runes.leo@gmail.com"},
 ]
-keywords = ["content-reader", "rss", "telegram", "bilibili", "xiaohongshu", "digest"]
+keywords = ["ai-agent", "web-reader", "search", "reddit", "github", "content-extraction", "mcp", "agent-infrastructure"]
 dependencies = [
     "requests>=2.28",
     "feedparser>=6.0",
@@ -17,9 +18,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/runesleo/x-reader"
-Repository = "https://github.com/runesleo/x-reader"
-Issues = "https://github.com/runesleo/x-reader/issues"
+Homepage = "https://github.com/Panniantong/agent-eyes"
+Repository = "https://github.com/Panniantong/agent-eyes"
+Issues = "https://github.com/Panniantong/agent-eyes/issues"
 
 [project.optional-dependencies]
 telegram = ["telethon>=1.34"]
@@ -28,11 +29,12 @@ browser = ["playwright>=1.40"]
 all = ["telethon>=1.34", "mcp[cli]>=1.0", "playwright>=1.40"]
 
 [project.scripts]
-x-reader = "x_reader.cli:main"
+agent-eyes = "agent_eyes.cli:main"
+x-reader = "agent_eyes.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["x_reader"]
+packages = ["agent_eyes"]

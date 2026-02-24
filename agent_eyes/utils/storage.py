@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from loguru import logger
 
-from x_reader.schema import UnifiedContent
+from agent_eyes.schema import UnifiedContent
 
 
 def save_to_json(item: UnifiedContent, filepath: str = "unified_inbox.json"):

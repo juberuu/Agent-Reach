@@ -10,12 +10,12 @@ from urllib.parse import urlparse
 from loguru import logger
 from typing import Dict, Any, Optional
 
-from x_reader.schema import (
-    UnifiedContent, UnifiedInbox, SourceType,
+from agent_eyes.schema import (
+    UnifiedContent, UnifiedInbox, SourceType, MediaType,
     from_bilibili, from_twitter, from_wechat,
     from_xiaohongshu, from_youtube, from_rss, from_telegram,
 )
-from x_reader.fetchers.jina import fetch_via_jina
+from agent_eyes.fetchers.jina import fetch_via_jina
 
 
 class UniversalReader:
@@ -47,6 +47,10 @@ class UniversalReader:
             return "podcast"
         if "t.me" in domain or "telegram.org" in domain:
             return "telegram"
+        if "reddit.com" in domain or "redd.it" in domain:
+            return "reddit"
+        if "github.com" in domain:
+            return "github"
         if url.endswith(".xml") or "/rss" in url or "/feed" in url or "/atom" in url:
             return "rss"
         return "generic"
@@ -74,7 +78,7 @@ class UniversalReader:
                     logger.info(f"Saved to inbox: {content.title[:50]}")
 
             # Save to markdown output if configured
-            from x_reader.utils.storage import save_to_markdown
+            from agent_eyes.utils.storage import save_to_markdown
             save_to_markdown(content)
 
             return content
@@ -87,39 +91,67 @@ class UniversalReader:
         """Dispatch to platform-specific fetcher."""
 
         if platform == "bilibili":
-            from x_reader.fetchers.bilibili import fetch_bilibili
+            from agent_eyes.fetchers.bilibili import fetch_bilibili
             data = await fetch_bilibili(url)
             return from_bilibili(data)
 
         if platform == "twitter":
-            from x_reader.fetchers.twitter import fetch_twitter
+            from agent_eyes.fetchers.twitter import fetch_twitter
             data = await fetch_twitter(url)
             return from_twitter(data)
 
         if platform == "wechat":
-            from x_reader.fetchers.wechat import fetch_wechat
+            from agent_eyes.fetchers.wechat import fetch_wechat
             data = await fetch_wechat(url)
             return from_wechat(data)
 
         if platform == "xhs":
-            from x_reader.fetchers.xhs import fetch_xhs
+            from agent_eyes.fetchers.xhs import fetch_xhs
             data = await fetch_xhs(url)
             return from_xiaohongshu(data)
 
         if platform == "youtube":
-            from x_reader.fetchers.youtube import fetch_youtube
+            from agent_eyes.fetchers.youtube import fetch_youtube
             data = await fetch_youtube(url)
             return from_youtube(data)
 
         if platform == "rss":
-            from x_reader.fetchers.rss import fetch_rss
+            from agent_eyes.fetchers.rss import fetch_rss
             articles = await fetch_rss(url, limit=1)
             if articles:
                 return from_rss(articles[0])
             raise ValueError(f"No articles found in RSS feed: {url}")
 
+        if platform == "reddit":
+            from agent_eyes.fetchers.reddit import fetch_reddit
+            data = await fetch_reddit(url)
+            return UnifiedContent(
+                source_type=SourceType.REDDIT,
+                source_name=f"r/{data.get('subreddit', '')}",
+                title=data["title"],
+                content=data.get("content", ""),
+                url=data["url"],
+                author=data.get("author", ""),
+                media_type=MediaType.TEXT,
+                metadata={"score": data.get("score", 0), "num_comments": data.get("num_comments", 0)},
+            )
+
+        if platform == "github":
+            from agent_eyes.fetchers.github import fetch_github
+            data = await fetch_github(url)
+            return UnifiedContent(
+                source_type=SourceType.GITHUB,
+                source_name=data.get("title", ""),
+                title=data["title"],
+                content=data.get("content", ""),
+                url=data["url"],
+                author=data.get("author", ""),
+                media_type=MediaType.TEXT,
+                metadata={k: v for k, v in data.items() if k not in ("title", "content", "url", "author", "platform")},
+            )
+
         if platform == "telegram":
-            from x_reader.fetchers.telegram import fetch_telegram
+            from agent_eyes.fetchers.telegram import fetch_telegram
             # Extract channel username from t.me URL
             path = urlparse(url).path.strip("/").split("/")[0]
             channel = path if path else url

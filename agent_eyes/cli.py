@@ -17,8 +17,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-from x_reader.reader import UniversalReader
-from x_reader.schema import UnifiedInbox, SourceType
+from agent_eyes.reader import UniversalReader
+from agent_eyes.schema import UnifiedInbox, SourceType
 
 
 def get_inbox_path() -> str:
@@ -87,7 +87,7 @@ def cmd_clear():
 
 def cmd_login(platform: str):
     """Open browser for manual login to a platform."""
-    from x_reader.login import login
+    from agent_eyes.login import login
     login(platform)
 
 

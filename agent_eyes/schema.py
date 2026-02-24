@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Unified content schema for x-reader.
+Unified content schema for Agent Eyes.
 
 Defines the standard data format for all content sources:
 - Telegram channels
@@ -10,6 +10,9 @@ Defines the standard data format for all content sources:
 - WeChat articles
 - X/Twitter posts
 - YouTube videos
+- Reddit posts
+- GitHub repos/issues/PRs
+- Web search results
 - Manual input
 """
 
@@ -30,6 +33,9 @@ class SourceType(str, Enum):
     TWITTER = "twitter"
     WECHAT = "wechat"
     YOUTUBE = "youtube"
+    REDDIT = "reddit"
+    GITHUB = "github"
+    SEARCH = "search"
     MANUAL = "manual"
 
 
