@@ -2,31 +2,30 @@
 
 **Give your AI Agent eyes to see the entire internet.**
 
-Agent Eyes is infrastructure for the Agent world — install once, and your AI Agent can search and read content across 10+ platforms. Zero to minimal configuration.
+Agent Eyes is an open-source Agent capability aggregator. It combines the best free tools into one install, so any AI Agent can search and read the entire internet.
 
-> *Built on top of [x-reader](https://github.com/runesleo/x-reader) by [@runes_leo](https://x.com/runes_leo) — thank you for the amazing open-source work. 🙏*
-
----
-
-## Why Agent Eyes?
-
-AI Agents are powerful, but blind. They can't browse Reddit, search Twitter, or read WeChat articles. Agent Eyes fixes that.
-
-- **One install, 10+ platforms** — web pages, GitHub, Reddit, Twitter, YouTube, Bilibili, WeChat, XiaoHongShu, RSS, Telegram
-- **Search + Read** — not just URL extraction, but actual search capability (find, then read)
-- **Agent-native design** — CLI, MCP Server, Python API — works with any AI Agent platform
-- **Mostly free** — 99% of features cost nothing. One free API key unlocks full search.
+> Not a framework. Not a library. Just glue — beautifully simple glue that gives your Agent superpowers.
 
 ---
 
-## Quick Start
+## Install (One Line)
+
+**Copy this to your AI Agent** (Claude Code, OpenClaw, Cursor, ChatGPT, etc.):
+
+```
+Install and configure Agent Eyes by following the instructions here:
+https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
+```
+
+Your Agent reads the guide, installs everything, and configures itself. You just watch.
+
+**Or install manually:**
 
 ```bash
-# Install
 pip install git+https://github.com/Panniantong/agent-eyes.git
-
-# Check what's available
-agent-eyes doctor
+agent-eyes doctor    # See what's available
+agent-eyes setup     # Unlock more (optional)
+```
 
 # Read any URL (works immediately, no config needed)
 agent-eyes read "https://github.com/openai/gpt-4"
@@ -213,43 +212,48 @@ Run `agent-eyes setup` to unlock more!
 
 ## Architecture
 
-Agent Eyes is **not** a fork of x-reader. It's a layer built on top of it.
+Agent Eyes is pure glue. Every channel is a thin wrapper (~50 lines) around an external tool. **Swap any backend by changing one file.**
 
 ```
-┌──────────────────────────────────────┐
-│         Agent Eyes                    │
-│  ┌──────────┐  ┌──────────────────┐  │
-│  │  Search   │  │  Config + Doctor │  │
-│  │  Exa      │  │  Setup Wizard   │  │
-│  │  Reddit   │  │  Health Check   │  │
-│  │  GitHub   │  │                 │  │
-│  │  Twitter  │  │  Agent Guides   │  │
-│  └──────────┘  └──────────────────┘  │
-│  ┌──────────────────────────────────┐│
-│  │  Readers (based on x-reader)     ││
-│  │  Web · GitHub · Reddit · Twitter ││
-│  │  YouTube · Bilibili · WeChat     ││
-│  │  XHS · RSS · Telegram            ││
-│  └──────────────────────────────────┘│
-│  ┌──────────────────────────────────┐│
-│  │  Integrations                    ││
-│  │  CLI · MCP Server · OpenClaw Skill│
-│  └──────────────────────────────────┘│
-└──────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│           Agent Eyes (pure glue)         │
+│                                          │
+│  ┌─────────────────────────────────────┐│
+│  │  Pluggable Channels                 ││
+│  │                                     ││
+│  │  web.py      → Jina Reader API      ││
+│  │  github.py   → GitHub API           ││
+│  │  twitter.py  → birdx + Jina         ││
+│  │  youtube.py  → yt-dlp               ││
+│  │  reddit.py   → Reddit JSON API      ││
+│  │  bilibili.py → Bilibili API         ││
+│  │  rss.py      → feedparser           ││
+│  │  exa.py      → Exa Search API       ││
+│  │                                     ││
+│  │  ↑ Swap any backend, nothing else   ││
+│  │    changes. Just edit one file.     ││
+│  └─────────────────────────────────────┘│
+│  ┌──────────┐ ┌──────────────────────┐  │
+│  │ Config   │ │ Integrations         │  │
+│  │ Doctor   │ │ CLI · MCP · Skill    │  │
+│  │ Guides   │ │ Python API           │  │
+│  └──────────┘ └──────────────────────┘  │
+└─────────────────────────────────────────┘
 ```
 
-- **Readers**: Content extraction from URLs (internalized from x-reader, MIT license)
-- **Search**: Semantic search across platforms (Agent Eyes original)
-- **Config + Doctor**: Configuration management and health checks (Agent Eyes original)
-- **Integrations**: CLI, MCP Server, OpenClaw Skill (Agent Eyes original)
+**Design principle**: Agent Eyes doesn't reinvent wheels. It aggregates the best free tools and makes them accessible to any AI Agent with one install.
 
 ---
 
 ## Credits
 
-- **[x-reader](https://github.com/runesleo/x-reader)** by [@runes_leo](https://x.com/runes_leo) — the URL-to-content extraction engine that Agent Eyes is built upon. MIT License.
-- **[Exa](https://exa.ai)** — semantic search API powering web/Reddit/Twitter search.
-- **[birdx](https://github.com/runesleo/birdx)** — Twitter CLI tool for advanced Twitter features.
+Agent Eyes stands on the shoulders of these amazing open-source projects:
+
+- **[Jina Reader](https://r.jina.ai)** — web page reading
+- **[birdx](https://github.com/runesleo/birdx)** by [@runes_leo](https://x.com/runes_leo) — Twitter access
+- **[Exa](https://exa.ai)** — semantic search
+- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** — YouTube transcripts
+- **[feedparser](https://github.com/kurtmckee/feedparser)** — RSS/Atom feeds
 
 ## License
 
