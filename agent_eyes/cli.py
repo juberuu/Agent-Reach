@@ -81,9 +81,10 @@ def main():
 
     # ── configure ──
     p_conf = sub.add_parser("configure", help="Set a config value")
-    p_conf.add_argument("key", choices=["exa-key", "proxy", "github-token", "groq-key"],
+    p_conf.add_argument("key", choices=["exa-key", "proxy", "github-token", "groq-key",
+                                        "twitter-cookies", "xhs-cookie", "youtube-cookies"],
                         help="What to configure")
-    p_conf.add_argument("value", help="The value to set")
+    p_conf.add_argument("value", nargs="+", help="The value(s) to set")
 
     # ── doctor ──
     sub.add_parser("doctor", help="Check platform availability")
@@ -178,28 +179,36 @@ def _cmd_install(args):
 def _cmd_configure(args):
     """Set a config value and test it."""
     from agent_eyes.config import Config
-    import subprocess
 
     config = Config()
+    value = " ".join(args.value) if isinstance(args.value, list) else args.value
 
-    key_map = {
-        "exa-key": "exa_api_key",
-        "proxy": ("reddit_proxy", "bilibili_proxy"),
-        "github-token": "github_token",
-        "groq-key": "groq_api_key",
-    }
+    if args.key == "proxy":
+        config.set("reddit_proxy", value)
+        config.set("bilibili_proxy", value)
+        print(f"✅ Proxy configured for Reddit + Bilibili!")
 
-    config_key = key_map.get(args.key)
-    if isinstance(config_key, tuple):
-        for k in config_key:
-            config.set(k, args.value)
-    else:
-        config.set(config_key, args.value)
+        # Auto-test
+        print("Testing Reddit access...", end=" ")
+        try:
+            import requests
+            resp = requests.get(
+                "https://www.reddit.com/r/test.json?limit=1",
+                headers={"User-Agent": "Mozilla/5.0"},
+                proxies={"http": value, "https": value},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                print("✅ Reddit works!")
+            else:
+                print(f"⚠️ Reddit returned {resp.status_code}")
+        except Exception as e:
+            print(f"❌ Failed: {e}")
 
-    print(f"✅ {args.key} configured!")
+    elif args.key == "exa-key":
+        config.set("exa_api_key", value)
+        print(f"✅ Exa key configured!")
 
-    # Auto-test
-    if args.key == "exa-key":
         print("Testing search...", end=" ")
         try:
             import asyncio
@@ -209,26 +218,72 @@ def _cmd_configure(args):
             if results:
                 print("✅ Search works!")
             else:
-                print("⚠️  No results, but API connected.")
+                print("⚠️ No results, but API connected.")
         except Exception as e:
             print(f"❌ Failed: {e}")
 
-    elif args.key == "proxy":
-        print("Testing Reddit access...", end=" ")
+    elif args.key == "twitter-cookies":
+        # Expect: auth_token ct0
+        parts = value.split()
+        if len(parts) == 2:
+            config.set("twitter_auth_token", parts[0])
+            config.set("twitter_ct0", parts[1])
+            print(f"✅ Twitter cookies configured!")
+
+            print("Testing Twitter access...", end=" ")
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ["birdx", "search", "test", "-n", "1",
+                     "--auth-token", parts[0], "--ct0", parts[1]],
+                    capture_output=True, text=True, timeout=15,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    print("✅ Twitter Advanced works!")
+                else:
+                    print(f"⚠️ Test returned no results (cookies might be wrong)")
+            except FileNotFoundError:
+                print("⚠️ birdx not installed. Run: pip install birdx")
+            except Exception as e:
+                print(f"❌ Failed: {e}")
+        else:
+            print("❌ Usage: agent-eyes configure twitter-cookies AUTH_TOKEN CT0")
+            print("   (two values separated by space)")
+
+    elif args.key == "xhs-cookie":
+        config.set("xhs_cookie", value)
+        print(f"✅ XiaoHongShu cookie configured!")
+
+        print("Testing XHS access...", end=" ")
         try:
             import requests
             resp = requests.get(
-                "https://www.reddit.com/r/test.json?limit=1",
-                headers={"User-Agent": "Mozilla/5.0"},
-                proxies={"http": args.value, "https": args.value},
+                "https://www.xiaohongshu.com/",
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Cookie": value,
+                },
                 timeout=10,
             )
-            if resp.status_code == 200:
-                print("✅ Reddit accessible!")
+            if resp.status_code == 200 and "xiaohongshu" in resp.text.lower():
+                print("✅ XiaoHongShu works!")
             else:
-                print(f"❌ Reddit returned {resp.status_code}")
+                print(f"⚠️ Got status {resp.status_code}, cookie might be expired")
         except Exception as e:
             print(f"❌ Failed: {e}")
+
+    elif args.key == "youtube-cookies":
+        config.set("youtube_cookies_from", value)
+        print(f"✅ YouTube cookie source configured: {value}")
+        print("   yt-dlp will use cookies from this browser for age-restricted/member videos.")
+
+    elif args.key == "github-token":
+        config.set("github_token", value)
+        print(f"✅ GitHub token configured!")
+
+    elif args.key == "groq-key":
+        config.set("groq_api_key", value)
+        print(f"✅ Groq key configured!")
 
 
 def _cmd_doctor():

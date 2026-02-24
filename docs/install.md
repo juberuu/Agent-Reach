@@ -16,7 +16,7 @@ Your Agent will handle everything. You just answer a few questions.
 ## For AI Agents
 
 You are installing Agent Eyes — giving yourself eyes to see the entire internet.
-Follow this guide step by step. Do not skip steps.
+Follow this guide step by step. Do not improvise.
 
 ### Step 1: Install
 
@@ -31,148 +31,197 @@ Verify:
 agent-eyes version
 ```
 
-### Step 2: Ask environment
+### Step 2: Detect environment
 
 Ask the user:
 
-> "You're installing Agent Eyes! First question: are you running on a **local computer** or a **server/VPS**?"
+> "First question: are you running on a **local computer** or a **server/VPS**?"
 
-Remember their answer — it affects which channels need extra setup.
+This determines what works out of the box and what needs extra setup.
 
 ### Step 3: Show channel menu
 
-Show the user this menu. Explain each option clearly.
+Present this menu to the user. Adjust the details based on their environment (local vs server).
 
-**Present it like this** (adjust the Bilibili line based on Step 2 answer):
-
----
-
-> Here are all the channels Agent Eyes supports. I'll help you set up whichever ones you want.
->
-> **Already active — no setup needed ✅**
-> These work right now, nothing to configure:
-> - ✅ **Web pages** — read any URL
-> - ✅ **GitHub** — read repos, issues, PRs + search repos
-> - ✅ **RSS** — read any RSS/Atom feed
-> - ✅ **YouTube** — video transcripts via yt-dlp
-> - ✅ **Twitter basic** — read individual tweets
->
-> **Recommended — free, takes 30 seconds each 🔍**
-> - 🔍 **Exa Search** (STRONGLY RECOMMENDED)
->   - What it unlocks: **full web search + Reddit search + Twitter search**
->   - What you need: one free API key from https://exa.ai (1000 searches/month free)
->   - Without it: I can read URLs you give me, but can't search the internet for you
->
-> **Optional — easy setup 🔧**
-> - 🐦 **Twitter Advanced** — search timelines, read threads, deep search
->   - What you need: export cookies from your browser (free, 2 minutes)
->   - Without it: I can still search Twitter via Exa and read individual tweets
->
-> - 📺 **Bilibili** [IF LOCAL: "already works ✅"] [IF SERVER: "⚠️ needs proxy — Bilibili blocks server IPs. Proxy costs ~$1/month at webshare.io. Without it, Bilibili won't work from your server."]
->
-> **Optional — more setup 🔨**
-> - 📖 **Reddit Full Reader** — read complete posts + all comments
->   - What you need: residential proxy (~$1/month at https://webshare.io)
->   - Without it: I can still **search** Reddit content via Exa (free!), just can't read full posts with all comments
->   - [IF SERVER: "Same proxy works for both Reddit and Bilibili"]
->
-> - 💬 **WeChat** — read WeChat public articles
->   - What you need: install browser component (~150MB download)
->
-> - 📕 **XiaoHongShu** — read XHS notes
->   - What you need: browser component + scan QR code once to login
->
-> **Which ones would you like me to set up?** (I recommend at least Exa Search)
+**IMPORTANT**: Make sure the user understands what each tier means and what they get/miss.
 
 ---
 
-Wait for user to choose. Then proceed to Step 4.
+> **Agent Eyes supports these channels. Let me help you choose what to set up.**
+>
+> ---
+>
+> **🟢 Already active — works right now, nothing needed:**
+>
+> | Channel | What it does |
+> |---------|-------------|
+> | ✅ Web pages | Read any URL on the internet |
+> | ✅ GitHub | Read repos, issues, PRs + search repositories |
+> | ✅ RSS | Read any RSS/Atom feed |
+>
+> These 3 channels are always available. No setup needed.
+>
+> ---
+>
+> **🔵 Cookie-based — free, just need to export cookies from your browser (~2 min each):**
+>
+> | Channel | What it does | Without cookies |
+> |---------|-------------|-----------------|
+> | 🐦 Twitter/X | Read tweets, search timelines, read threads | Can still read individual tweet URLs (basic mode) |
+> | 📺 YouTube | Video transcripts (public + age-restricted) | Public videos work without cookies; age-restricted/member-only videos need cookies |
+> | 📺 Bilibili | Video info + subtitles | [LOCAL: works without cookies ✅] [SERVER: ⚠️ blocked — needs proxy, see below] |
+> | 📕 XiaoHongShu | Read XHS notes + comments | Falls back to basic web reading (less content) |
+>
+> **How to export cookies**: open the site in Chrome → F12 → Application → Cookies → copy the values. I'll walk you through it for each one you choose.
+>
+> ---
+>
+> **🟡 Free API key — one key unlocks 3 search capabilities (~30 seconds):**
+>
+> | Channel | What it unlocks |
+> |---------|----------------|
+> | 🔍 Exa Search (RECOMMENDED) | **Web search + Reddit search + Twitter search** — one free key powers all three |
+>
+> Without Exa: I can read URLs you give me, but I cannot search the internet for you.
+> With Exa: I can find information across the entire web, Reddit, and Twitter.
+>
+> Free tier: 1000 searches/month at https://exa.ai — more than enough for most users.
+>
+> ---
+>
+> **🟠 Proxy-based — needed only on servers, $1/month shared across channels:**
+>
+> | Channel | Why proxy needed | Without proxy |
+> |---------|-----------------|---------------|
+> | 📖 Reddit | Reddit blocks server IPs | **Reddit search still works via Exa (free!)** — you just can't read full posts with all comments |
+> | 📺 Bilibili | Bilibili blocks server IPs | Won't work from server |
+>
+> [ONLY SHOW THIS SECTION IF USER SAID "SERVER"]
+> [IF LOCAL: Skip this section — Reddit and Bilibili work directly on local computers]
+>
+> One proxy works for both. Recommend: https://www.webshare.io ($1/month residential proxy).
+> Same proxy also works for Bilibili cookies-based access.
+>
+> ---
+>
+> **Which channels do you want me to set up?**
+> (I recommend: **Exa Search** for sure, plus any cookie-based channels you actually use)
 
-### Step 4: Run installer
+---
+
+Wait for the user to choose. Then go to Step 4.
+
+### Step 4: Run base installer
 
 ```bash
 agent-eyes install --env=<local|server>
 ```
 
-### Step 5: Configure selected channels
+### Step 5: Configure each selected channel
 
-For each channel the user selected, run the corresponding configure command.
-Each command auto-tests after configuring.
+Run the corresponding command for each channel the user chose.
+Every configure command auto-tests and gives instant feedback (✅ or ❌).
 
-#### If user selected: Exa Search
+---
 
-Tell the user:
-> "Go to https://exa.ai, sign up (free), and send me your API Key."
+#### Exa Search
 
-When they provide it:
+Tell user: "Go to https://exa.ai, sign up (free), copy your API Key, and send it to me."
+
 ```bash
 agent-eyes configure exa-key THE_KEY
 ```
-Expected: `✅ exa-key configured! Testing search... ✅ Search works!`
 
-#### If user selected: Reddit Full Reader and/or Bilibili (on server)
+---
 
-Tell the user:
-> "Reddit and Bilibili need a residential proxy. Steps:
+#### Twitter/X
+
+Tell user:
+> "Open https://x.com in Chrome (make sure you're logged in).
+> Press F12 → Application → Cookies → https://x.com
+> Find these two values: **auth_token** and **ct0**
+> Copy both and send them to me."
+
+```bash
+agent-eyes configure twitter-cookies AUTH_TOKEN CT0
+```
+
+---
+
+#### YouTube (cookies for age-restricted videos)
+
+Tell user:
+> "Most YouTube videos work without any setup. If you want access to age-restricted or member-only videos:
+> Which browser do you use? (chrome/firefox/edge/safari)"
+
+```bash
+agent-eyes configure youtube-cookies chrome
+```
+(replace `chrome` with whatever browser they use — yt-dlp reads cookies directly from the browser)
+
+---
+
+#### Bilibili
+
+**If local**: Already works. No setup needed.
+
+**If server**: Needs proxy (same proxy as Reddit, see Proxy section below).
+
+If user also wants cookies for member-only content:
+> "Open https://bilibili.com in Chrome (logged in).
+> F12 → Application → Cookies → find **SESSDATA**
+> Send it to me."
+
+(For now, Bilibili public API works without cookies. Cookie support is for future member-only content.)
+
+---
+
+#### XiaoHongShu
+
+Tell user:
+> "Open https://www.xiaohongshu.com in Chrome (make sure you're logged in).
+> Press F12 → Application → Cookies → https://www.xiaohongshu.com
+> Select all cookies, right-click → Copy All
+> Or just copy the full cookie string from a network request header.
+> Send it to me."
+
+```bash
+agent-eyes configure xhs-cookie THE_COOKIE_STRING
+```
+
+---
+
+#### Proxy (Reddit + Bilibili on server)
+
+Tell user:
+> "Reddit and Bilibili block server IPs. You need a residential proxy to access them.
 > 1. Go to https://www.webshare.io
-> 2. Sign up and get a proxy ($1/month plan is enough)
+> 2. Sign up and get a residential proxy ($1/month is enough)
 > 3. Copy your proxy address (format: http://username:password@ip:port)
 > 4. Send it to me"
 
-When they provide it:
 ```bash
 agent-eyes configure proxy THE_PROXY_URL
 ```
-Expected: `✅ proxy configured! Testing Reddit... ✅ Reddit accessible!`
 
-#### If user selected: Twitter Advanced
+This configures the proxy for both Reddit and Bilibili at once.
 
-Tell the user:
-> "Twitter Advanced needs cookies from your browser. Steps:
-> 1. Open https://x.com in Chrome and make sure you're logged in
-> 2. Press F12 → Application tab → Cookies → https://x.com
-> 3. Find and copy these two values: **auth_token** and **ct0**
-> 4. Send them to me"
+---
 
-When they provide cookies:
-```bash
-# birdx cookie setup (if birdx is available)
-which birdx || pip install birdx
-# Configure birdx with cookies (method varies by birdx version)
-```
-
-#### If user selected: WeChat
-
-```bash
-pip install agent-eyes[browser]
-playwright install chromium
-```
-Tell user: "✅ WeChat is ready! Send me any WeChat article URL."
-
-#### If user selected: XiaoHongShu
-
-```bash
-pip install agent-eyes[browser]
-playwright install chromium
-```
-Tell user: "I'll need you to scan a QR code once to log in. Ready?" Then read the guide: read the file at `agent_eyes/guides/setup-xiaohongshu.md` for detailed steps.
-
-### Step 6: Final check
+### Step 6: Final health check
 
 ```bash
 agent-eyes doctor
 ```
 
-Summarize results for the user naturally. Example:
+Summarize what's working for the user. Example:
 
 > "✅ All done! Here's what I can do now:
-> - 📖 Read: Web, GitHub, YouTube, RSS, Tweets, Reddit, Bilibili
-> - 🔍 Search: Web, GitHub, Reddit, Twitter
 >
-> Try asking me things like:
-> - 'Search Reddit for best self-hosted LLM'
-> - 'Read this GitHub repo: [URL]'
-> - 'What's trending on Twitter about AI agents?'"
+> 📖 **Read**: Web, GitHub, YouTube, Bilibili, Twitter, XiaoHongShu, RSS
+> 🔍 **Search**: Web, GitHub, Reddit, Twitter
+>
+> Try it out — ask me to search or read anything!"
 
 ---
 
@@ -181,11 +230,14 @@ Summarize results for the user naturally. Example:
 | Action | Command |
 |--------|---------|
 | Install | `pip install git+https://github.com/Panniantong/agent-eyes.git` |
-| Setup | `agent-eyes install --env=<local\|server>` |
+| Base setup | `agent-eyes install --env=<local\|server>` |
 | Add Exa key | `agent-eyes configure exa-key YOUR_KEY` |
+| Add Twitter | `agent-eyes configure twitter-cookies AUTH_TOKEN CT0` |
+| Add YouTube | `agent-eyes configure youtube-cookies chrome` |
+| Add XiaoHongShu | `agent-eyes configure xhs-cookie COOKIE_STRING` |
 | Add proxy | `agent-eyes configure proxy http://user:pass@ip:port` |
 | Health check | `agent-eyes doctor` |
-| Read any URL | `agent-eyes read <url>` |
+| Read URL | `agent-eyes read <url>` |
 | Search web | `agent-eyes search "query"` |
 | Search GitHub | `agent-eyes search-github "query"` |
 | Search Reddit | `agent-eyes search-reddit "query"` |
