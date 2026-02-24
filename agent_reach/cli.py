@@ -283,7 +283,26 @@ def _install_system_deps():
         except Exception:
             print("  ⚠️  Node.js install failed. Install manually: https://nodejs.org")
 
+    # ── birdx (for Twitter search) ──
+    if shutil.which("birdx"):
+        print("  ✅ birdx already installed")
+    else:
+        if shutil.which("pip3") or shutil.which("pip"):
+            pip_cmd = "pip3" if shutil.which("pip3") else "pip"
+            try:
+                subprocess.run(
+                    [pip_cmd, "install", "-q", "birdx"],
+                    capture_output=True, text=True, timeout=120,
+                )
+                if shutil.which("birdx"):
+                    print("  ✅ birdx installed (Twitter search + timeline)")
+                else:
+                    print("  ⬜ birdx install failed (optional — Twitter reading still works via Jina)")
+            except Exception:
+                print("  ⬜ birdx install failed (optional — Twitter reading still works via Jina)")
 
+
+def _install_mcporter():
     """Install mcporter and configure Exa + XiaoHongShu MCP servers."""
     import shutil
     import subprocess
