@@ -5,126 +5,119 @@
 Copy this to your AI Agent:
 
 ```
-Install and configure Agent Eyes: https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
+Install Agent Eyes: https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
 ```
 
 ---
 
 ## For AI Agents
 
-Follow these steps exactly. Minimize questions to the user.
+Install Agent Eyes and set it up for the user. Minimize friction — ask as few questions as possible.
 
-### Step 1: Install + auto-detect
+### Step 1: Install and check
 
 ```bash
 pip install git+https://github.com/Panniantong/agent-eyes.git || pip3 install git+https://github.com/Panniantong/agent-eyes.git
-agent-eyes doctor
-```
-
-Read the doctor output. It tells you:
-- What's already working (zero-config channels)
-- What needs a key/cookie/proxy
-
-Also auto-detect the environment:
-```bash
 agent-eyes install --env=auto
 ```
-This command auto-detects local vs server (checks if running in SSH, Docker, or cloud VM).
 
-### Step 2: Show ONE simple summary to user
+That's it. This installs the package, auto-detects the environment, and shows what's working.
 
-Based on doctor output, tell the user what's already working and what ONE thing you recommend:
+### Step 2: Tell user what's ready + offer ONE upgrade
 
-> "✅ Agent Eyes installed! You already have: web pages, GitHub, RSS, YouTube.
+Tell the user what already works, then offer the single highest-value upgrade:
+
+> "✅ Agent Eyes installed! Here's what I can already do:
+> - Read web pages, GitHub repos, RSS feeds, YouTube transcripts
+> - Read individual tweets
 >
-> **One recommendation**: get a free Exa API key to unlock web search + Reddit search + Twitter search.
-> → Go to https://exa.ai, sign up (free), and send me the API key.
+> **Want me to unlock search too?** One free API key lets me search the entire web, Reddit, and Twitter for you.
+> Just go to https://exa.ai → sign up (free, 1000 searches/month) → send me the API key.
 >
-> (I can also set up Twitter, Bilibili, XiaoHongShu, and Reddit later — just ask anytime.)"
+> Or say 'skip' and I'm ready to use as-is."
 
-**Key principle**: only ask for ONE thing now. Don't overwhelm with choices.
-
-### Step 3: Configure Exa (if user provides key)
-
+If the user provides a key:
 ```bash
 agent-eyes configure exa-key THE_KEY
 ```
 
-After success, tell user:
+If the user says skip, move to Step 4.
 
-> "✅ Done! I can now search the web, Reddit, and Twitter for you.
+### Step 3: Offer additional channels
+
+After Exa is configured (or skipped), briefly mention what else is available:
+
+> "I can also unlock these with cookies from your browser (2 min each):
+> 🐦 **Twitter** deep search — timelines, threads, advanced search
+> 📕 **XiaoHongShu** — read notes and comments
 >
-> Want me to set up any of these too? (just say which ones)
-> - 🐦 Twitter deep search (need browser cookies, 2 min)
-> - 📕 XiaoHongShu (need browser cookies, 2 min)
-> - 📺 Bilibili (need browser cookies, 2 min)
-> - 📖 Reddit full reader (need $1/month proxy — search already works via Exa!)
->
-> Or just say 'all' and I'll walk you through each one."
+> Want any of these? Or say 'done' and we're good to go."
 
-### Step 4: Configure additional channels (only if user asks)
+Only proceed with channels the user explicitly asks for.
 
-For each channel the user asks for, use the appropriate command:
+#### How to get cookies (for any platform)
 
-**Twitter:**
-Ask: "Open x.com in Chrome → F12 → Application → Cookies → copy **auth_token** and **ct0**"
+When the user wants to set up a cookie-based channel, give them the SIMPLEST method:
+
+**Method 1 — Browser extension (easiest):**
+> "Install the 'Cookie-Editor' extension for Chrome/Firefox (free). Open [the site], click the extension icon, click 'Export' → 'Header String'. Paste it to me."
+
+**Method 2 — Manual (if they don't want to install an extension):**
+> "Open [the site] in Chrome. Press F12. Click 'Application' tab at the top. Click 'Cookies' on the left. Find and copy the values I need."
+
+#### Twitter setup
+Cookie-Editor export, or manually copy **auth_token** and **ct0** from x.com cookies.
 ```bash
 agent-eyes configure twitter-cookies AUTH_TOKEN CT0
 ```
 
-**XiaoHongShu:**
-Ask: "Open xiaohongshu.com in Chrome → F12 → Network → click any request → copy the Cookie header value"
+#### XiaoHongShu setup
+Cookie-Editor export the full cookie string from xiaohongshu.com.
 ```bash
 agent-eyes configure xhs-cookie COOKIE_STRING
 ```
 
-**YouTube (age-restricted only):**
-Ask: "Which browser do you use?"
+#### YouTube (only mention if user has age-restricted video needs)
+No cookies needed for public videos. For age-restricted/member content:
 ```bash
 agent-eyes configure youtube-cookies chrome
 ```
+(yt-dlp reads cookies directly from the browser — just tell it which browser)
 
-**Bilibili:**
-- Auto-detected as local → already works, nothing needed
-- Auto-detected as server → needs proxy (same as Reddit, see below)
+#### Bilibili
+- Local computer: already works
+- Server: needs proxy (see below)
 
-**Reddit full reader + Bilibili (server only):**
-Ask: "Reddit/Bilibili block server IPs. Get a $1/month residential proxy at webshare.io, then send me the proxy address."
+#### Reddit full reader + Bilibili on server
+Only offer this if `agent-eyes install` detected server environment:
+> "Reddit and Bilibili block server IPs. Reddit search already works (via Exa), but for reading full posts you'd need a $1/month proxy from https://webshare.io. Want to set that up?"
+
 ```bash
 agent-eyes configure proxy http://user:pass@ip:port
 ```
 
-### Step 5: Final status
+### Step 4: Done
 
 ```bash
 agent-eyes doctor
 ```
 
-> "✅ All set! Here's what I can do:
-> [list active channels]
->
-> Try: 'search Reddit for ...' or 'read this URL: ...'"
+Summarize naturally:
+> "✅ Ready! Here's everything I can do: [list channels]. Try asking me to search or read something!"
+
+**Remember**: the user can always come back and say "set up Twitter" or "add a proxy" later. You just run the corresponding `agent-eyes configure` command.
 
 ---
-
-## Configure anything later
-
-Users can ask their Agent to configure new channels anytime:
-- "Help me set up Twitter for Agent Eyes"
-- "I got a proxy, configure it for Agent Eyes"
-- "Add my XiaoHongShu cookies"
-
-The Agent runs `agent-eyes configure <channel> <value>` — each command auto-tests.
 
 ## Quick Reference
 
 | Command | What it does |
 |---------|-------------|
-| `agent-eyes doctor` | Show what's working |
-| `agent-eyes configure exa-key KEY` | Unlock web/Reddit/Twitter search |
+| `agent-eyes doctor` | Show all channels and status |
+| `agent-eyes configure exa-key KEY` | Unlock search (web + Reddit + Twitter) |
 | `agent-eyes configure twitter-cookies TOKEN CT0` | Unlock Twitter deep search |
 | `agent-eyes configure xhs-cookie COOKIE` | Unlock XiaoHongShu |
-| `agent-eyes configure youtube-cookies chrome` | Unlock age-restricted YouTube |
-| `agent-eyes configure proxy URL` | Unlock Reddit + Bilibili (server) |
-| `agent-eyes read <url>` | Read any URL |
+| `agent-eyes configure youtube-cookies BROWSER` | Unlock age-restricted YouTube |
+| `agent-eyes configure proxy URL` | Unlock Reddit reader + Bilibili (server) |
+| `agent-eyes read URL` | Read any URL |
 | `agent-eyes search "query"` | Search the web |
