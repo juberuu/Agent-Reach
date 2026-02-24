@@ -193,11 +193,13 @@ channels/
 
 ## 贡献
 
-欢迎提 [Issue](https://github.com/Panniantong/agent-reach/issues) 和 [PR](https://github.com/Panniantong/agent-reach/pulls)。
+这个项目是纯 vibe coding 出来的 🎸 可能会有一些不完美的地方，如果遇到问题请多多包涵。有 bug 尽管提 [Issue](https://github.com/Panniantong/agent-reach/issues)，我都会尽快修复。
 
 **想要新渠道？** 直接提 Issue 告诉我们，或者自己提 PR。
 
 **想在本地加？** 让你的 Agent clone 下来改就行，每个渠道就是一个独立文件，加起来很简单。
+
+[PR](https://github.com/Panniantong/agent-reach/pulls) 也随时欢迎！
 
 ## 致谢
 

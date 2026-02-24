@@ -193,11 +193,13 @@ channels/
 
 ## Contributing
 
-[Issues](https://github.com/Panniantong/agent-reach/issues) and [PRs](https://github.com/Panniantong/agent-reach/pulls) welcome.
+This project was entirely vibe-coded 🎸 There might be rough edges here and there — sorry about that! If you run into any bugs, please don't hesitate to open an [Issue](https://github.com/Panniantong/agent-reach/issues) and I'll fix it ASAP.
 
 **Want a new channel?** Open an Issue to request it, or submit a PR yourself.
 
 **Want to add one locally?** Just have your Agent clone the repo and modify it — each channel is a single standalone file, easy to add.
+
+[PRs](https://github.com/Panniantong/agent-reach/pulls) always welcome!
 
 ## Credits
 
