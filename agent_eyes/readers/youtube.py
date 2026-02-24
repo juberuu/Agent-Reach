@@ -17,7 +17,7 @@ import tempfile
 from loguru import logger
 from typing import Dict, Any
 
-from agent_eyes.fetchers.jina import fetch_via_jina
+from agent_eyes.readers.jina import fetch_via_jina
 
 
 def _extract_video_id(url: str) -> str:

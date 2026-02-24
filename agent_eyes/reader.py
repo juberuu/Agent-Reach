@@ -51,7 +51,7 @@ class UniversalReader:
             return "reddit"
         if "github.com" in domain:
             return "github"
-        if url.endswith(".xml") or "/rss" in url or "/feed" in url or "/atom" in url:
+        if url.endswith(".xml") or "/rss" in url or "/feed" in url or "/atom" in url or "rss" in domain:
             return "rss"
         return "generic"
 
@@ -131,9 +131,8 @@ class UniversalReader:
                 title=data["title"],
                 content=data.get("content", ""),
                 url=data["url"],
-                author=data.get("author", ""),
                 media_type=MediaType.TEXT,
-                metadata={"score": data.get("score", 0), "num_comments": data.get("num_comments", 0)},
+                extra={"author": data.get("author", ""), "score": data.get("score", 0), "num_comments": data.get("num_comments", 0)},
             )
 
         if platform == "github":
@@ -145,9 +144,8 @@ class UniversalReader:
                 title=data["title"],
                 content=data.get("content", ""),
                 url=data["url"],
-                author=data.get("author", ""),
                 media_type=MediaType.TEXT,
-                metadata={k: v for k, v in data.items() if k not in ("title", "content", "url", "author", "platform")},
+                extra={k: v for k, v in data.items() if k not in ("title", "content", "url", "platform")},
             )
 
         if platform == "telegram":

@@ -13,7 +13,7 @@ from loguru import logger
 from typing import Dict, Any
 from pathlib import Path
 
-from agent_eyes.fetchers.jina import fetch_via_jina
+from agent_eyes.readers.jina import fetch_via_jina
 
 
 async def fetch_xhs(url: str) -> Dict[str, Any]:
@@ -43,7 +43,7 @@ async def fetch_xhs(url: str) -> Dict[str, Any]:
         logger.warning(f"[XHS] Jina failed ({e}), falling back to browser")
 
     # Tier 2: Playwright with session
-    from agent_eyes.fetchers.browser import get_session_path, SESSION_DIR
+    from agent_eyes.readers.browser import get_session_path, SESSION_DIR
 
     session_path = get_session_path("xhs")
     if not Path(session_path).exists():
@@ -56,7 +56,7 @@ async def fetch_xhs(url: str) -> Dict[str, Any]:
 
     try:
         logger.info(f"[XHS] Tier 2 — Playwright with session: {url}")
-        from agent_eyes.fetchers.browser import fetch_via_browser
+        from agent_eyes.readers.browser import fetch_via_browser
 
         data = await fetch_via_browser(url, storage_state=session_path)
         return {
