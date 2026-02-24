@@ -4,17 +4,25 @@
 
 你的 AI Agent 很聪明，但几乎是个瞎子。Reddit 封 IP、Twitter API 要 $100/月、B站屏蔽服务器、小红书需要登录——每个平台都有自己的坑，你要一个一个去踩。
 
-Agent Eyes 把互联网上最好的开源工具粘在一起，一次安装全部搞定：
+Agent Eyes 把最好的开源工具粘在一起，一次安装全部搞定。
 
-| 工具 | 它解决了什么 | Stars |
-|------|------------|:-----:|
-| [Jina Reader](https://github.com/jina-ai/reader) | 任意网页 → 干净 Markdown，处理 JS 渲染，去掉广告 | ⭐ 9.8K |
-| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | **1800+ 个视频网站**的字幕提取（YouTube、B站、TikTok…） | ⭐ 148K |
-| [Exa](https://exa.ai) | AI 语义搜索引擎，一个 Key 搜全网 + Reddit + Twitter | — |
-| [birdx](https://github.com/runesleo/birdx) | 不花 $100/月，用 Cookie 就能搜 Twitter 时间线和线程 | — |
-| [feedparser](https://github.com/kurtmckee/feedparser) | 万能 RSS/Atom 解析 | ⭐ 2.3K |
+---
 
-> 不造轮子，只做胶水。统一安装、统一配置、统一接口。
+## 支持的平台
+
+| 平台 | 能力 | 配置难度 | 说明 |
+|------|------|:--------:|------|
+| 🌐 **网页** | 阅读 | 零配置 | 任意 URL → 干净 Markdown（[Jina Reader](https://github.com/jina-ai/reader) ⭐9.8K 驱动） |
+| 🐦 **Twitter/X** | 阅读 · 搜索 · **发推 · 回复** | Cookie | 不花 $100/月 Twitter API，浏览器 Cookie 就能玩转（[birdx](https://github.com/runesleo/birdx) 驱动） |
+| 📕 **小红书** | 阅读 · 搜索 · **发帖 · 评论 · 点赞 · 收藏** | Cookie | 完整操作能力：发图文/视频笔记、回复评论、查看用户主页 |
+| 🔍 **全网搜索** | 搜索 | 免费 Key | AI 语义搜索，一个 Key 搜全网 + Reddit + Twitter（[Exa](https://exa.ai) 驱动） |
+| 📦 **GitHub** | 阅读 · 搜索 | 零配置 | 仓库、Issue、PR、代码 |
+| 📺 **YouTube** | 阅读 | 零配置 | 1800+ 视频网站字幕提取（[yt-dlp](https://github.com/yt-dlp/yt-dlp) ⭐148K 驱动） |
+| 📺 **B站** | 阅读 | 零配置 / 代理 | 视频信息 + 字幕。本地直接用，服务器需代理 |
+| 📡 **RSS** | 阅读 | 零配置 | 任意 RSS/Atom 源（[feedparser](https://github.com/kurtmckee/feedparser) ⭐2.3K 驱动） |
+| 📖 **Reddit** | 搜索 · 阅读 | 免费 / 代理 | 搜索通过 Exa 免费可用；完整阅读需代理 |
+
+> **配置难度说明：** 零配置 = 装好即用 · 免费 Key = 30 秒注册 · Cookie = 从浏览器导出 · 代理 = $1/月
 
 [English](docs/README_en.md)
 
@@ -43,15 +51,15 @@ agent-eyes install --env=auto
 
 ## 装好就能用
 
-不需要任何配置，装完直接用：
+不需要任何配置：
 
 ```bash
-agent-eyes read "https://任意网页"                          # Jina Reader 驱动
-agent-eyes read "https://github.com/openai/gpt-4"          # GitHub 仓库/Issue/PR
-agent-eyes read "https://www.youtube.com/watch?v=xxx"       # yt-dlp 驱动
+agent-eyes read "https://任意网页"                          # 网页
+agent-eyes read "https://github.com/openai/gpt-4"          # GitHub
+agent-eyes read "https://www.youtube.com/watch?v=xxx"       # YouTube 字幕
 agent-eyes read "https://www.bilibili.com/video/BVxxx"      # B站字幕
 agent-eyes read "https://x.com/elonmusk/status/xxx"         # 推文
-agent-eyes read "https://hnrss.org/frontpage"               # RSS 订阅
+agent-eyes read "https://hnrss.org/frontpage"               # RSS
 agent-eyes search-github "LLM 框架"                         # GitHub 搜索
 ```
 
@@ -75,7 +83,7 @@ agent-eyes search-twitter "Claude Code"
 
 ### 🍪 Cookie — 免费，2 分钟
 
-解锁 Twitter 高级搜索 + 小红书。本地电脑一键导入：
+解锁 Twitter 发推/搜索 + 小红书全功能。本地电脑一键导入：
 
 ```bash
 agent-eyes configure --from-browser chrome
@@ -91,8 +99,7 @@ Reddit 和 B站封服务器 IP。一个代理解决两个：
 agent-eyes configure proxy http://用户名:密码@IP:端口
 ```
 
-> Reddit 搜索通过 Exa 免费可用，不买代理也能搜，只是读不了完整帖子。
-> 推荐 [Webshare](https://webshare.io)，$1/月。
+> Reddit 搜索通过 Exa 免费可用，不买代理也能搜。推荐 [Webshare](https://webshare.io)，$1/月。
 
 ---
 
