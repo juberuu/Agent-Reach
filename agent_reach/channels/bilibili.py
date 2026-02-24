@@ -72,41 +72,97 @@ class BilibiliChannel(Channel):
         )
 
     async def search(self, query: str, config=None, **kwargs) -> List[SearchResult]:
-        """Search Bilibili via yt-dlp's bilisearch."""
+        """Search Bilibili.
+
+        Strategy:
+        1. Try yt-dlp bilisearch (works on local machines)
+        2. Fallback to Exa site:bilibili.com (works on servers)
+        """
         if not shutil.which("yt-dlp"):
             raise RuntimeError("yt-dlp not installed. Install: pip install yt-dlp")
 
-        limit = kwargs.get("limit", 10)
+        limit = kwargs.get("limit", 5)
         proxy = config.get("bilibili_proxy") if config else None
 
+        # Strategy 1: yt-dlp bilisearch
+        results = self._search_ytdlp(query, limit, proxy)
+        if results:
+            return results
+
+        # Strategy 2: Exa fallback (server-friendly)
+        results = self._search_exa(query, limit)
+        if results:
+            return results
+
+        return []
+
+    def _search_ytdlp(self, query: str, limit: int, proxy: str = None) -> List[SearchResult]:
+        """Search via yt-dlp bilisearch (needs local/Chinese IP)."""
         cmd = [
-            "yt-dlp", "--dump-json", "--flat-playlist",
+            "yt-dlp", "--dump-json", "--no-download",
             f"bilisearch{limit}:{query}",
         ]
         if proxy:
             cmd += ["--proxy", proxy]
 
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            if r.returncode != 0:
+                return []
             results = []
             for line in r.stdout.strip().split("\n"):
                 if not line.strip():
                     continue
                 try:
                     d = json.loads(line)
+                    vid = d.get("id", "")
+                    url = d.get("webpage_url", f"https://www.bilibili.com/video/av{vid}")
                     results.append(SearchResult(
-                        title=d.get("title", ""),
-                        url=f"https://www.bilibili.com/video/{d.get('id', '')}",
+                        title=d.get("title", f"av{vid}"),
+                        url=url,
                         snippet=f"👤 {d.get('uploader', '?')} · 👁 {d.get('view_count', '?')}",
                         extra={
                             "view_count": d.get("view_count"),
                             "uploader": d.get("uploader"),
+                            "duration": d.get("duration_string"),
                         },
                     ))
                 except json.JSONDecodeError:
                     continue
             return results
         except subprocess.TimeoutExpired:
+            return []
+
+    def _search_exa(self, query: str, limit: int) -> List[SearchResult]:
+        """Fallback: search via Exa (site:bilibili.com). Works on any IP."""
+        try:
+            r = subprocess.run(
+                ["mcporter", "call",
+                 f'exa.web_search_exa(query: "site:bilibili.com {query}", numResults: {limit})'],
+                capture_output=True, text=True, timeout=30,
+            )
+            if r.returncode != 0:
+                return []
+
+            results = []
+            # Parse mcporter output: Title: / Author: / URL: / Text: blocks
+            title, author, url = "", "", ""
+            for line in r.stdout.split("\n"):
+                if line.startswith("Title: "):
+                    title = line[7:].strip()
+                elif line.startswith("Author: "):
+                    author = line[8:].strip()
+                elif line.startswith("URL: "):
+                    url = line[5:].strip()
+                    if url and "bilibili.com" in url:
+                        results.append(SearchResult(
+                            title=title or url,
+                            url=url,
+                            snippet=f"👤 {author}" if author else "(via Exa search)",
+                        ))
+                    title, author, url = "", "", ""
+            return results
+        except Exception:
             return []
 
     def _get_info(self, url: str, proxy: str = None) -> dict:

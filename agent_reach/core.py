@@ -83,6 +83,24 @@ class AgentReach:
         results = await ch.search(query, config=self.config, limit=limit)
         return [r.to_dict() for r in results]
 
+    async def search_youtube(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """Search YouTube via yt-dlp."""
+        ch = get_channel("youtube")
+        results = await ch.search(query, config=self.config, limit=limit)
+        return [r.to_dict() for r in results]
+
+    async def search_bilibili(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """Search Bilibili. Tries yt-dlp first, falls back to Exa."""
+        ch = get_channel("bilibili")
+        results = await ch.search(query, config=self.config, limit=limit)
+        return [r.to_dict() for r in results]
+
+    async def search_xhs(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search XiaoHongShu via mcporter."""
+        ch = get_channel("xiaohongshu")
+        results = await ch.search(query, config=self.config, limit=limit)
+        return [r.to_dict() for r in results]
+
     # ── Health ──────────────────────────────────────────
 
     def doctor(self) -> Dict[str, dict]:

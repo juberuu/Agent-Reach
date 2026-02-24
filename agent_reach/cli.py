@@ -66,6 +66,21 @@ def main():
     p_st.add_argument("query", nargs="+", help="Search query")
     p_st.add_argument("-n", "--num", type=int, default=10, help="Number of results")
 
+    # ── search-youtube ──
+    p_sy = sub.add_parser("search-youtube", help="Search YouTube")
+    p_sy.add_argument("query", nargs="+", help="Search query")
+    p_sy.add_argument("-n", "--num", type=int, default=5, help="Number of results")
+
+    # ── search-bilibili ──
+    p_sb = sub.add_parser("search-bilibili", help="Search Bilibili")
+    p_sb.add_argument("query", nargs="+", help="Search query")
+    p_sb.add_argument("-n", "--num", type=int, default=5, help="Number of results")
+
+    # ── search-xhs ──
+    p_sx = sub.add_parser("search-xhs", help="Search XiaoHongShu")
+    p_sx.add_argument("query", nargs="+", help="Search query")
+    p_sx.add_argument("-n", "--num", type=int, default=10, help="Number of results")
+
     # ── setup ──
     sub.add_parser("setup", help="Interactive configuration wizard")
 
@@ -575,6 +590,12 @@ async def _cmd_search(args):
             results = await eyes.search_github(query, language=getattr(args, "lang", None), limit=num)
         elif args.command == "search-twitter":
             results = await eyes.search_twitter(query, limit=num)
+        elif args.command == "search-youtube":
+            results = await eyes.search_youtube(query, limit=num)
+        elif args.command == "search-bilibili":
+            results = await eyes.search_bilibili(query, limit=num)
+        elif args.command == "search-xhs":
+            results = await eyes.search_xhs(query, limit=num)
         else:
             print(f"Unknown command: {args.command}", file=sys.stderr)
             sys.exit(1)
