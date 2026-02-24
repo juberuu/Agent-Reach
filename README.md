@@ -51,55 +51,36 @@ agent-eyes install --env=auto
 
 ## 装好就能用
 
-不需要任何配置：
+不需要任何配置，告诉 Agent 就行：
 
-```bash
-agent-eyes read "https://任意网页"                          # 网页
-agent-eyes read "https://github.com/openai/gpt-4"          # GitHub
-agent-eyes read "https://www.youtube.com/watch?v=xxx"       # YouTube 字幕
-agent-eyes read "https://www.bilibili.com/video/BVxxx"      # B站字幕
-agent-eyes read "https://x.com/elonmusk/status/xxx"         # 推文
-agent-eyes read "https://hnrss.org/frontpage"               # RSS
-agent-eyes search-github "LLM 框架"                         # GitHub 搜索
-```
+- "帮我看看这个链接" → 任意网页
+- "这个 GitHub 仓库是做什么的" → GitHub 仓库、Issue、代码
+- "这个视频讲了什么" → YouTube / B站字幕提取
+- "帮我看看这条推文" → Twitter 推文
+- "订阅这个 RSS" → RSS / Atom 源
+- "搜一下 GitHub 上有什么 LLM 框架" → GitHub 搜索
+
+**不需要记命令。** Agent 自己知道该调什么。
 
 ---
 
 ## 按需解锁
 
-不用的不用配。每一步都可以跳过。
+不用的不用配。每一步都可以跳过，直接告诉 Agent 就行。
 
 ### 🔍 搜索 — 免费，30 秒
 
-一个 [Exa](https://exa.ai) Key（免费 1000 次/月），同时解锁三个搜索：
-
-```bash
-agent-eyes configure exa-key 你的KEY
-
-agent-eyes search "2025 最好的开源 AI 工具"
-agent-eyes search-reddit "best LLM" --sub LocalLLaMA
-agent-eyes search-twitter "Claude Code"
-```
+去 [exa.ai](https://exa.ai) 注册拿个免费 Key（1000 次/月），发给 Agent。一个 Key 同时解锁全网搜索 + Reddit 搜索 + Twitter 搜索。
 
 ### 🍪 Cookie — 免费，2 分钟
 
-解锁 Twitter 发推/搜索 + 小红书全功能。本地电脑一键导入：
-
-```bash
-agent-eyes configure --from-browser chrome
-```
-
-> 服务器用户？装个 [Cookie-Editor](https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm) 扩展，Export → Header String，粘贴给 Agent。
+告诉 Agent "帮我配置 Twitter Cookie" 或 "帮我配置小红书"，Agent 会引导你从浏览器导入。本地电脑可以一键自动导入。
 
 ### 🌐 代理 — $1/月，仅服务器需要
 
-Reddit 和 B站封服务器 IP。一个代理解决两个：
+Reddit 和 B站封服务器 IP。买个代理（推荐 [Webshare](https://webshare.io)，$1/月），把地址发给 Agent 就行。
 
-```bash
-agent-eyes configure proxy http://用户名:密码@IP:端口
-```
-
-> Reddit 搜索通过 Exa 免费可用，不买代理也能搜。推荐 [Webshare](https://webshare.io)，$1/月。
+> 本地电脑不需要代理。Reddit 搜索通过 Exa 免费可用，不买代理也能搜。
 
 ---
 
@@ -128,49 +109,6 @@ $ agent-eyes doctor
 
 状态：6/9 个渠道可用
 ```
-
----
-
-## 接入方式
-
-### CLI
-```bash
-agent-eyes read "URL"
-agent-eyes search "关键词"
-agent-eyes doctor
-```
-
-### Python
-```python
-from agent_eyes import AgentEyes
-import asyncio
-eyes = AgentEyes()
-asyncio.run(eyes.read("https://example.com"))
-asyncio.run(eyes.search("AI agent"))
-```
-
-### MCP Server（Claude Code / Cursor）
-
-<details>
-<summary>配置</summary>
-
-```json
-{"mcpServers": {"agent-eyes": {"command": "python", "args": ["-m", "agent_eyes.integrations.mcp_server"]}}}
-```
-</details>
-
----
-
-## 速查
-
-| 命令 | 作用 |
-|------|------|
-| `agent-eyes doctor` | 查看状态 |
-| `agent-eyes configure --from-browser chrome` | 一键导入 cookies |
-| `agent-eyes configure exa-key KEY` | 解锁搜索 |
-| `agent-eyes configure twitter-cookies "..."` | 解锁 Twitter |
-| `agent-eyes configure xhs-cookie "..."` | 解锁小红书 |
-| `agent-eyes configure proxy URL` | 解锁 Reddit + B站 |
 
 ---
 
