@@ -5,100 +5,64 @@
 Copy this to your AI Agent:
 
 ```
-Install Agent Eyes: https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
+帮我安装 Agent Eyes：https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
 ```
 
 ---
 
 ## For AI Agents
 
-Install Agent Eyes with minimal user effort. Goal: fewest questions, fewest steps.
-
-### Step 1: Install and detect
+### Step 1: Install
 
 ```bash
 pip install https://github.com/Panniantong/agent-eyes/archive/main.zip || pip3 install https://github.com/Panniantong/agent-eyes/archive/main.zip
 agent-eyes install --env=auto
 ```
 
-Read the output. It tells you the detected environment (local/server) and what's already working.
+This single command does everything automatically:
+- Detects local computer vs server
+- Auto-imports browser cookies on local (Twitter, XiaoHongShu, Bilibili)
+- Auto-detects Exa API key if already in environment
+- Tests all channels
+- Shows what's working and what needs setup
 
-### Step 2: Set up search (highest value, free)
+**Read the output carefully.** It tells you exactly what happened and what's next.
 
-> "Want to unlock web search? One free API key lets me search the web, Reddit, and Twitter.
-> Go to https://exa.ai → sign up (free, 1000 searches/month) → send me the key.
-> Or say 'skip' — I can still read any URL you give me."
+### Step 2: Only if needed — configure what's missing
+
+Based on the install output, you may need to configure one or two things.
+Only ask the user for items the install output says are missing.
+
+**If search is not configured:**
+> "Want to unlock web search? Go to https://exa.ai → sign up (free) → send me the API key."
 
 ```bash
 agent-eyes configure exa-key THE_KEY
 ```
 
-### Step 3: Set up cookies (the approach depends on environment)
+**If cookies were not auto-imported (server users):**
+> "To unlock Twitter and XiaoHongShu, install the Cookie-Editor Chrome extension, go to the site, click Export → Header String, and paste it to me."
+> Extension: https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm
 
-#### Path A: Local computer (auto-detected)
-
-Offer one-click import:
-
-> "I can grab your browser cookies automatically to unlock Twitter, XiaoHongShu, and Bilibili — all at once. Just close Chrome first, then say 'go'."
-
-If user agrees:
 ```bash
-pip install browser-cookie3 2>/dev/null; agent-eyes configure --from-browser chrome
+agent-eyes configure twitter-cookies "PASTED_STRING"
+agent-eyes configure xhs-cookie "PASTED_STRING"
 ```
 
-If user uses another browser: replace `chrome` with `firefox`, `edge`, `brave`, or `opera`.
-
-If it fails or user declines, fall through to Path B.
-
-#### Path B: Server, or auto-import didn't work
-
-Tell the user the easiest manual method:
-
-> "I need cookies from your browser to unlock some platforms. Here's the fastest way (30 seconds per site):
->
-> 1. Install the **Cookie-Editor** Chrome extension: https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm
-> 2. Go to the site (e.g. x.com) — make sure you're logged in
-> 3. Click the Cookie-Editor icon → **Export** → **Header String**
-> 4. Paste the result to me
->
-> Which platforms do you use? I'll tell you which ones to export."
-
-For each platform the user wants:
-
-**Twitter/X** — export from https://x.com :
-```bash
-agent-eyes configure twitter-cookies "PASTED_COOKIE_STRING"
-```
-(Accepts both: full cookie string OR just `auth_token ct0` as two values)
-
-**XiaoHongShu** — export from https://www.xiaohongshu.com :
-```bash
-agent-eyes configure xhs-cookie "PASTED_COOKIE_STRING"
-```
-
-**Bilibili** — export from https://www.bilibili.com :
-(On local computers Bilibili already works without cookies. On servers it needs a proxy — see Step 4.)
-
-### Step 4: Server-only — proxy for Reddit/Bilibili
-
-Only mention if environment was detected as server:
-
-> "On servers, Reddit and Bilibili block direct access. Reddit *search* still works via Exa (free), but for reading full Reddit posts or using Bilibili, you'd need a residential proxy (~$1/month).
-> Get one at https://webshare.io if you want. Or skip — not required."
+**If on server and wants Reddit/Bilibili full access:**
+> "Reddit and Bilibili block server IPs. Get a proxy at https://webshare.io ($1/month) and send me the address."
 
 ```bash
 agent-eyes configure proxy http://user:pass@ip:port
 ```
 
-### Step 5: Done
+### Step 3: Verify
 
 ```bash
 agent-eyes doctor
 ```
 
-> "✅ All set! [list active channels]. Try: 'search Reddit for ...' or 'read this URL'"
-
-Users can configure more channels anytime — just say "set up Twitter" or "add proxy".
+Report what's active. Users can configure more anytime by asking.
 
 ---
 
@@ -106,12 +70,11 @@ Users can configure more channels anytime — just say "set up Twitter" or "add 
 
 | Command | What it does |
 |---------|-------------|
-| `agent-eyes configure --from-browser chrome` | Auto-import ALL cookies at once (local only) |
-| `agent-eyes configure exa-key KEY` | Unlock search (web + Reddit + Twitter) |
-| `agent-eyes configure twitter-cookies "COOKIE_STRING"` | Unlock Twitter (cookie string or auth_token + ct0) |
-| `agent-eyes configure xhs-cookie "COOKIE_STRING"` | Unlock XiaoHongShu |
-| `agent-eyes configure youtube-cookies chrome` | Unlock age-restricted YouTube |
-| `agent-eyes configure proxy URL` | Unlock Reddit reader + Bilibili (server) |
-| `agent-eyes doctor` | Show all channels and their status |
+| `agent-eyes install --env=auto` | Full auto-setup |
+| `agent-eyes doctor` | Show status |
+| `agent-eyes configure exa-key KEY` | Unlock search |
+| `agent-eyes configure twitter-cookies "..."` | Unlock Twitter |
+| `agent-eyes configure xhs-cookie "..."` | Unlock XiaoHongShu |
+| `agent-eyes configure proxy URL` | Unlock Reddit + Bilibili (server) |
 | `agent-eyes read URL` | Read any URL |
 | `agent-eyes search "query"` | Search the web |

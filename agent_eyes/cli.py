@@ -128,6 +128,7 @@ def main():
 
 def _cmd_install(args):
     """One-shot deterministic installer."""
+    import os
     from agent_eyes.config import Config
     from agent_eyes.doctor import check_all, format_report
 
@@ -146,7 +147,7 @@ def _cmd_install(args):
     else:
         print(f"💻 Environment: Local computer (auto-detected)")
 
-    # Apply flags
+    # Apply explicit flags
     if args.exa_key:
         config.set("exa_api_key", args.exa_key)
         print(f"✅ Exa search key configured")
@@ -156,8 +157,39 @@ def _cmd_install(args):
         config.set("bilibili_proxy", args.proxy)
         print(f"✅ Proxy configured for Reddit + Bilibili")
 
+    # Auto-detect Exa key from environment
+    if not config.get("exa_api_key") and not args.exa_key:
+        env_key = os.environ.get("EXA_API_KEY") or os.environ.get("exa_api_key")
+        if env_key:
+            config.set("exa_api_key", env_key)
+            print(f"✅ Exa key auto-detected from environment")
+
+    # Auto-import cookies on local computers
+    if env == "local":
+        print()
+        print("🍪 Trying to import cookies from browser...")
+        try:
+            from agent_eyes.cookie_extract import configure_from_browser
+            results = configure_from_browser("chrome", config)
+            found = False
+            for platform, success, message in results:
+                if success:
+                    print(f"  ✅ {platform}: {message}")
+                    found = True
+            if not found:
+                # Try firefox
+                results = configure_from_browser("firefox", config)
+                for platform, success, message in results:
+                    if success:
+                        print(f"  ✅ {platform}: {message}")
+                        found = True
+            if not found:
+                print("  ⬜ No cookies found (normal if you haven't logged into these sites)")
+        except Exception:
+            print("  ⬜ Could not read browser cookies (browser might be open)")
+
     # Environment-specific advice
-    if env == "server" and not args.proxy:
+    if env == "server":
         print()
         print("💡 Tip: Reddit and Bilibili block server IPs.")
         print("   Reddit search still works via Exa (free).")
@@ -170,10 +202,9 @@ def _cmd_install(args):
     results = check_all(config)
     ok = sum(1 for r in results.values() if r["status"] == "ok")
     total = len(results)
-    print(f"✅ {ok}/{total} channels active")
 
-    # What's missing
-    if args.search == "yes" and not args.exa_key and not config.get("exa_api_key"):
+    # What's missing — only mention Exa if not configured
+    if not config.get("exa_api_key"):
         print()
         print("🔍 Recommended: unlock search with a free Exa API key")
         print("   agent-eyes configure exa-key YOUR_KEY")
@@ -183,7 +214,7 @@ def _cmd_install(args):
     print()
     print(format_report(results))
     print()
-    print("✅ Installation complete!")
+    print(f"✅ Installation complete! {ok}/{total} channels active.")
 
 
 def _detect_environment():
