@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Agent Eyes MCP Server — expose all capabilities as MCP tools.
+Agent Reach MCP Server — expose all capabilities as MCP tools.
 
-Run: python -m agent_eyes.integrations.mcp_server
+Run: python -m agent_reach.integrations.mcp_server
 
 8 tools for any MCP-compatible AI Agent.
 """
@@ -11,8 +11,8 @@ import asyncio
 import json
 import sys
 
-from agent_eyes.config import Config
-from agent_eyes.core import AgentEyes
+from agent_reach.config import Config
+from agent_reach.core import AgentReach
 
 try:
     from mcp.server import Server
@@ -25,12 +25,12 @@ except ImportError:
 
 def create_server():
     if not HAS_MCP:
-        print("MCP not installed. Install: pip install agent-eyes[mcp]", file=sys.stderr)
+        print("MCP not installed. Install: pip install agent-reach[mcp]", file=sys.stderr)
         sys.exit(1)
 
-    server = Server("agent-eyes")
+    server = Server("agent-reach")
     config = Config()
-    eyes = AgentEyes(config)
+    eyes = AgentReach(config)
 
     @server.list_tools()
     async def list_tools():
@@ -57,7 +57,7 @@ def create_server():
                  description="Search Twitter/X posts.",
                  inputSchema={"type": "object", "properties": {"query": {"type": "string"}, "limit": {"type": "integer", "default": 10}}, "required": ["query"]}),
             Tool(name="get_status",
-                 description="Get Agent Eyes status: which channels are active.",
+                 description="Get Agent Reach status: which channels are active.",
                  inputSchema={"type": "object", "properties": {}}),
         ]
 

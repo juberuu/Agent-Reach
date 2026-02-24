@@ -7,12 +7,12 @@
 
 1. 检查是否已配置：
 ```bash
-agent-eyes doctor | grep -i "groq\|whisper"
+agent-reach doctor | grep -i "groq\|whisper"
 ```
 
 2. 如果用户提供了 key，写入配置：
 ```python
-from agent_eyes.config import Config
+from agent_reach.config import Config
 c = Config()
 c.set("groq_api_key", "用户提供的KEY")
 ```

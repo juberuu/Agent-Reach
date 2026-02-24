@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for Agent Eyes config module."""
+"""Tests for Agent Reach config module."""
 
 import os
 import tempfile
@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from agent_eyes.config import Config
+from agent_reach.config import Config
 
 
 @pytest.fixture

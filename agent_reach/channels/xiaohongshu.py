@@ -26,7 +26,7 @@ class XiaoHongShuChannel(Channel):
         cookie = config.get("xhs_cookie") if config else None
         if cookie:
             return "ok", "Cookie 已配置，完整可用"
-        return "off", "需要配置 Cookie 才能访问。导入浏览器 Cookie 即可：agent-eyes configure --from-browser chrome"
+        return "off", "需要配置 Cookie 才能访问。导入浏览器 Cookie 即可：agent-reach configure --from-browser chrome"
 
     async def read(self, url: str, config=None) -> ReadResult:
         cookie = config.get("xhs_cookie") if config else None
@@ -35,7 +35,7 @@ class XiaoHongShuChannel(Channel):
             return ReadResult(
                 title="XiaoHongShu",
                 content="⚠️ XiaoHongShu requires cookies to access.\n"
-                        "Set up: agent-eyes configure xhs-cookie \"YOUR_COOKIE_STRING\"\n"
+                        "Set up: agent-reach configure xhs-cookie \"YOUR_COOKIE_STRING\"\n"
                         "How to get it: install Cookie-Editor extension → go to xiaohongshu.com → Export → Header String",
                 url=url,
                 platform="xiaohongshu",
@@ -44,7 +44,7 @@ class XiaoHongShuChannel(Channel):
         # Extract note ID from URL
         note_id = self._extract_note_id(url)
         if not note_id:
-            from agent_eyes.channels.web import WebChannel
+            from agent_reach.channels.web import WebChannel
             return await WebChannel().read(url, config)
 
         headers = {

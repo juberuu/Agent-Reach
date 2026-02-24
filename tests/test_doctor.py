@@ -2,8 +2,8 @@
 """Tests for doctor module."""
 
 import pytest
-from agent_eyes.config import Config
-from agent_eyes.doctor import check_all, format_report
+from agent_reach.config import Config
+from agent_reach.doctor import check_all, format_report
 
 
 @pytest.fixture
@@ -31,6 +31,6 @@ class TestDoctor:
     def test_format_report(self, tmp_config):
         results = check_all(tmp_config)
         report = format_report(results)
-        assert "Agent Eyes" in report
+        assert "Agent Reach" in report
         assert "✅" in report
         assert "渠道可用" in report

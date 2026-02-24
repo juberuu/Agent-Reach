@@ -19,7 +19,7 @@ playwright install chromium
 3. 检查是否已有登录态：
 ```bash
 # 检查 cookie 文件是否存在
-ls ~/.agent-eyes/xhs_cookies.json 2>/dev/null
+ls ~/.agent-reach/xhs_cookies.json 2>/dev/null
 ```
 
 ## 需要用户手动做的步骤
@@ -37,6 +37,6 @@ ls ~/.agent-eyes/xhs_cookies.json 2>/dev/null
 
 ## Agent 收到确认后的操作
 
-1. 保存浏览器 cookie 到 `~/.agent-eyes/xhs_cookies.json`
+1. 保存浏览器 cookie 到 `~/.agent-reach/xhs_cookies.json`
 2. 测试：读取一条小红书笔记
 3. 反馈："✅ 小红书已配置！现在我可以读取小红书笔记了。"

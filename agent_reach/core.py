@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-AgentEyes — the unified entry point.
+AgentReach — the unified entry point.
 
 Pure glue: routes URLs to the right channel, routes searches to the right engine.
 Every channel is a thin wrapper around an external tool. Swap any backend anytime.
 
 Usage:
-    from agent_eyes import AgentEyes
+    from agent_reach import AgentReach
 
-    eyes = AgentEyes()
+    eyes = AgentReach()
     content = await eyes.read("https://github.com/openai/gpt-4")
     results = await eyes.search("AI agent framework")
 """
@@ -16,11 +16,11 @@ Usage:
 import asyncio
 from typing import Any, Dict, List, Optional
 
-from agent_eyes.config import Config
-from agent_eyes.channels import get_channel_for_url, get_channel, get_all_channels
+from agent_reach.config import Config
+from agent_reach.channels import get_channel_for_url, get_channel, get_all_channels
 
 
-class AgentEyes:
+class AgentReach:
     """Give your AI Agent eyes to see the entire internet."""
 
     def __init__(self, config: Optional[Config] = None):
@@ -87,12 +87,12 @@ class AgentEyes:
 
     def doctor(self) -> Dict[str, dict]:
         """Check all channel availability."""
-        from agent_eyes.doctor import check_all
+        from agent_reach.doctor import check_all
         return check_all(self.config)
 
     def doctor_report(self) -> str:
         """Get formatted health report."""
-        from agent_eyes.doctor import check_all, format_report
+        from agent_reach.doctor import check_all, format_report
         return format_report(check_all(self.config))
 
     # ── Sync wrappers ───────────────────────────────────

@@ -10,17 +10,17 @@ Exa 是一个语义搜索引擎，免费提供 1000 次/月搜索。配置后解
 
 1. 检查是否已配置：
 ```bash
-agent-eyes doctor | grep "Web Search"
+agent-reach doctor | grep "Web Search"
 ```
 
 2. 如果用户提供了 key，写入配置：
 ```bash
 # 方法1: 通过 setup 命令
-agent-eyes setup
+agent-reach setup
 
 # 方法2: 直接写入配置文件
 python3 -c "
-from agent_eyes.config import Config
+from agent_reach.config import Config
 c = Config()
 c.set('exa_api_key', '用户提供的KEY')
 print('✅ Exa API key saved')
@@ -29,7 +29,7 @@ print('✅ Exa API key saved')
 
 3. 测试是否有效：
 ```bash
-agent-eyes search "test query" -n 1
+agent-reach search "test query" -n 1
 ```
 
 ## 需要用户手动做的步骤

@@ -5,8 +5,8 @@ Each channel knows how to check itself. Doctor just collects the results.
 """
 
 from typing import Dict
-from agent_eyes.config import Config
-from agent_eyes.channels import get_all_channels
+from agent_reach.config import Config
+from agent_reach.channels import get_all_channels
 
 
 def check_all(config: Config) -> Dict[str, dict]:
@@ -27,7 +27,7 @@ def check_all(config: Config) -> Dict[str, dict]:
 def format_report(results: Dict[str, dict]) -> str:
     """Format results as a readable text report."""
     lines = []
-    lines.append("👁️  Agent Eyes 状态")
+    lines.append("👁️  Agent Reach 状态")
     lines.append("=" * 40)
 
     ok_count = sum(1 for r in results.values() if r["status"] == "ok")
@@ -72,6 +72,6 @@ def format_report(results: Dict[str, dict]) -> str:
     lines.append("")
     lines.append(f"状态：{ok_count}/{total} 个渠道可用")
     if ok_count < total:
-        lines.append("运行 `agent-eyes setup` 解锁更多渠道")
+        lines.append("运行 `agent-reach setup` 解锁更多渠道")
 
     return "\n".join(lines)

@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-"""Tests for AgentEyes core class."""
+"""Tests for AgentReach core class."""
 
 import pytest
-from agent_eyes.config import Config
-from agent_eyes.core import AgentEyes
+from agent_reach.config import Config
+from agent_reach.core import AgentReach
 
 
 @pytest.fixture
 def eyes(tmp_path):
     config = Config(config_path=tmp_path / "config.yaml")
-    return AgentEyes(config=config)
+    return AgentReach(config=config)
 
 
-class TestAgentEyes:
+class TestAgentReach:
     def test_init(self, eyes):
         assert eyes.config is not None
 
@@ -33,4 +33,4 @@ class TestAgentEyes:
     def test_doctor_report(self, eyes):
         report = eyes.doctor_report()
         assert isinstance(report, str)
-        assert "Agent Eyes" in report
+        assert "Agent Reach" in report

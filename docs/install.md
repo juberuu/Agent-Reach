@@ -1,11 +1,11 @@
-# Agent Eyes — Installation Guide
+# Agent Reach — Installation Guide
 
 ## For Humans
 
 Copy this to your AI Agent:
 
 ```
-帮我安装 Agent Eyes：https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
+帮我安装 Agent Reach：https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
 ```
 
 ---
@@ -15,8 +15,8 @@ Copy this to your AI Agent:
 ### Step 1: Install
 
 ```bash
-pip install https://github.com/Panniantong/agent-eyes/archive/main.zip || pip3 install https://github.com/Panniantong/agent-eyes/archive/main.zip
-agent-eyes install --env=auto
+pip install https://github.com/Panniantong/agent-reach/archive/main.zip || pip3 install https://github.com/Panniantong/agent-reach/archive/main.zip
+agent-reach install --env=auto
 ```
 
 This single command does everything automatically:
@@ -37,7 +37,7 @@ Only ask the user for items the install output says are missing.
 > "Want to unlock web search? Go to https://exa.ai → sign up (free) → send me the API key."
 
 ```bash
-agent-eyes configure exa-key THE_KEY
+agent-reach configure exa-key THE_KEY
 ```
 
 **If cookies were not auto-imported (server users):**
@@ -45,21 +45,21 @@ agent-eyes configure exa-key THE_KEY
 > Extension: https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm
 
 ```bash
-agent-eyes configure twitter-cookies "PASTED_STRING"
-agent-eyes configure xhs-cookie "PASTED_STRING"
+agent-reach configure twitter-cookies "PASTED_STRING"
+agent-reach configure xhs-cookie "PASTED_STRING"
 ```
 
 **If on server and wants Reddit/Bilibili full access:**
 > "Reddit and Bilibili block server IPs. Get a proxy at https://webshare.io ($1/month) and send me the address."
 
 ```bash
-agent-eyes configure proxy http://user:pass@ip:port
+agent-reach configure proxy http://user:pass@ip:port
 ```
 
 ### Step 3: Verify
 
 ```bash
-agent-eyes doctor
+agent-reach doctor
 ```
 
 Report what's active. Users can configure more anytime by asking.
@@ -70,11 +70,11 @@ Report what's active. Users can configure more anytime by asking.
 
 | Command | What it does |
 |---------|-------------|
-| `agent-eyes install --env=auto` | Full auto-setup |
-| `agent-eyes doctor` | Show status |
-| `agent-eyes configure exa-key KEY` | Unlock search |
-| `agent-eyes configure twitter-cookies "..."` | Unlock Twitter |
-| `agent-eyes configure xhs-cookie "..."` | Unlock XiaoHongShu |
-| `agent-eyes configure proxy URL` | Unlock Reddit + Bilibili (server) |
-| `agent-eyes read URL` | Read any URL |
-| `agent-eyes search "query"` | Search the web |
+| `agent-reach install --env=auto` | Full auto-setup |
+| `agent-reach doctor` | Show status |
+| `agent-reach configure exa-key KEY` | Unlock search |
+| `agent-reach configure twitter-cookies "..."` | Unlock Twitter |
+| `agent-reach configure xhs-cookie "..."` | Unlock XiaoHongShu |
+| `agent-reach configure proxy URL` | Unlock Reddit + Bilibili (server) |
+| `agent-reach read URL` | Read any URL |
+| `agent-reach search "query"` | Search the web |

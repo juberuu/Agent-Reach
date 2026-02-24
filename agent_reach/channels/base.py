@@ -123,7 +123,7 @@ class Channel(ABC):
         # Check required config
         for key in self.requires_config:
             if config and not config.get(key):
-                return "off", f"需要配置 {key}，运行 agent-eyes setup"
+                return "off", f"需要配置 {key}，运行 agent-reach setup"
 
         return "ok", f"{'、'.join(self.backends) if self.backends else '内置'}"
 

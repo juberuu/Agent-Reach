@@ -31,9 +31,9 @@ class RedditChannel(Channel):
         elif proxy:
             return "ok", "代理已配置，可读取帖子。配置 REDDIT_CLIENT_ID/SECRET 可解锁高级搜索和发帖"
         elif has_bot:
-            return "warn", "OAuth Bot 已配置，但服务器直连可能被封。配个代理更稳定：agent-eyes configure proxy URL"
+            return "warn", "OAuth Bot 已配置，但服务器直连可能被封。配个代理更稳定：agent-reach configure proxy URL"
         else:
-            return "off", "搜索用 Exa 免费可用。读帖子需配个代理：agent-eyes configure proxy URL"
+            return "off", "搜索用 Exa 免费可用。读帖子需配个代理：agent-reach configure proxy URL"
 
     async def read(self, url: str, config=None) -> ReadResult:
         proxy = config.get("reddit_proxy") if config else None
@@ -63,10 +63,10 @@ class RedditChannel(Channel):
                     title="Reddit",
                     content="⚠️ Reddit blocked this request (403 Forbidden). "
                             "Reddit blocks most server IPs.\n"
-                            "Fix: agent-eyes configure proxy http://user:pass@ip:port\n"
+                            "Fix: agent-reach configure proxy http://user:pass@ip:port\n"
                             "Cheap option: https://www.webshare.io ($1/month)\n\n"
                             "Alternatively, search Reddit via Exa (free, no proxy needed): "
-                            "agent-eyes search-reddit \"your query\"",
+                            "agent-reach search-reddit \"your query\"",
                     url=url,
                     platform="reddit",
                 )

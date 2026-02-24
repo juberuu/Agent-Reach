@@ -9,7 +9,7 @@ Reddit 封锁了大量服务器 IP，直接访问会返回 403。需要 ISP 代�
 
 1. 检查当前状态：
 ```bash
-agent-eyes doctor | grep "Reddit"
+agent-reach doctor | grep "Reddit"
 ```
 
 2. 如果用户提供了代理，测试连通性：
@@ -23,7 +23,7 @@ curl -s --proxy "用户提供的代理" \
 
 3. 写入配置：
 ```python
-from agent_eyes.config import Config
+from agent_reach.config import Config
 c = Config()
 c.set("reddit_proxy", "http://用户名:密码@IP:端口")
 ```

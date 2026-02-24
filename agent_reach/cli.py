@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Agent Eyes CLI — command-line interface.
+Agent Reach CLI — command-line interface.
 
 Usage:
-    agent-eyes read <url>
-    agent-eyes search <query>
-    agent-eyes search-reddit <query> [--sub <subreddit>]
-    agent-eyes search-github <query> [--lang <language>]
-    agent-eyes search-twitter <query>
-    agent-eyes setup
-    agent-eyes doctor
-    agent-eyes version
+    agent-reach read <url>
+    agent-reach search <query>
+    agent-reach search-reddit <query> [--sub <subreddit>]
+    agent-reach search-github <query> [--lang <language>]
+    agent-reach search-twitter <query>
+    agent-reach setup
+    agent-reach doctor
+    agent-reach version
 """
 
 import sys
@@ -19,7 +19,7 @@ import argparse
 import json
 import os
 
-from agent_eyes import __version__
+from agent_reach import __version__
 
 
 def _configure_logging(verbose: bool = False):
@@ -32,7 +32,7 @@ def _configure_logging(verbose: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="agent-eyes",
+        prog="agent-reach",
         description="👁️ Give your AI Agent eyes to see the entire internet",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Show debug logs")
@@ -106,7 +106,7 @@ def main():
         sys.exit(0)
 
     if args.command == "version":
-        print(f"Agent Eyes v{__version__}")
+        print(f"Agent Reach v{__version__}")
         sys.exit(0)
 
     if args.command == "doctor":
@@ -129,12 +129,12 @@ def main():
 def _cmd_install(args):
     """One-shot deterministic installer."""
     import os
-    from agent_eyes.config import Config
-    from agent_eyes.doctor import check_all, format_report
+    from agent_reach.config import Config
+    from agent_reach.doctor import check_all, format_report
 
     config = Config()
     print()
-    print("👁️  Agent Eyes Installer")
+    print("👁️  Agent Reach Installer")
     print("=" * 40)
 
     # Auto-detect environment
@@ -169,7 +169,7 @@ def _cmd_install(args):
         print()
         print("🍪 Trying to import cookies from browser...")
         try:
-            from agent_eyes.cookie_extract import configure_from_browser
+            from agent_reach.cookie_extract import configure_from_browser
             results = configure_from_browser("chrome", config)
             found = False
             for platform, success, message in results:
@@ -193,7 +193,7 @@ def _cmd_install(args):
         print()
         print("💡 Tip: Reddit and Bilibili block server IPs.")
         print("   Reddit search still works via Exa (free).")
-        print("   For full access: agent-eyes configure proxy http://user:pass@ip:port")
+        print("   For full access: agent-reach configure proxy http://user:pass@ip:port")
         print("   Cheap option: https://www.webshare.io ($1/month)")
 
     # Test channels
@@ -207,7 +207,7 @@ def _cmd_install(args):
     if not config.get("exa_api_key"):
         print()
         print("🔍 Recommended: unlock search with a free Exa API key")
-        print("   agent-eyes configure exa-key YOUR_KEY")
+        print("   agent-reach configure exa-key YOUR_KEY")
         print("   Get free key: https://exa.ai")
 
     # Final status
@@ -260,13 +260,13 @@ def _detect_environment():
 
 def _cmd_configure(args):
     """Set a config value and test it, or auto-extract from browser."""
-    from agent_eyes.config import Config
+    from agent_reach.config import Config
 
     config = Config()
 
     # ── Auto-extract from browser ──
     if args.from_browser:
-        from agent_eyes.cookie_extract import configure_from_browser
+        from agent_reach.cookie_extract import configure_from_browser
 
         browser = args.from_browser
         print(f"🔍 Extracting cookies from {browser}...")
@@ -284,15 +284,15 @@ def _cmd_configure(args):
 
         print()
         if found_any:
-            print("✅ Cookies configured! Run `agent-eyes doctor` to see updated status.")
+            print("✅ Cookies configured! Run `agent-reach doctor` to see updated status.")
         else:
             print(f"No cookies found. Make sure you're logged into the platforms in {browser}.")
         return
 
     # ── Manual configure ──
     if not args.key:
-        print("Usage: agent-eyes configure <key> <value>")
-        print("   or: agent-eyes configure --from-browser chrome")
+        print("Usage: agent-reach configure <key> <value>")
+        print("   or: agent-reach configure --from-browser chrome")
         return
 
     value = " ".join(args.value) if args.value else ""
@@ -329,8 +329,8 @@ def _cmd_configure(args):
         print("Testing search...", end=" ")
         try:
             import asyncio
-            from agent_eyes.core import AgentEyes
-            eyes = AgentEyes(config)
+            from agent_reach.core import AgentReach
+            eyes = AgentReach(config)
             results = asyncio.run(eyes.search("test", num_results=1))
             if results:
                 print("✅ Search works!")
@@ -383,8 +383,8 @@ def _cmd_configure(args):
         else:
             print("❌ Could not find auth_token and ct0 in your input.")
             print("   Accepted formats:")
-            print("   1. agent-eyes configure twitter-cookies AUTH_TOKEN CT0")
-            print('   2. agent-eyes configure twitter-cookies "auth_token=xxx; ct0=yyy; ..."')
+            print("   1. agent-reach configure twitter-cookies AUTH_TOKEN CT0")
+            print('   2. agent-reach configure twitter-cookies "auth_token=xxx; ct0=yyy; ..."')
 
     elif args.key == "xhs-cookie":
         config.set("xhs_cookie", value)
@@ -423,19 +423,19 @@ def _cmd_configure(args):
 
 
 def _cmd_doctor():
-    from agent_eyes.config import Config
-    from agent_eyes.doctor import check_all, format_report
+    from agent_reach.config import Config
+    from agent_reach.doctor import check_all, format_report
     config = Config()
     results = check_all(config)
     print(format_report(results))
 
 
 def _cmd_setup():
-    from agent_eyes.config import Config
+    from agent_reach.config import Config
 
     config = Config()
     print()
-    print("👁️  Agent Eyes Setup")
+    print("👁️  Agent Reach Setup")
     print("=" * 40)
     print()
 
@@ -461,7 +461,7 @@ def _cmd_setup():
             config.set("exa_api_key", key)
             print("  ✅ 全网搜索 + Reddit搜索 + Twitter搜索 已开启！")
         else:
-            print("  ℹ️  跳过。稍后可运行 agent-eyes setup 配置")
+            print("  ℹ️  跳过。稍后可运行 agent-reach setup 配置")
         print()
 
     # Step 2: GitHub token
@@ -514,13 +514,13 @@ def _cmd_setup():
     # Summary
     print("=" * 40)
     print(f"✅ 配置已保存到 {config.config_path}")
-    print("运行 agent-eyes doctor 查看完整状态")
+    print("运行 agent-reach doctor 查看完整状态")
     print()
 
 
 async def _cmd_read(args):
-    from agent_eyes.core import AgentEyes
-    eyes = AgentEyes()
+    from agent_reach.core import AgentReach
+    eyes = AgentReach()
     try:
         result = await eyes.read(args.url)
         if args.as_json:
@@ -537,8 +537,8 @@ async def _cmd_read(args):
 
 
 async def _cmd_search(args):
-    from agent_eyes.core import AgentEyes
-    eyes = AgentEyes()
+    from agent_reach.core import AgentReach
+    eyes = AgentReach()
     query = " ".join(args.query).strip()
     num = args.num
 
@@ -563,12 +563,12 @@ async def _cmd_search(args):
         if "401" in error_str or "Unauthorized" in error_str:
             print("⚠️  Exa API key not configured or invalid.")
             print("Get a free key at https://exa.ai (1000 searches/month free)")
-            print("Then run: agent-eyes configure exa-key YOUR_KEY")
+            print("Then run: agent-reach configure exa-key YOUR_KEY")
             sys.exit(1)
         elif "exa" in error_str.lower() or "api_key" in error_str.lower():
             print("⚠️  Exa API key not configured.")
             print("Get a free key at https://exa.ai")
-            print("Then run: agent-eyes configure exa-key YOUR_KEY")
+            print("Then run: agent-reach configure exa-key YOUR_KEY")
             sys.exit(1)
         else:
             print(f"❌ Error: {e}", file=sys.stderr)

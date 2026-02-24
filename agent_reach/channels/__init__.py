@@ -2,7 +2,7 @@
 """
 Channel registry — routes URLs to the right channel.
 
-This is the core of Agent Eyes' pluggable architecture.
+This is the core of Agent Reach' pluggable architecture.
 Add a new channel: just create a file and register it here.
 Swap a backend: just change the implementation inside the channel file.
 """

@@ -1,5 +1,5 @@
 [project]
-name = "agent-eyes"
+name = "agent-reach"
 version = "1.0.0"
 description = "Give your AI Agent eyes to see the entire internet. Search + Read 10+ platforms."
 readme = "README.md"
@@ -37,19 +37,19 @@ mcp = ["mcp[cli]>=1.0"]
 all = ["playwright>=1.40", "mcp[cli]>=1.0", "browser-cookie3>=0.19"]
 
 [project.scripts]
-agent-eyes = "agent_eyes.cli:main"
+agent-reach = "agent_reach.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/Panniantong/agent-eyes"
-Repository = "https://github.com/Panniantong/agent-eyes"
-Issues = "https://github.com/Panniantong/agent-eyes/issues"
+Homepage = "https://github.com/Panniantong/agent-reach"
+Repository = "https://github.com/Panniantong/agent-reach"
+Issues = "https://github.com/Panniantong/agent-reach/issues"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["agent_eyes"]
+packages = ["agent_reach"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"agent_eyes/guides" = "agent_eyes/guides"
+"agent_reach/guides" = "agent_reach/guides"

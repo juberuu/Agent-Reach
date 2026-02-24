@@ -34,7 +34,7 @@ class BilibiliChannel(Channel):
         ]
         is_server = any(indicators)
         if is_server:
-            return "warn", "服务器 IP 可能被封，配置代理即可解决：agent-eyes configure proxy URL"
+            return "warn", "服务器 IP 可能被封，配置代理即可解决：agent-reach configure proxy URL"
         return "ok", "本地直连可用"
 
     async def read(self, url: str, config=None) -> ReadResult:
@@ -52,7 +52,7 @@ class BilibiliChannel(Channel):
 
         if not bv_id:
             # Fallback to Jina Reader
-            from agent_eyes.channels.web import WebChannel
+            from agent_reach.channels.web import WebChannel
             return await WebChannel().read(url, config)
 
         # Get video info
@@ -75,7 +75,7 @@ class BilibiliChannel(Channel):
                     title=f"Bilibili: {bv_id}",
                     content=f"⚠️ Bilibili blocked this request ({msg}). "
                             f"This usually means the server IP is blocked. "
-                            f"Try: agent-eyes configure proxy http://user:pass@ip:port",
+                            f"Try: agent-reach configure proxy http://user:pass@ip:port",
                     url=url,
                     platform="bilibili",
                 )

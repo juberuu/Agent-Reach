@@ -1,8 +1,8 @@
-# 👁️ Agent Eyes
+# 👁️ Agent Reach
 
 **Give your AI Agent eyes to see the entire internet.**
 
-Your AI Agent is smart but blind. It can't browse Reddit, search Twitter, or read Bilibili videos. Agent Eyes fixes this — once installed, your Agent can search and read content across 10+ platforms.
+Your AI Agent is smart but blind. It can't browse Reddit, search Twitter, or read Bilibili videos. Agent Reach fixes this — once installed, your Agent can search and read content across 10+ platforms.
 
 > Install once. Superpowers unlocked. Most features work with zero config, zero cost.
 
@@ -15,7 +15,7 @@ Your AI Agent is smart but blind. It can't browse Reddit, search Twitter, or rea
 Copy this to your AI Agent (Claude Code, OpenClaw, Cursor, etc.):
 
 ```
-Install Agent Eyes: https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
+Install Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
 ```
 
 Your Agent handles everything. You answer 1-2 questions at most.
@@ -24,9 +24,9 @@ Your Agent handles everything. You answer 1-2 questions at most.
 <summary>Manual install</summary>
 
 ```bash
-pip install https://github.com/Panniantong/agent-eyes/archive/main.zip
-agent-eyes install --env=auto
-agent-eyes doctor
+pip install https://github.com/Panniantong/agent-reach/archive/main.zip
+agent-reach install --env=auto
+agent-reach doctor
 ```
 </details>
 
@@ -44,8 +44,8 @@ No configuration needed:
 - 🐦 **Twitter** — read individual tweets
 
 ```bash
-agent-eyes read "https://github.com/openai/gpt-4"
-agent-eyes search-github "LLM framework"
+agent-reach read "https://github.com/openai/gpt-4"
+agent-reach search-github "LLM framework"
 ```
 
 ---
@@ -55,10 +55,10 @@ agent-eyes search-github "LLM framework"
 Sign up at [Exa](https://exa.ai) (free, 1000 searches/month). One key unlocks **web + Reddit + Twitter search**:
 
 ```bash
-agent-eyes configure exa-key YOUR_KEY
-agent-eyes search "best open source LLM 2025"
-agent-eyes search-reddit "self-hosted LLM" --sub LocalLLaMA
-agent-eyes search-twitter "AI agent"
+agent-reach configure exa-key YOUR_KEY
+agent-reach search "best open source LLM 2025"
+agent-reach search-reddit "self-hosted LLM" --sub LocalLLaMA
+agent-reach search-twitter "AI agent"
 ```
 
 ---
@@ -69,11 +69,11 @@ agent-eyes search-twitter "AI agent"
 
 ```bash
 # Local: auto-import all cookies
-agent-eyes configure --from-browser chrome
+agent-reach configure --from-browser chrome
 
 # Server: use Cookie-Editor extension, export Header String
-agent-eyes configure twitter-cookies "cookie_string"
-agent-eyes configure xhs-cookie "cookie_string"
+agent-reach configure twitter-cookies "cookie_string"
+agent-reach configure xhs-cookie "cookie_string"
 ```
 
 Unlocks: Twitter deep search, XiaoHongShu notes
@@ -83,7 +83,7 @@ Unlocks: Twitter deep search, XiaoHongShu notes
 Reddit and Bilibili block server IPs. Local computers are fine.
 
 ```bash
-agent-eyes configure proxy http://user:pass@ip:port
+agent-reach configure proxy http://user:pass@ip:port
 ```
 
 Recommend [Webshare](https://webshare.io). One proxy covers both Reddit and Bilibili.
@@ -95,24 +95,24 @@ Recommend [Webshare](https://webshare.io). One proxy covers both Reddit and Bili
 **CLI** · **Python API** · **MCP Server**
 
 ```bash
-agent-eyes read "URL"
-agent-eyes search "query"
-agent-eyes doctor
+agent-reach read "URL"
+agent-reach search "query"
+agent-reach doctor
 ```
 
 ```python
-from agent_eyes import AgentEyes
-eyes = AgentEyes()
+from agent_reach import AgentReach
+eyes = AgentReach()
 result = asyncio.run(eyes.read("https://example.com"))
 ```
 
 ```json
-{"mcpServers": {"agent-eyes": {"command": "python", "args": ["-m", "agent_eyes.integrations.mcp_server"]}}}
+{"mcpServers": {"agent-reach": {"command": "python", "args": ["-m", "agent_reach.integrations.mcp_server"]}}}
 ```
 
 ---
 
-## Why Agent Eyes?
+## Why Agent Reach?
 
 Not a framework. Not an SDK. Just glue — beautifully simple glue.
 

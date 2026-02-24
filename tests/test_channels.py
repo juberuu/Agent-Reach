@@ -4,8 +4,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from agent_eyes.channels import get_channel_for_url, get_channel, get_all_channels
-from agent_eyes.channels.base import ReadResult, SearchResult
+from agent_reach.channels import get_channel_for_url, get_channel, get_all_channels
+from agent_reach.channels.base import ReadResult, SearchResult
 
 
 class TestChannelRouting:
@@ -74,7 +74,7 @@ class TestSearchResult:
 
 
 class TestGitHubChannel:
-    @patch("agent_eyes.channels.github.requests.get")
+    @patch("agent_reach.channels.github.requests.get")
     @pytest.mark.asyncio
     async def test_search(self, mock_get):
         mock_resp = MagicMock()
@@ -93,10 +93,10 @@ class TestGitHubChannel:
 
 
 class TestExaSearch:
-    @patch("agent_eyes.channels.exa_search.requests.post")
+    @patch("agent_reach.channels.exa_search.requests.post")
     @pytest.mark.asyncio
     async def test_search(self, mock_post):
-        from agent_eyes.config import Config
+        from agent_reach.config import Config
         config = Config(config_path="/tmp/test-exa-config.yaml")
         config.set("exa_api_key", "test-key")
 

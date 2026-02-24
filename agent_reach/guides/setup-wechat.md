@@ -18,7 +18,7 @@ playwright install chromium
 
 3. 安装完成后测试：
 ```bash
-agent-eyes read "https://mp.weixin.qq.com/s/一个测试链接"
+agent-reach read "https://mp.weixin.qq.com/s/一个测试链接"
 ```
 
 ## 需要用户手动做的步骤

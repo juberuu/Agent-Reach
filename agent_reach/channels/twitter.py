@@ -145,6 +145,6 @@ class TwitterChannel(Channel):
         return results
 
     async def _search_exa(self, query: str, limit: int, config=None) -> List[SearchResult]:
-        from agent_eyes.channels.exa_search import ExaSearchChannel
+        from agent_reach.channels.exa_search import ExaSearchChannel
         exa = ExaSearchChannel()
         return await exa.search(f"site:x.com {query}", config=config, limit=limit)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Exa semantic search — the search backbone for Agent Eyes.
+"""Exa semantic search — the search backbone for Agent Reach.
 
 Backend: Exa API (https://exa.ai) — free 1000 searches/month
 Swap to: Tavily, SerpAPI, or any search API
@@ -37,7 +37,7 @@ class ExaSearchChannel(Channel):
         raise ValueError(
             "Exa API key not configured.\n"
             "Get a free key at https://exa.ai (1000 searches/month free)\n"
-            "Then run: agent-eyes setup"
+            "Then run: agent-reach setup"
         )
 
     async def search(self, query: str, config=None, **kwargs) -> List[SearchResult]:

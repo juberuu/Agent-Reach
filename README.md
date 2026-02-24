@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="Agent Eyes" width="200">
+  <img src="docs/assets/logo.png" alt="Agent Reach" width="200">
 </p>
 
-<h1 align="center">👁️ Agent Eyes</h1>
+<h1 align="center">👁️ Agent Reach</h1>
 
 <p align="center">
   <strong>给你的 AI Agent 一键装上互联网能力</strong>
@@ -11,7 +11,7 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-green.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.8+"></a>
-  <a href="https://github.com/Panniantong/agent-eyes/stargazers"><img src="https://img.shields.io/github/stars/Panniantong/agent-eyes?style=for-the-badge" alt="GitHub Stars"></a>
+  <a href="https://github.com/Panniantong/agent-reach/stargazers"><img src="https://img.shields.io/github/stars/Panniantong/agent-reach?style=for-the-badge" alt="GitHub Stars"></a>
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
 
 ---
 
-## 为什么需要 Agent Eyes？
+## 为什么需要 Agent Reach？
 
 AI Agent 已经能访问互联网——但只是"能上网"而已。
 
@@ -35,10 +35,10 @@ AI Agent 已经能访问互联网——但只是"能上网"而已。
 
 你要让 Agent 接入这些平台，就得一个一个去踩坑、装工具、调配置。
 
-**Agent Eyes 把这件事变成一行命令：**
+**Agent Reach 把这件事变成一行命令：**
 
 ```
-帮我安装 Agent Eyes：https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
+帮我安装 Agent Reach：https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
 ```
 
 复制给你的 Agent，30 秒后它就能读推特、搜 Reddit、看 B站了。
@@ -51,7 +51,7 @@ AI Agent 已经能访问互联网——但只是"能上网"而已。
 | 🔒 **隐私安全** | Cookie 只存在你本地，不上传不外传。代码完全开源，随时可审查 |
 | 🔄 **持续更新** | 底层工具（yt-dlp、birdx、Jina Reader 等）定期追踪更新到最新版，你不用自己盯 |
 | 🤖 **兼容所有 Agent** | Claude Code、OpenClaw、Cursor、Windsurf……任何能跑命令行的 Agent 都能用 |
-| 🩺 **自带诊断** | `agent-eyes doctor` 一条命令告诉你哪个通、哪个不通、怎么修 |
+| 🩺 **自带诊断** | `agent-reach doctor` 一条命令告诉你哪个通、哪个不通、怎么修 |
 
 ---
 
@@ -78,7 +78,7 @@ AI Agent 已经能访问互联网——但只是"能上网"而已。
 复制给你的 AI Agent（Claude Code、OpenClaw、Cursor 等）：
 
 ```
-帮我安装 Agent Eyes：https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
+帮我安装 Agent Reach：https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
 ```
 
 Agent 自动安装、检测环境、告诉你哪些功能已经可以用。
@@ -87,8 +87,8 @@ Agent 自动安装、检测环境、告诉你哪些功能已经可以用。
 <summary>手动安装</summary>
 
 ```bash
-pip install https://github.com/Panniantong/agent-eyes/archive/main.zip
-agent-eyes install --env=auto
+pip install https://github.com/Panniantong/agent-reach/archive/main.zip
+agent-reach install --env=auto
 ```
 </details>
 
@@ -132,9 +132,9 @@ Reddit 和 B站封服务器 IP。买个代理（推荐 [Webshare](https://websha
 ## 状态一目了然
 
 ```
-$ agent-eyes doctor
+$ agent-reach doctor
 
-👁️  Agent Eyes 状态
+👁️  Agent Reach 状态
 ========================================
 
 ✅ 装好即用：
@@ -159,11 +159,11 @@ $ agent-eyes doctor
 
 ## 设计理念
 
-**Agent Eyes 是一个 Agent 初始化脚手架，不是框架。**
+**Agent Reach 是一个 Agent 初始化脚手架，不是框架。**
 
 你给一个新 Agent 装环境的时候，总要花时间去找工具、装依赖、调配置——Twitter 用什么读？Reddit 怎么绕封？YouTube 字幕怎么提取？每次都要重新踩一遍。
 
-Agent Eyes 做的事情很简单：**帮你把这些选型和配置的活儿做完了。**
+Agent Reach 做的事情很简单：**帮你把这些选型和配置的活儿做完了。**
 
 | 场景 | 选型 | 为什么选它 |
 |------|------|-----------|
@@ -179,7 +179,7 @@ Agent Eyes 做的事情很简单：**帮你把这些选型和配置的活儿做�
 <summary>项目结构</summary>
 
 ```
-agent_eyes/channels/
+agent_reach/channels/
 ├── web.py          → Jina Reader
 ├── twitter.py      → birdx
 ├── youtube.py      → yt-dlp
@@ -196,7 +196,7 @@ agent_eyes/channels/
 
 ## 贡献
 
-欢迎提 [Issue](https://github.com/Panniantong/agent-eyes/issues) 和 [PR](https://github.com/Panniantong/agent-eyes/pulls)。
+欢迎提 [Issue](https://github.com/Panniantong/agent-reach/issues) 和 [PR](https://github.com/Panniantong/agent-reach/pulls)。
 
 想加新平台？复制任意一个 channel 文件，改改就行——每个文件只有 ~50 行。
 

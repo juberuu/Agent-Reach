@@ -5,7 +5,7 @@ Supports: Chrome, Firefox, Edge, Brave, Opera
 Extracts: Twitter, XiaoHongShu, Bilibili cookies in one shot.
 
 Usage:
-    agent-eyes configure --from-browser chrome
+    agent-reach configure --from-browser chrome
 """
 
 import sys
