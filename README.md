@@ -24,7 +24,7 @@ AI Agent 已经能访问互联网——但只是"能上网"而已。
 
 | 痛点 | 现状 |
 |------|------|
-| Twitter API | $100/月起步 |
+| Twitter API | 按量付费，中等用量 ~$215/月 |
 | Reddit | 服务器 IP 直接 403 |
 | 小红书 | 必须登录才能看 |
 | B站 | 屏蔽海外/服务器 IP |
@@ -226,7 +226,7 @@ ALL_CHANNELS: List[Channel] = [
 | 场景 | 选型 | 为什么选它 |
 |------|------|-----------|
 | 读网页 | [Jina Reader](https://github.com/jina-ai/reader) | 9.8K Star，免费，不需要 API Key |
-| 读推特 | [birdx](https://github.com/runesleo/birdx) | Cookie 登录，不用花 $100/月买官方 API |
+| 读推特 | [birdx](https://github.com/runesleo/birdx) | Cookie 登录，免费。官方 API 按量付费（读一条 $0.005） |
 | 视频字幕 + 搜索 | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | 148K Star，YouTube + B站 + 1800 站通吃 |
 | 搜全网 | [Exa](https://exa.ai) via [mcporter](https://github.com/nicepkg/mcporter) | AI 语义搜索，MCP 接入免 Key |
 | GitHub | [gh CLI](https://cli.github.com) | 官方工具，认证后完整 API 能力 |

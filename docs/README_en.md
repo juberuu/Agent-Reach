@@ -24,7 +24,7 @@ The most valuable information lives across social and niche platforms: Twitter d
 
 | Pain Point | Reality |
 |------------|---------|
-| Twitter API | Starts at $100/month |
+| Twitter API | Pay-per-use, moderate usage ~$215/month |
 | Reddit | Server IPs get 403'd |
 | XiaoHongShu | Login required to browse |
 | Bilibili | Blocks overseas/server IPs |
@@ -224,7 +224,7 @@ ALL_CHANNELS: List[Channel] = [
 | Scenario | Tool | Why |
 |----------|------|-----|
 | Read web pages | [Jina Reader](https://github.com/jina-ai/reader) | 9.8K stars, free, no API key needed |
-| Read tweets | [birdx](https://github.com/runesleo/birdx) | Cookie auth, no $100/month official API |
+| Read tweets | [birdx](https://github.com/runesleo/birdx) | Cookie auth, free. Official API is pay-per-use ($0.005/post read) |
 | Video subtitles + search | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | 148K stars, YouTube + Bilibili + 1800 sites |
 | Search the web | [Exa](https://exa.ai) via [mcporter](https://github.com/nicepkg/mcporter) | AI semantic search, MCP integration, no API key |
 | GitHub | [gh CLI](https://cli.github.com) | Official tool, full API after auth |
