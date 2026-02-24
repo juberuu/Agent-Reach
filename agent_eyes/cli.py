@@ -570,28 +570,22 @@ async def _cmd_search(args):
             print(f"❌ Error: {e}", file=sys.stderr)
             sys.exit(1)
 
-        if not results:
-            print("No results found.")
-            return
+    if not results:
+        print("No results found.")
+        return
 
-        for i, r in enumerate(results, 1):
-            title = r.get("title") or r.get("name") or r.get("text", "")[:60]
-            url = r.get("url", "")
-            snippet = r.get("snippet") or r.get("description") or r.get("text", "")
-            print(f"\n{i}. {title}")
-            print(f"   🔗 {url}")
-            if snippet:
-                print(f"   {snippet[:200]}")
-            # Extra info for GitHub
-            if "stars" in r:
-                print(f"   ⭐ {r['stars']}  🍴 {r.get('forks', 0)}  📝 {r.get('language', '')}")
-
-    except ValueError as e:
-        print(f"⚠️  {e}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Error: {e}", file=sys.stderr)
-        sys.exit(1)
+    for i, r in enumerate(results, 1):
+        title = r.get("title") or r.get("name") or r.get("text", "")[:60]
+        url = r.get("url", "")
+        snippet = r.get("snippet") or r.get("description") or r.get("text", "")
+        print(f"\n{i}. {title}")
+        print(f"   🔗 {url}")
+        if snippet:
+            print(f"   {snippet[:200]}")
+        # Extra info for GitHub
+        extra = r.get("extra", {})
+        if extra.get("stars"):
+            print(f"   ⭐ {extra['stars']}  🍴 {extra.get('forks', 0)}  📝 {extra.get('language', '')}")
 
 
 if __name__ == "__main__":

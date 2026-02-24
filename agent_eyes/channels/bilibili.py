@@ -47,7 +47,29 @@ class BilibiliChannel(Channel):
             timeout=15,
         )
         resp.raise_for_status()
-        data = resp.json().get("data", {})
+        api_data = resp.json()
+
+        # Check for API errors (IP blocked, video not found, etc.)
+        if api_data.get("code") != 0:
+            msg = api_data.get("message", "Unknown error")
+            # Bilibili returns -404 when server IP is blocked
+            if api_data.get("code") in (-404, -403, -412):
+                return ReadResult(
+                    title=f"Bilibili: {bv_id}",
+                    content=f"⚠️ Bilibili blocked this request ({msg}). "
+                            f"This usually means the server IP is blocked. "
+                            f"Try: agent-eyes configure proxy http://user:pass@ip:port",
+                    url=url,
+                    platform="bilibili",
+                )
+            return ReadResult(
+                title=f"Bilibili: {bv_id}",
+                content=f"Bilibili API error: {msg} (code: {api_data.get('code')})",
+                url=url,
+                platform="bilibili",
+            )
+
+        data = api_data.get("data", {})
 
         title = data.get("title", "")
         desc = data.get("desc", "")
