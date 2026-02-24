@@ -1,105 +1,138 @@
 # 👁️ Agent Eyes
 
-**Give your AI Agent eyes to see the entire internet.**
+**让你的 AI Agent 看见整个互联网。**
 
-Agent Eyes is an open-source Agent capability aggregator. It combines the best free tools into one install, so any AI Agent can search and read the entire internet.
+你的 AI Agent 很聪明，但是它看不见。它不能帮你刷 Reddit、搜 Twitter、读 B站视频。Agent Eyes 解决这个问题——装好之后，Agent 就能搜索和阅读互联网上几乎所有内容。
 
-> Not a framework. Not a library. Just glue — beautifully simple glue that gives your Agent superpowers.
+> 装一次，能力拉满。大部分功能零配置、零花费。
+
+[English](docs/README_en.md)
 
 ---
 
-## Install (One Line)
+## 30 秒上手
 
-**Copy this to your AI Agent** (Claude Code, OpenClaw, Cursor, ChatGPT, etc.):
+把这句话复制给你的 AI Agent：
 
 ```
-Install and configure Agent Eyes by following the instructions here:
-https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
+帮我安装 Agent Eyes：https://raw.githubusercontent.com/Panniantong/agent-eyes/main/docs/install.md
 ```
 
-Your Agent reads the guide, installs everything, and configures itself. You just watch.
+> 💡 不知道怎么发？打开你的 Agent 对话框（Claude Code 终端、OpenClaw 聊天、Cursor Chat），直接粘贴上面这段话就行。
 
-**Or install manually:**
+Agent 会自动装好并告诉你哪些功能已经可以用了。你最多需要回答 1-2 个问题。
+
+<details>
+<summary>想手动装？点这里</summary>
 
 ```bash
 pip install https://github.com/Panniantong/agent-eyes/archive/main.zip
-agent-eyes doctor    # See what's available
-agent-eyes setup     # Unlock more (optional)
+agent-eyes install --env=auto
+agent-eyes doctor
 ```
-
-# Read any URL (works immediately, no config needed)
-agent-eyes read "https://github.com/openai/gpt-4"
-agent-eyes read "https://www.bilibili.com/video/BV1xx411c7mD"
-
-# Search GitHub (works immediately, no config needed)
-agent-eyes search-github "LLM framework"
-
-# Unlock search (one free API key)
-agent-eyes setup
-agent-eyes search "AI agent infrastructure 2025"
-agent-eyes search-reddit "best self-hosted LLM" --sub LocalLLaMA
-agent-eyes search-twitter "OpenClaw agent"
-```
+</details>
 
 ---
 
-## Platform Support
+## 装好就能用的
 
-### ✅ Zero Config (works out of the box)
+不需要任何配置，装好直接用：
 
-| Platform | Read | Search | Notes |
-|----------|:----:|:------:|-------|
-| Web Pages | ✅ | — | Any URL via Jina Reader |
-| GitHub | ✅ | ✅ | Repos, issues, PRs, code |
-| Bilibili | ✅ | — | Videos with subtitles |
-| YouTube | ✅ | — | Videos with subtitles (needs yt-dlp) |
-| RSS | ✅ | — | Any RSS/Atom feed |
-| Single Tweet | ✅ | — | Via Jina Reader |
-
-### 🔑 One Free API Key (30 seconds to set up)
-
-| Platform | Read | Search | Notes |
-|----------|:----:|:------:|-------|
-| Web (semantic) | — | ✅ | Exa API (1000 free/month) |
-| Reddit | — | ✅ | Via Exa (site:reddit.com) |
-| Twitter/X | — | ✅ | Via Exa (site:x.com) |
-
-### ⚙️ Optional Setup
-
-| Platform | Read | Search | What's Needed |
-|----------|:----:|:------:|---------------|
-| Reddit (full) | ✅ | — | ISP proxy (~$3-10/mo) |
-| Twitter (advanced) | ✅ | ✅ | birdx + browser cookies (free) |
-| WeChat Articles | ✅ | — | Playwright (free, auto-installed) |
-| XiaoHongShu | ✅ | — | Playwright + one-time login (free) |
-| Video Transcription | ✅ | — | Groq API key (free) |
-
----
-
-## Three Ways to Use
-
-### 1. Command Line (CLI)
+- 🌐 **网页** — 给个 URL，帮你读出来
+- 📦 **GitHub** — 仓库、Issue、PR、代码搜索
+- 📺 **YouTube** — 自动提取视频字幕
+- 📺 **B站** — 视频信息 + 字幕提取
+- 📡 **RSS** — 任意订阅源
+- 🐦 **Twitter** — 读单条推文
 
 ```bash
-agent-eyes read <url>                    # Read any URL
-agent-eyes search "query"                # Search the web
-agent-eyes search-reddit "query"         # Search Reddit
-agent-eyes search-github "query"         # Search GitHub
-agent-eyes search-twitter "query"        # Search Twitter
-agent-eyes setup                         # Interactive setup wizard
-agent-eyes doctor                        # Check platform status
+agent-eyes read "https://github.com/openai/gpt-4"
+agent-eyes read "https://www.bilibili.com/video/BV1xx411c7mD"
+agent-eyes search-github "LLM 框架"
 ```
 
-### 2. MCP Server (for Claude Code, Cursor, etc.)
+---
+
+## 一个 Key 解锁搜索
+
+注册 [Exa](https://exa.ai)（免费，1000 次/月），一个 Key 同时解锁 **全网搜索 + Reddit 搜索 + Twitter 搜索**：
+
+```bash
+agent-eyes configure exa-key 你的KEY
+
+agent-eyes search "2025 最好的开源 LLM"
+agent-eyes search-reddit "best self-hosted LLM" --sub LocalLLaMA
+agent-eyes search-twitter "AI agent"
+```
+
+> 没有 Exa Key 也能用——只是不能搜索，读取功能不受影响。
+
+---
+
+## 解锁更多平台
+
+### 🍪 Cookie 解锁（免费，2 分钟）
+
+本地电脑一键导入所有 cookies：
+
+```bash
+agent-eyes configure --from-browser chrome
+```
+
+> 关掉 Chrome 再运行。支持 chrome / firefox / edge / brave / opera。
+
+服务器用户？装个 [Cookie-Editor](https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm) 浏览器扩展，在网站上点一下 Export → Header String，粘贴给 Agent 就行。
+
+Cookie 能解锁：
+
+| 平台 | 额外能力 |
+|------|---------|
+| 🐦 Twitter | 时间线搜索、完整线程、高级搜索 |
+| 📕 小红书 | 笔记内容 + 评论 |
+
+### 🌐 代理解锁（$1/月，仅服务器需要）
+
+Reddit 和 B站封服务器 IP。本地电脑不受影响。
+
+```bash
+agent-eyes configure proxy http://用户名:密码@IP:端口
+```
+
+> 推荐 [Webshare](https://webshare.io)，$1/月。一个代理同时解锁 Reddit + B站。
+>
+> 不买也行——Reddit **搜索** 通过 Exa 免费可用，只是不能读完整帖子。
+
+---
+
+## 三种使用方式
+
+### 命令行
+
+```bash
+agent-eyes read "https://任意URL"
+agent-eyes search "任意搜索词"
+agent-eyes search-github "关键词"
+agent-eyes search-reddit "关键词"
+agent-eyes search-twitter "关键词"
+agent-eyes doctor
+```
+
+### Python
+
+```python
+from agent_eyes import AgentEyes
+import asyncio
+
+eyes = AgentEyes()
+result = asyncio.run(eyes.read("https://example.com"))
+results = asyncio.run(eyes.search("AI agent"))
+```
+
+### MCP Server（Claude Code / Cursor）
 
 ```bash
 pip install agent-eyes[mcp]
-python -m agent_eyes.integrations.mcp_server
 ```
-
-Exposes 8 tools: `read_url`, `read_batch`, `detect_platform`, `search`, `search_reddit`, `search_github`, `search_twitter`, `get_status`
-
-Add to your MCP config:
 
 ```json
 {
@@ -112,148 +145,61 @@ Add to your MCP config:
 }
 ```
 
-### 3. Python Library
+---
 
-```python
-from agent_eyes import AgentEyes
-import asyncio
+## 配置速查
 
-eyes = AgentEyes()
-
-# Read
-result = asyncio.run(eyes.read("https://github.com/openai/gpt-4"))
-print(result["title"])
-print(result["content"])
-
-# Search
-results = asyncio.run(eyes.search("AI agent framework"))
-for r in results:
-    print(f"{r['title']} — {r['url']}")
-
-# Search Reddit
-results = asyncio.run(eyes.search_reddit("best LLM", subreddit="LocalLLaMA"))
-
-# Health check
-print(eyes.doctor_report())
-```
+| 命令 | 作用 |
+|------|------|
+| `agent-eyes doctor` | 查看所有频道状态 |
+| `agent-eyes configure --from-browser chrome` | 一键导入 cookies（本地）|
+| `agent-eyes configure exa-key KEY` | 解锁全网搜索 |
+| `agent-eyes configure twitter-cookies "..."` | 解锁 Twitter 高级 |
+| `agent-eyes configure xhs-cookie "..."` | 解锁小红书 |
+| `agent-eyes configure proxy URL` | 解锁 Reddit + B站（服务器）|
 
 ---
 
-## Configuration
+## 为什么用 Agent Eyes？
 
-### Interactive Setup
+**不是框架，不是 SDK，就是胶水。**
 
-```bash
-agent-eyes setup
-```
+- 把最好的免费工具粘在一起：Jina Reader、birdx、yt-dlp、Exa、feedparser
+- 每个平台就是一个 ~50 行的薄封装，换后端只改一个文件
+- CLI、MCP Server、Python API 三种接入方式
+- 99% 功能免费，剩下 1% 也就 $1/月
 
-Walks you through configuring each platform step by step. Only asks for what you want to set up.
-
-### Agent-Readable Guides
-
-Each platform has a detailed setup guide in `agent_eyes/guides/`. These are designed for AI Agents to read and follow — the Agent handles the technical steps, and only asks the user for things that require human action (logging in, copying API keys, buying proxies).
-
-| Guide | What It Configures |
-|-------|-------------------|
-| `setup-exa.md` | Exa search API key (free) |
-| `setup-reddit.md` | Reddit ISP proxy |
-| `setup-twitter.md` | Twitter birdx cookies |
-| `setup-xiaohongshu.md` | XiaoHongShu login |
-| `setup-wechat.md` | WeChat Playwright |
-| `setup-groq.md` | Groq Whisper API key (free) |
-
-### Manual Config
-
-Config file: `~/.agent-eyes/config.yaml`
-
-```yaml
-exa_api_key: "exa-..."
-github_token: "ghp_..."
-reddit_proxy: "http://user:pass@ip:port"
-groq_api_key: "gsk_..."
-```
-
-Environment variables also work (uppercase): `EXA_API_KEY`, `GITHUB_TOKEN`, etc.
-
----
-
-## Health Check
-
-```bash
-$ agent-eyes doctor
-
-👁️  Agent Eyes Status
-========================================
-
-✅ Ready (no setup needed):
-  ✅ Web Pages
-  ✅ GitHub
-  ✅ Bilibili
-  ✅ RSS
-  ✅ Tweet (single)
-  ✅ GitHub Search
-
-🔍 Search (need free Exa API key):
-  ⬜ Web Search
-  ⬜ Reddit Search
-  ⬜ Twitter Search
-
-🔧 Optional (advanced setup):
-  ⬜ Twitter Advanced — Install birdx for timeline/deep search
-  ⬜ Reddit Reader — Need proxy for full post reading
-  ⬜ WeChat — pip install agent-eyes[browser]
-  ⬜ XiaoHongShu — pip install agent-eyes[browser]
-
-Status: 7/13 platforms active
-Run `agent-eyes setup` to unlock more!
-```
-
----
-
-## Architecture
-
-Agent Eyes is pure glue. Every channel is a thin wrapper (~50 lines) around an external tool. **Swap any backend by changing one file.**
+<details>
+<summary>架构图</summary>
 
 ```
 ┌─────────────────────────────────────────┐
-│           Agent Eyes (pure glue)         │
+│           Agent Eyes（纯胶水）             │
 │                                          │
-│  ┌─────────────────────────────────────┐│
-│  │  Pluggable Channels                 ││
-│  │                                     ││
-│  │  web.py      → Jina Reader API      ││
-│  │  github.py   → GitHub API           ││
-│  │  twitter.py  → birdx + Jina         ││
-│  │  youtube.py  → yt-dlp               ││
-│  │  reddit.py   → Reddit JSON API      ││
-│  │  bilibili.py → Bilibili API         ││
-│  │  rss.py      → feedparser           ││
-│  │  exa.py      → Exa Search API       ││
-│  │                                     ││
-│  │  ↑ Swap any backend, nothing else   ││
-│  │    changes. Just edit one file.     ││
-│  └─────────────────────────────────────┘│
-│  ┌──────────┐ ┌──────────────────────┐  │
-│  │ Config   │ │ Integrations         │  │
-│  │ Doctor   │ │ CLI · MCP · Skill    │  │
-│  │ Guides   │ │ Python API           │  │
-│  └──────────┘ └──────────────────────┘  │
+│  web.py      → Jina Reader API           │
+│  github.py   → GitHub API                │
+│  twitter.py  → birdx + Jina              │
+│  youtube.py  → yt-dlp                    │
+│  reddit.py   → Reddit JSON API           │
+│  bilibili.py → Bilibili API              │
+│  rss.py      → feedparser                │
+│  exa.py      → Exa Search API            │
+│  xhs.py      → XHS Web API               │
+│                                          │
+│  CLI · MCP Server · Python API            │
 └─────────────────────────────────────────┘
 ```
-
-**Design principle**: Agent Eyes doesn't reinvent wheels. It aggregates the best free tools and makes them accessible to any AI Agent with one install.
+</details>
 
 ---
 
-## Credits
+## 致谢
 
-Agent Eyes stands on the shoulders of these amazing open-source projects:
-
-- **[Jina Reader](https://r.jina.ai)** — web page reading
-- **[birdx](https://github.com/runesleo/birdx)** by [@runes_leo](https://x.com/runes_leo) — Twitter access
-- **[Exa](https://exa.ai)** — semantic search
-- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** — YouTube transcripts
-- **[feedparser](https://github.com/kurtmckee/feedparser)** — RSS/Atom feeds
+- [Jina Reader](https://r.jina.ai) — 网页阅读
+- [birdx](https://github.com/runesleo/birdx) by [@runes_leo](https://x.com/runes_leo) — Twitter
+- [Exa](https://exa.ai) — 语义搜索
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) — YouTube
+- [feedparser](https://github.com/kurtmckee/feedparser) — RSS
 
 ## License
 
