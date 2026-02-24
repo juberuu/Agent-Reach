@@ -20,7 +20,7 @@
 
 AI Agents can already access the internet — but "can go online" is barely the start.
 
-The most valuable information lives across social and niche platforms: Twitter discussions, Reddit feedback, XiaoHongShu reviews, Bilibili videos, GitHub activity… **These are where information density is highest**, but each platform has its own barriers:
+The most valuable information lives across social and niche platforms: Twitter discussions, Reddit feedback, YouTube tutorials, XiaoHongShu reviews, Bilibili videos, GitHub activity… **These are where information density is highest**, but each platform has its own barriers:
 
 | Pain Point | Reality |
 |------------|---------|
