@@ -6,6 +6,24 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [1.3.0] - 2026-03-12
+
+### 🆕 New Channels / 新增渠道
+
+#### 💻 V2EX
+- Hot topics, node topics, topic detail + replies, user profile via public JSON API
+- Zero config — no auth, no proxy, no API key required
+- `get_hot_topics(limit)`, `get_node_topics(node_name, limit)`, `get_topic(id)`, `get_user(username)`
+- 通过公开 JSON API 获取热门帖子、节点帖子、帖子详情+回复、用户信息
+- 零配置，无需认证、无需代理、无需 API Key
+
+### 📈 Improvements / 改进
+
+- Channel count: 14 → 15
+- 渠道数量：14 → 15
+
+---
+
 ## [1.1.0] - 2025-02-25
 
 ### 🆕 New Channels / 新增渠道
