@@ -304,10 +304,10 @@ Install douyin-mcp-server, then your agent can use `mcporter call 'douyin.parse_
 - 📧 **Email:** pnt01@foxmail.com
 - 🐦 **Twitter/X:** [@Neo_Reidlab](https://x.com/Neo_Reidlab)
 
-Want to exchange AI Agent tips, share workflows, and learn from power users? Join our WeChat community group:
+For collaboration or questions, add me on WeChat — I'll invite you to the community group:
 
 <p align="center">
-  <img src="wechat-group-qr.jpg" width="280" alt="WeChat Group QR">
+  <img src="wechat-group-qr.jpg" width="280" alt="WeChat QR">
 </p>
 
 > For bug reports and feature requests, please use [GitHub Issues](https://github.com/Panniantong/Agent-Reach/issues) — easier to track.
