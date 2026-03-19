@@ -1106,9 +1106,9 @@ def _configure_xhs_cookies(value):
         )
         cookie_path_in_container = result.stdout.strip()
         if not cookie_path_in_container:
-            cookie_path_in_container = "cookies.json"  # fallback to workdir
+            cookie_path_in_container = "/app/cookies.json"  # fallback: absolute path in workdir
     except Exception:
-        cookie_path_in_container = "cookies.json"
+        cookie_path_in_container = "/app/cookies.json"
 
     # Write cookies into the container
     try:
@@ -1129,6 +1129,17 @@ def _configure_xhs_cookies(value):
             return
 
         print(f"✅ Cookies written to {container_name}:{cookie_path_in_container}")
+        # Restart container so it reloads cookies from disk
+        print("  Restarting container to reload cookies...", end=" ", flush=True)
+        try:
+            subprocess.run(
+                [docker, "restart", container_name],
+                capture_output=True, encoding="utf-8", timeout=30,
+            )
+            print("done")
+        except Exception as e:
+            print(f"\n  [!] Could not restart container: {e}")
+            print(f"  Restart manually: docker restart {container_name}")
     except Exception as e:
         print(f"[X] Failed to write cookies: {e}")
         return
