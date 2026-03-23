@@ -3,7 +3,7 @@
 AgentReach — installer, doctor, and configuration tool.
 
 Agent Reach helps AI agents install and configure upstream platform tools
-(xreach CLI, yt-dlp, mcporter, gh CLI, etc.). After installation, agents
+(bird CLI, yt-dlp, mcporter, gh CLI, etc.). After installation, agents
 call the upstream tools directly — no wrapper layer needed.
 
 Usage:

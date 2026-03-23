@@ -1,33 +1,35 @@
-# Twitter 高级功能配置指南（xreach CLI）
+# Twitter 高级功能配置指南（bird CLI）
 
 Twitter 基础阅读通过 Jina Reader 免费可用，无需配置。
 
-高级功能需要 xreach CLI：
+高级功能需要 bird CLI（@steipete/bird）：
 
-- 搜索推文（`xreach search`）
-- 读取完整推文和对话链（`xreach tweet`、`xreach thread`）
-- 用户时间线（`xreach tweets`）
+- 搜索推文（`bird search`）
+- 读取完整推文和对话链（`bird read`、`bird thread`）
+- 用户时间线（`bird user-tweets`）
 
-xreach 是免费开源工具（npm 包 xreach-cli），但需要你的 Twitter 账号 cookie。
+bird 是免费开源工具（npm 包 @steipete/bird），但需要你的 Twitter 账号 cookie。
 
 ## 快速配置
 
-1. 检查 xreach 是否安装：
+1. 检查 bird 是否安装：
 
 ```bash
-which xreach && echo "installed" || echo "not installed"
+which bird && echo "installed" || echo "not installed"
 ```
 
-2. 安装 xreach：
+2. 安装 bird：
 
 ```bash
-npm install -g xreach-cli
+npm install -g @steipete/bird
 ```
+
+> 备选包：`npm install -g @connormartin/bird`
 
 3. 测试是否配置好：
 
 ```bash
-AUTH_TOKEN="xxx" CT0="yyy" xreach search "test" -n 1
+AUTH_TOKEN="xxx" CT0="yyy" bird search "test" -n 1
 ```
 
 ## 获取 Cookie（Cookie-Editor 方式，推荐）
@@ -47,7 +49,7 @@ agent-reach configure twitter-cookies "粘贴的 cookie JSON"
 
 如果你已经知道 `auth_token` 和 `ct0`：
 
-1. 安装 xreach（如果没装）：`npm install -g xreach-cli`
+1. 安装 bird（如果没装）：`npm install -g @steipete/bird`
 
 2. 设置环境变量：
 
@@ -59,19 +61,21 @@ export CT0="你的ct0"
 3. 测试：
 
 ```bash
-xreach search "test" --auth-token "$AUTH_TOKEN" --ct0 "$CT0" -n 1
+bird search "test" -n 1
 ```
 
 ## 代理配置
 
-> xreach CLI 内置代理支持，通过 `--proxy` 参数传入：
+> bird CLI 支持通过环境变量设置代理：
 
 ```bash
-xreach search "test" --auth-token "$AUTH_TOKEN" --ct0 "$CT0" --proxy "http://user:pass@host:port"
+export HTTP_PROXY="http://user:pass@host:port"
+export HTTPS_PROXY="http://user:pass@host:port"
+bird search "test" -n 1
 ```
 
-也支持代理轮换文件：
+也可以使用全局代理工具：
 
 ```bash
-xreach search "test" --auth-token "$AUTH_TOKEN" --ct0 "$CT0" --proxy-file proxies.txt
+proxychains bird search "test" -n 1
 ```

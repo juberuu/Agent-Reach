@@ -113,7 +113,7 @@ def extract_all(browser: str = "chrome") -> Dict[str, dict]:
 
 
 def _sync_xfetch_session(auth_token: str, ct0: str) -> None:
-    """Sync Twitter credentials to ~/.config/xfetch/session.json for xreach CLI."""
+    """Sync Twitter credentials to ~/.config/xfetch/session.json (legacy xreach compat)."""
     import json
     import os
 
@@ -136,6 +136,31 @@ def _sync_xfetch_session(auth_token: str, ct0: str) -> None:
     except Exception:
         # Non-fatal: agent-reach config is the source of truth, xfetch sync is best-effort
         pass
+
+
+def _sync_bird_env(auth_token: str, ct0: str) -> None:
+    """Write Twitter credentials to ~/.config/bird/credentials.env for bird CLI.
+
+    bird reads AUTH_TOKEN and CT0 from environment variables. This writes a
+    shell-sourceable file so users can `source ~/.config/bird/credentials.env`.
+    """
+    import os
+
+    try:
+        bird_dir = os.path.join(os.path.expanduser("~"), ".config", "bird")
+        os.makedirs(bird_dir, exist_ok=True)
+        env_path = os.path.join(bird_dir, "credentials.env")
+        with open(env_path, "w", encoding="utf-8") as f:
+            f.write(f'AUTH_TOKEN="{auth_token}"\n')
+            f.write(f'CT0="{ct0}"\n')
+        os.chmod(env_path, 0o600)
+    except Exception:
+        # Non-fatal: agent-reach config is the source of truth, bird env sync is best-effort
+        pass
+
+
+# Alias for callers expecting the name _sync_bird_credentials
+_sync_bird_credentials = _sync_bird_env
 
 
 def configure_from_browser(browser: str, config) -> List[Tuple[str, bool, str]]:
@@ -162,7 +187,8 @@ def configure_from_browser(browser: str, config) -> List[Tuple[str, bool, str]]:
         if "auth_token" in tc and "ct0" in tc:
             config.set("twitter_auth_token", tc["auth_token"])
             config.set("twitter_ct0", tc["ct0"])
-            # Sync credentials to xreach's session.json so `xreach auth check` works
+            # Sync credentials to bird CLI env and legacy xfetch session.json
+            _sync_bird_env(tc["auth_token"], tc["ct0"])
             _sync_xfetch_session(tc["auth_token"], tc["ct0"])
             results_list.append(("Twitter/X", True, "auth_token + ct0"))
         else:
