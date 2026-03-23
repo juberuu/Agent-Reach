@@ -39,13 +39,13 @@ mcporter call 'exa.web_search_exa(query: "query", numResults: 5)'
 mcporter call 'exa.get_code_context_exa(query: "code question", tokensNum: 3000)'
 ```
 
-## Twitter/X (xreach)
+## Twitter/X (bird)
 
 ```bash
-xreach search "query" -n 10 --json          # search
-xreach tweet URL_OR_ID --json                # read tweet (supports /status/ and /article/ URLs)
-xreach tweets @username -n 20 --json         # user timeline
-xreach thread URL_OR_ID --json               # full thread
+bird search "query" -n 10                  # search
+bird read URL_OR_ID                        # read tweet (supports /status/ and /article/ URLs)
+bird user-tweets @username -n 20           # user timeline
+bird thread URL_OR_ID                      # full thread
 ```
 
 ## YouTube (yt-dlp)

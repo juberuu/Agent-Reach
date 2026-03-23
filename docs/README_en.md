@@ -51,7 +51,7 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 |---|---|
 | 💰 **Completely free** | All tools are open source, all APIs are free. The only possible cost is a server proxy ($1/month) — local computers don't need one |
 | 🔒 **Privacy safe** | Cookies stay local. Never uploaded. Fully open source — audit anytime |
-| 🔄 **Kept up to date** | Upstream tools (yt-dlp, xreach, Jina Reader, etc.) are tracked and updated regularly |
+| 🔄 **Kept up to date** | Upstream tools (yt-dlp, bird, Jina Reader, etc.) are tracked and updated regularly |
 | 🤖 **Works with any Agent** | Claude Code, OpenClaw, Cursor, Windsurf… any Agent that can run commands |
 | 🩺 **Built-in diagnostics** | `agent-reach doctor` — one command shows what works, what doesn't, and how to fix it |
 
@@ -62,7 +62,7 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 | Platform | Capabilities | Setup | Notes |
 |----------|-------------|:-----:|-------|
 | 🌐 **Web** | Read | Zero config | Any URL → clean Markdown ([Jina Reader](https://github.com/jina-ai/reader) ⭐9.8K) |
-| 🐦 **Twitter/X** | Read · Search | Zero config / Cookie | Single tweets readable out of the box. Cookie unlocks search, timeline, posting ([xreach](https://www.npmjs.com/package/xreach-cli)) |
+| 🐦 **Twitter/X** | Read · Search | Zero config / Cookie | Single tweets readable out of the box. Cookie unlocks search, timeline, posting ([bird](https://www.npmjs.com/package/@steipete/bird)) |
 | 📕 **XiaoHongShu** | Read · Search · **Post · Comment · Like** | mcporter | Via [xiaohongshu-mcp](https://github.com/user/xiaohongshu-mcp) internal API, install and go |
 | 🎵 **Douyin** | Video parsing · Watermark-free download | mcporter | Via [douyin-mcp-server](https://github.com/yzfly/douyin-mcp-server), no login needed |
 | 💼 **LinkedIn** | Jina Reader (public pages) | Full profiles, companies, job search | Tell your Agent "help me set up LinkedIn" |
@@ -126,7 +126,7 @@ No configuration needed — just tell your Agent:
 - "Read this link" → `curl https://r.jina.ai/URL` for any web page
 - "What's this GitHub repo about?" → `gh repo view owner/repo`
 - "What does this video cover?" → `yt-dlp --dump-json URL` for subtitles
-- "Read this tweet" → `xreach tweet URL --json`
+- "Read this tweet" → `bird read URL`
 - "Subscribe to this RSS" → `feedparser` to parse feeds
 - "Search GitHub for LLM frameworks" → `gh search repos "LLM framework"`
 
@@ -186,7 +186,7 @@ Every time you spin up a new Agent, you spend time finding tools, installing dep
 
 Agent Reach does one simple thing: **it makes those tool selection and configuration decisions for you.**
 
-After installation, your Agent calls the upstream tools directly (xreach CLI, yt-dlp, mcporter, gh CLI, etc.) — no wrapper layer in between.
+After installation, your Agent calls the upstream tools directly (bird CLI, yt-dlp, mcporter, gh CLI, etc.) — no wrapper layer in between.
 
 ### 🔌 Every Channel is Pluggable
 
@@ -195,7 +195,7 @@ Each platform maps to an upstream tool. **Don't like one? Swap it out.**
 ```
 channels/
 ├── web.py          → Jina Reader     ← swap to Firecrawl, Crawl4AI…
-├── twitter.py      → xreach            ← swap to Nitter, official API…
+├── twitter.py      → bird CLI         ← swap to Nitter, official API…
 ├── youtube.py      → yt-dlp          ← swap to YouTube API, Whisper…
 ├── github.py       → gh CLI          ← swap to REST API, PyGithub…
 ├── bilibili.py     → yt-dlp          ← swap to bilibili-api…
@@ -215,7 +215,7 @@ Each channel file only checks whether its upstream tool is installed and working
 | Scenario | Tool | Why |
 |----------|------|-----|
 | Read web pages | [Jina Reader](https://github.com/jina-ai/reader) | 9.8K stars, free, no API key needed |
-| Read tweets | [xreach](https://www.npmjs.com/package/xreach-cli) | Cookie auth, free. Official API is pay-per-use ($0.005/post read) |
+| Read tweets | [bird](https://www.npmjs.com/package/@steipete/bird) | Cookie auth, free. Official API is pay-per-use ($0.005/post read) |
 | Video subtitles + search | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | 148K stars, YouTube + Bilibili + 1800 sites |
 | Search the web | [Exa](https://exa.ai) via [mcporter](https://github.com/nicepkg/mcporter) | AI semantic search, MCP integration, no API key |
 | GitHub | [gh CLI](https://cli.github.com) | Official tool, full API after auth |
@@ -248,7 +248,7 @@ This project was entirely vibe-coded 🎸 There might be rough edges here and th
 <details>
 <summary><strong>How to search Twitter/X with AI agent without paying for API?</strong></summary>
 
-Agent Reach uses the [xreach CLI](https://www.npmjs.com/package/xreach-cli) with cookie-based authentication — completely free, no Twitter API subscription needed. After installing Agent Reach, export your Twitter cookies using the Cookie-Editor Chrome extension, run `agent-reach configure twitter-cookies "your_cookies"`, and your agent can search with `xreach search "query" --json`.
+Agent Reach uses the [bird CLI](https://www.npmjs.com/package/@steipete/bird) with cookie-based authentication — completely free, no Twitter API subscription needed. After installing Agent Reach, export your Twitter cookies using the Cookie-Editor Chrome extension, run `agent-reach configure twitter-cookies "your_cookies"`, and your agent can search with `bird search "query" -n 10`.
 </details>
 
 <details>
@@ -272,13 +272,13 @@ Yes! Agent Reach is an installer + configuration tool. Any AI coding agent that 
 <details>
 <summary><strong>Is Agent Reach free? Any API costs?</strong></summary>
 
-100% free and open source. All backends (xreach CLI, yt-dlp, Jina Reader, Exa) are free tools that don't require paid API keys. The only optional cost is a residential proxy (~$1/month) if you need Reddit/Bilibili access from a server.
+100% free and open source. All backends (bird CLI, yt-dlp, Jina Reader, Exa) are free tools that don't require paid API keys. The only optional cost is a residential proxy (~$1/month) if you need Reddit/Bilibili access from a server.
 </details>
 
 <details>
 <summary><strong>Free alternative to Twitter API for web scraping?</strong></summary>
 
-Agent Reach uses xreach CLI which accesses Twitter via cookie auth — same as your browser session. No API fees, no rate limit tiers, no developer account needed. Supports search, read tweets, read profiles, and timelines.
+Agent Reach uses bird CLI which accesses Twitter via cookie auth — same as your browser session. No API fees, no rate limit tiers, no developer account needed. Supports search, read tweets, read profiles, and timelines.
 </details>
 
 <details>
@@ -297,7 +297,7 @@ Install douyin-mcp-server, then your agent can use `mcporter call 'douyin.parse_
 
 ## Credits
 
-[Jina Reader](https://github.com/jina-ai/reader) · [yt-dlp](https://github.com/yt-dlp/yt-dlp) · [xreach](https://www.npmjs.com/package/xreach-cli) · [Exa](https://exa.ai) · [feedparser](https://github.com/kurtmckee/feedparser) · [douyin-mcp-server](https://github.com/yzfly/douyin-mcp-server) · [linkedin-scraper-mcp](https://github.com/stickerdaniel/linkedin-mcp-server)
+[Jina Reader](https://github.com/jina-ai/reader) · [yt-dlp](https://github.com/yt-dlp/yt-dlp) · [bird](https://www.npmjs.com/package/@steipete/bird) · [Exa](https://exa.ai) · [feedparser](https://github.com/kurtmckee/feedparser) · [douyin-mcp-server](https://github.com/yzfly/douyin-mcp-server) · [linkedin-scraper-mcp](https://github.com/stickerdaniel/linkedin-mcp-server)
 
 ## Contact
 
