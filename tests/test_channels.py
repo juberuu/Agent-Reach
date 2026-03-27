@@ -473,31 +473,23 @@ class TestXueqiuChannel:
 
         monkeypatch.setattr(xueqiu_mod, "_cookies_initialized", True)
 
-        fake_data = {
-            "data": {
-                "items": [
-                    {
-                        "original_status": {
-                            "id": 111,
-                            "title": "市场分析",
-                            "text": "<p>今天大盘走势&amp;分析</p>",
-                            "user": {"screen_name": "投资者A"},
-                            "like_count": 42,
-                            "target": "/1234567890/111",
-                        }
-                    },
-                    {
-                        "original_status": {
-                            "id": 222,
-                            "title": "",
-                            "text": "短评",
-                            "user": {"screen_name": "投资者B"},
-                            "like_count": 10,
-                            "target": "/9876543210/222",
-                        }
-                    },
-                ]
+        # v4 timeline: each item has a JSON-encoded `data` field
+        def make_item(id_, title, text, author, likes, target):
+            post = {
+                "id": id_,
+                "title": title,
+                "text": text,
+                "user": {"screen_name": author},
+                "like_count": likes,
+                "target": target,
             }
+            return {"data": json.dumps(post), "original_status": None}
+
+        fake_data = {
+            "list": [
+                make_item(111, "市场分析", "<p>今天大盘走势&amp;分析</p>", "投资者A", 42, "/1234567890/111"),
+                make_item(222, "", "短评", "投资者B", 10, "/9876543210/222"),
+            ]
         }
 
         class FakeResponse:
@@ -526,21 +518,20 @@ class TestXueqiuChannel:
         monkeypatch.setattr(xueqiu_mod, "_cookies_initialized", True)
 
         fake_data = {
-            "data": {
-                "items": [
-                    {
-                        "original_status": {
-                            "id": i,
-                            "title": f"Post {i}",
-                            "text": f"Content {i}",
-                            "user": {"screen_name": f"User {i}"},
-                            "like_count": i,
-                            "target": f"/user/{i}",
-                        }
-                    }
-                    for i in range(10)
-                ]
-            }
+            "list": [
+                {
+                    "data": json.dumps({
+                        "id": i,
+                        "title": f"Post {i}",
+                        "text": f"Content {i}",
+                        "user": {"screen_name": f"User {i}"},
+                        "like_count": i,
+                        "target": f"/user/{i}",
+                    }),
+                    "original_status": None,
+                }
+                for i in range(10)
+            ]
         }
 
         class FakeResponse:
@@ -593,6 +584,68 @@ class TestXueqiuChannel:
         assert stocks[0]["rank"] == 1
         assert stocks[1]["percent"] == -0.8
         assert stocks[2]["rank"] == 3
+
+    # ------------------------------------------------------------------ #
+    # Cookie loading
+    # ------------------------------------------------------------------ #
+
+    def test_ensure_cookies_loads_from_config(self, monkeypatch, tmp_path):
+        """_ensure_cookies() should inject cookies from the config file."""
+        import agent_reach.channels.xueqiu as xueqiu_mod
+
+        monkeypatch.setattr(xueqiu_mod, "_cookies_initialized", False)
+
+        # Provide a fake Config that returns a cookie string with xq_a_token
+        class FakeConfig:
+            def get(self, key, default=None):
+                if key == "xueqiu_cookie":
+                    return "xq_a_token=TESTTOKEN; xq_is_login=1"
+                return default
+
+        import agent_reach.channels.xueqiu as xq_mod
+        monkeypatch.setattr(
+            xq_mod,
+            "_load_cookies_from_config",
+            lambda: (xq_mod._inject_cookie_string("xq_a_token=TESTTOKEN; xq_is_login=1") or True),
+        )
+        monkeypatch.setattr(xq_mod, "_load_cookies_from_browser", lambda: False)
+
+        # Patch opener so no real HTTP call is made
+        class FakeResp:
+            def __enter__(self): return self
+            def __exit__(self, *_): pass
+            def read(self): return b'{"data":{"items":[]}}'
+
+        monkeypatch.setattr(xq_mod._opener, "open", lambda req, timeout=None: FakeResp())
+
+        xq_mod._ensure_cookies()
+        assert xq_mod._cookies_initialized is True
+        cookie_names = {c.name for c in xq_mod._cookie_jar}
+        assert "xq_a_token" in cookie_names
+
+    def test_get_json_sends_referer_and_browser_ua(self, monkeypatch):
+        """_get_json() must send Referer and a browser-like User-Agent."""
+        import agent_reach.channels.xueqiu as xueqiu_mod
+
+        monkeypatch.setattr(xueqiu_mod, "_cookies_initialized", True)
+        captured = {}
+
+        class FakeResp:
+            def __enter__(self): return self
+            def __exit__(self, *_): pass
+            def read(self): return b'{"data":{"items":[]}}'
+
+        def fake_open(req, timeout=None):
+            captured["ua"] = req.get_header("User-agent")
+            captured["referer"] = req.get_header("Referer")
+            return FakeResp()
+
+        monkeypatch.setattr(xueqiu_mod._opener, "open", fake_open)
+        xueqiu_mod._get_json("https://stock.xueqiu.com/v5/stock/batch/quote.json?symbol=SH000001")
+
+        assert captured["referer"] == "https://xueqiu.com/"
+        assert "Mozilla" in captured["ua"]
+        assert "agent-reach" not in captured["ua"]
 
 
 class TestXiaoHongShuChannel:

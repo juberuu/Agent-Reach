@@ -112,13 +112,13 @@ Some channels need credentials only the user can provide. Based on the doctor ou
 
 > 🍪 **Cookie 导入（所有需要登录的平台通用）：**
 >
-> 所有需要 Cookie 的平台（Twitter、小红书等），**优先使用 Cookie-Editor 导入**，这是最简单最可靠的方式：
+> 所有需要 Cookie 的平台（Twitter、小红书、雪球等），**优先使用 Cookie-Editor 导入**，这是最简单最可靠的方式：
 > 1. 用户在自己的浏览器上登录对应平台
 > 2. 安装 [Cookie-Editor](https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm) Chrome 插件
 > 3. 点击插件 → Export → Header String
 > 4. 把导出的字符串发给 Agent
 >
-> **本地电脑用户**也可以用 `agent-reach configure --from-browser chrome` 一键自动提取（支持 Twitter + 小红书）。
+> **本地电脑用户**也可以用 `agent-reach configure --from-browser chrome` 一键自动提取（支持 Twitter + 小红书 + 雪球）。
 
 **Twitter search & posting:**
 > "To unlock Twitter search, I need your Twitter cookies. Install the Cookie-Editor Chrome extension, go to x.com/twitter.com, click the extension → Export → Header String, and paste it to me."
@@ -184,6 +184,15 @@ mcporter config add weibo --command 'mcp-server-weibo'
 ```
 
 > 无需登录、无需 Cookie、无需代理。海外服务器也可以直接访问。
+
+**雪球 / Xueqiu (股票行情 + 热门帖子):**
+> "雪球需要登录后的 Cookie。请先在 Chrome 里登录 xueqiu.com，然后运行："
+
+```bash
+agent-reach configure --from-browser chrome
+```
+
+> Cookie 会随其他平台一起自动提取。
 
 **小宇宙播客 / Xiaoyuzhou Podcast (Groq Whisper):**
 > "小宇宙播客转文字已默认安装，只需要一个免费的 Groq API Key。"

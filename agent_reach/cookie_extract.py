@@ -32,6 +32,12 @@ PLATFORM_SPECS = [
         "cookies": ["SESSDATA", "bili_jct"],
         "config_key": "bilibili",
     },
+    {
+        "name": "Xueqiu",
+        "domains": [".xueqiu.com", "xueqiu.com"],
+        "cookies": None,  # grab all — xq_a_token + session cookies required
+        "config_key": "xueqiu",
+    },
 ]
 
 
@@ -216,5 +222,17 @@ def configure_from_browser(browser: str, config) -> List[Tuple[str, bool, str]]:
         else:
             results_list.append(("Bilibili", False,
                                  f"No SESSDATA found. Make sure you're logged into bilibili.com in {browser}."))
+
+    if "xueqiu" in extracted:
+        cookie_str = extracted["xueqiu"].get("cookie_string", "")
+        # Only save if xq_a_token is present — anonymous cookies are useless
+        if cookie_str and "xq_a_token" in cookie_str:
+            config.set("xueqiu_cookie", cookie_str)
+            n_cookies = len(cookie_str.split(";"))
+            results_list.append(("Xueqiu", True, f"{n_cookies} cookies (含 xq_a_token)"))
+        elif cookie_str:
+            results_list.append(("Xueqiu", False,
+                                 f"找到 {len(cookie_str.split(';'))} 个 Cookie 但缺少 xq_a_token，"
+                                 f"请先在 {browser} 中登录 xueqiu.com"))
 
     return results_list
