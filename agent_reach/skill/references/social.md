@@ -35,24 +35,23 @@ mcporter call 'douyin.extract_douyin_text(share_link: "https://v.douyin.com/xxx/
 
 > **无需登录**
 
-## Twitter/X (xreach CLI)
+## Twitter/X (bird CLI)
 
 ```bash
 # 搜索推文
-xreach search "query" -n 10 --json
+bird search "query" -n 10
 
 # 读取单条推文 (支持 /status/ 和 /article/ URL)
-xreach tweet URL_OR_ID --json
+bird read URL_OR_ID
 
 # 用户时间线
-xreach tweets @username -n 20 --json
+bird user-tweets @username -n 20
 
 # 读取完整 thread
-xreach thread URL_OR_ID --json
+bird thread URL_OR_ID
 ```
 
 > **需要配置**: `agent-reach configure twitter-auth ...` 或通过环境变量配置。
-> 如果 fetch 失败，确保安装了 undici: `npm install -g undici`
 
 ## 微博 / Weibo
 
@@ -136,14 +135,20 @@ user = ch.get_user("Livid")
 
 > **节点列表**: https://www.v2ex.com/planes
 
-## Reddit (公开 API)
+## Reddit (通过 Exa)
+
+Reddit 封锁了几乎所有非浏览器访问（包括代理 IP）。搜索和阅读全部通过 Exa 完成，免费且无需代理。
+
+### 搜索 Reddit 内容
 
 ```bash
-# 获取 subreddit 热门帖子
-curl -s "https://www.reddit.com/r/SUBREDDIT/hot.json?limit=10" -H "User-Agent: agent-reach/1.0"
-
-# 搜索
-curl -s "https://www.reddit.com/search.json?q=QUERY&limit=10" -H "User-Agent: agent-reach/1.0"
+mcporter call 'exa.web_search_exa(query: "your search query", numResults: 5, includeDomains: ["reddit.com"])'
 ```
 
-> **注意**: 服务器 IP 可能遇到 403 错误。搜索建议使用 Exa 代替，或配置代理。
+### 阅读完整帖子和评论
+
+```bash
+mcporter call 'exa.crawling_exa(urls: ["https://www.reddit.com/r/SUBREDDIT/comments/POST_ID/TITLE/"], maxCharacters: 10000)'
+```
+
+> **零配置**: 只需安装 Exa MCP（`agent-reach install --env=auto` 自动完成）。无需代理，无需 API Key。

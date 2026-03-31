@@ -1,30 +1,31 @@
 # -*- coding: utf-8 -*-
-"""Reddit — check connectivity and proxy configuration."""
+"""Reddit — search and read via Exa (no direct Reddit API needed)."""
 
-import os
-import urllib.request
+import shutil
+import subprocess
 from .base import Channel
 
-_UA = "agent-reach/1.0"
-_TIMEOUT = 10
 
-
-def _reddit_reachable() -> bool:
-    """Return True if Reddit JSON API responds with 200 (带 User-Agent)."""
-    url = "https://www.reddit.com/r/linux.json?limit=1"
-    req = urllib.request.Request(url, headers={"User-Agent": _UA})
+def _exa_available() -> bool:
+    """Return True if mcporter is installed and Exa MCP is configured."""
+    mcporter = shutil.which("mcporter")
+    if not mcporter:
+        return False
     try:
-        with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
-            return resp.status == 200
+        r = subprocess.run(
+            [mcporter, "config", "list"], capture_output=True,
+            encoding="utf-8", errors="replace", timeout=5
+        )
+        return "exa" in r.stdout.lower()
     except Exception:
         return False
 
 
 class RedditChannel(Channel):
     name = "reddit"
-    description = "Reddit 帖子和评论"
-    backends = ["JSON API", "Exa"]
-    tier = 1
+    description = "Reddit 帖子和评论（通过 Exa 搜索和阅读）"
+    backends = ["Exa via mcporter"]
+    tier = 0
 
     def can_handle(self, url: str) -> bool:
         from urllib.parse import urlparse
@@ -32,13 +33,10 @@ class RedditChannel(Channel):
         return "reddit.com" in d or "redd.it" in d
 
     def check(self, config=None):
-        proxy = (config.get("reddit_proxy") if config else None) or os.environ.get("REDDIT_PROXY")
-        if proxy:
-            return "ok", "代理已配置，可读取帖子。搜索走 Exa"
-        # 实际探测连通性（带 User-Agent，符合 Reddit API 要求）
-        if _reddit_reachable():
-            return "ok", "直连可用（JSON API 响应正常）。搜索走 Exa"
-        return "warn", (
-            "无代理且 Reddit JSON API 无响应。服务器 IP 可能被封锁。配置代理：\n"
-            "  agent-reach configure proxy http://user:pass@ip:port"
+        if _exa_available():
+            return "ok", "通过 Exa 搜索和阅读 Reddit 内容（免费，无需代理）"
+        return "off", (
+            "需要 mcporter + Exa MCP。安装：\n"
+            "  npm install -g mcporter\n"
+            "  mcporter config add exa https://mcp.exa.ai/mcp"
         )
