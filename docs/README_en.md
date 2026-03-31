@@ -76,7 +76,7 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 | 📺 **YouTube** | Read · **Search** | Zero config | Subtitles + search across 1800+ video sites ([yt-dlp](https://github.com/yt-dlp/yt-dlp) ⭐148K) |
 | 📺 **Bilibili** | Read · **Search** | Zero config / Proxy | Video info + subtitles + search. Local works directly, servers need a proxy ([yt-dlp](https://github.com/yt-dlp/yt-dlp)) |
 | 📡 **RSS** | Read | Zero config | Any RSS/Atom feed ([feedparser](https://github.com/kurtmckee/feedparser) ⭐2.3K) |
-| 📖 **Reddit** | Search · Read | Free / Proxy | Search via Exa (free). Reading posts needs a proxy on servers |
+| 📖 **Reddit** | Search · Read | Zero config | Search and read via Exa (free, no proxy needed) |
 
 > **Setup levels:** Zero config = install and go · Auto-configured = handled during install · mcporter = needs MCP service · Cookie = export from browser · Proxy = $1/month
 
@@ -145,9 +145,9 @@ Tell your Agent "help me configure Twitter cookies" — it'll guide you through 
 
 ### 🌐 Proxy — $1/month, servers only
 
-Reddit and Bilibili block server IPs. Get a proxy ([Webshare](https://webshare.io) recommended, $1/month) and send the address to your Agent.
+Bilibili blocks server IPs. Get a proxy ([Webshare](https://webshare.io) recommended, $1/month) and send the address to your Agent.
 
-> Local computers don't need a proxy. Reddit search works free via Exa even without one.
+> Reddit now works free via Exa without any proxy. Local computers don't need a proxy for Bilibili either.
 
 ---
 
@@ -171,7 +171,7 @@ $ agent-reach doctor
   ⬜ Web semantic search — sign up at exa.ai for free key
 
 🔧 Configurable:
-  ⬜ Reddit posts and comments — search via Exa (free). Reading needs proxy
+  ✅ Reddit posts and comments — search and read via Exa (free, no proxy)
   ⬜ XiaoHongShu notes — needs cookie. Export from browser
 
 Status: 6/9 channels available
@@ -200,7 +200,7 @@ channels/
 ├── youtube.py      → yt-dlp          ← swap to YouTube API, Whisper…
 ├── github.py       → gh CLI          ← swap to REST API, PyGithub…
 ├── bilibili.py     → yt-dlp          ← swap to bilibili-api…
-├── reddit.py       → JSON API + Exa  ← swap to PRAW, Pushshift…
+├── reddit.py       → Exa             ← search + read, no proxy needed
 ├── xiaohongshu.py  → mcporter MCP    ← swap to other XHS tools…
 ├── douyin.py       → mcporter MCP    ← swap to other Douyin tools…
 ├── linkedin.py     → linkedin-mcp    ← swap to LinkedIn API…
@@ -261,7 +261,7 @@ Agent Reach uses the [bird CLI](https://www.npmjs.com/package/@steipete/bird) wi
 <details>
 <summary><strong>Reddit returns 403 from server / datacenter IP blocked?</strong></summary>
 
-Reddit blocks datacenter IPs. Configure a residential proxy: `agent-reach configure proxy http://user:pass@ip:port`. Recommended: Webshare (~$1/month). Local machines typically don't have this issue.
+Agent Reach now uses Exa to search and read Reddit content, completely bypassing Reddit's IP blocks. No proxy needed. Run `agent-reach install --env=auto` to set up Exa automatically.
 </details>
 
 <details>
@@ -273,7 +273,7 @@ Yes! Agent Reach is an installer + configuration tool. Any AI coding agent that 
 <details>
 <summary><strong>Is Agent Reach free? Any API costs?</strong></summary>
 
-100% free and open source. All backends (bird CLI, yt-dlp, Jina Reader, Exa) are free tools that don't require paid API keys. The only optional cost is a residential proxy (~$1/month) if you need Reddit/Bilibili access from a server.
+100% free and open source. All backends (bird CLI, yt-dlp, Jina Reader, Exa) are free tools that don't require paid API keys. The only optional cost is a residential proxy (~$1/month) if you need Bilibili access from a server. Reddit works free via Exa without any proxy.
 </details>
 
 <details>

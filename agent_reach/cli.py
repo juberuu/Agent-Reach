@@ -186,11 +186,10 @@ def _cmd_install(args):
     # Apply explicit flags
     if args.proxy:
         if dry_run:
-            print(f"[dry-run] Would configure proxy for Reddit + Bilibili")
+            print(f"[dry-run] Would configure proxy for Bilibili")
         else:
-            config.set("reddit_proxy", args.proxy)
             config.set("bilibili_proxy", args.proxy)
-            print(f"✅ Proxy configured for Reddit + Bilibili")
+            print(f"✅ Proxy configured for Bilibili")
 
     # ── Install system dependencies ──
     print()
@@ -987,26 +986,9 @@ def _cmd_configure(args):
         return
 
     if args.key == "proxy":
-        config.set("reddit_proxy", value)
         config.set("bilibili_proxy", value)
-        print(f"✅ Proxy configured for Reddit + Bilibili!")
-
-        # Auto-test
-        print("Testing Reddit access...", end=" ")
-        try:
-            import requests
-            resp = requests.get(
-                "https://www.reddit.com/r/test.json?limit=1",
-                headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"},
-                proxies={"http": value, "https": value},
-                timeout=10,
-            )
-            if resp.status_code == 200:
-                print("✅ Reddit works!")
-            else:
-                print(f"[!] Reddit returned {resp.status_code}")
-        except Exception as e:
-            print(f"[X] Failed: {e}")
+        print(f"✅ Proxy configured for Bilibili!")
+        print("  Note: Reddit 已改为通过 Exa 访问，无需代理。")
 
     elif args.key == "twitter-cookies":
         # Accept two formats:
@@ -1466,20 +1448,9 @@ def _cmd_setup():
             print("  跳过。公开 API 也能用")
     print()
 
-    # Step 3: Reddit proxy
-    print("【可选】Reddit 代理 — 完整阅读 Reddit 帖子+评论")
-    print("  Reddit 封锁很多 IP，需要 ISP 代理才能直接访问")
-    print("  格式: http://用户名:密码@IP:端口")
-    current = config.get("reddit_proxy")
-    if current:
-        print(f"  当前状态: ✅ 已配置")
-    else:
-        proxy = input("  REDDIT_PROXY (回车跳过): ").strip()
-        if proxy:
-            config.set("reddit_proxy", proxy)
-            print("  ✅ Reddit 完整阅读已开启！")
-        else:
-            print("  跳过。仍可通过搜索获取 Reddit 内容")
+    # Step 3: Reddit — no config needed (uses Exa)
+    print("【信息】Reddit — 通过 Exa 搜索和阅读，无需配置")
+    print("  搜索和阅读 Reddit 内容已通过 Exa 自动完成，免费无需代理。")
     print()
 
     # Step 4: Groq (Whisper)

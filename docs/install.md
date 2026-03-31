@@ -336,7 +336,7 @@ After installation, use upstream tools directly. See SKILL.md for the full comma
 | Twitter/X | `bird` | `bird search "query" -n 10` |
 | YouTube | `yt-dlp` | `yt-dlp --dump-json URL` |
 | Bilibili | `yt-dlp` | `yt-dlp --dump-json URL` |
-| Reddit | `curl` | `curl -s "https://reddit.com/r/xxx.json"` |
+| Reddit | `mcporter` (Exa) | `mcporter call 'exa.web_search_exa(query: "...", includeDomains: ["reddit.com"])'` |
 | GitHub | `gh` | `gh search repos "query"` |
 | Web | `curl` + Jina | `curl -s "https://r.jina.ai/URL"` |
 | Exa Search | `mcporter` | `mcporter call 'exa.web_search_exa(...)'` |
