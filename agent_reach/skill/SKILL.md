@@ -255,7 +255,7 @@ print(result[0]["error"])  # 提示使用站内搜索或 Exa channel
 
 > No auth required. Results are public JSON. V2EX 节点名见 https://www.v2ex.com/planes
 
-## 雪球 / Xueqiu (public API)
+## 雪球 / Xueqiu (需要登录 Cookie)
 
 ```python
 from agent_reach.channels.xueqiu import XueqiuChannel
@@ -274,7 +274,7 @@ stocks = ch.search_stock("茅台", limit=5)
 for s in stocks:
     print(f"{s['name']} ({s['symbol']}) - {s['exchange']}")
 
-# 热门帖子
+# 热门帖子（v4 timeline，含作者、点赞数、正文）
 # 返回字段：id, title, text(前200字), author, likes, url
 posts = ch.get_hot_posts(limit=10)
 for p in posts:
@@ -287,7 +287,7 @@ for s in hot:
     print(f"#{s['rank']} {s['name']} ({s['symbol']}): {s['current']} ({s['percent']}%)")
 ```
 
-> 无需登录。自动获取会话 Cookie，所有公开 API 均可直接使用。
+> 需要登录 Cookie。先在 Chrome 登录 xueqiu.com，再运行 `agent-reach configure --from-browser chrome`。
 
 ## RSS (feedparser)
 
