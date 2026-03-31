@@ -20,7 +20,7 @@ Copy this to your AI Agent:
 
 ### Goal
 
-Install Agent Reach and all upstream tools so your user's agent has full internet access. After installation, you'll use the upstream tools directly (bird CLI, yt-dlp, mcporter, gh CLI, etc.) — Agent Reach is just the installer and health checker.
+Install Agent Reach and all upstream tools so your user's agent has full internet access. After installation, you'll use the upstream tools directly (twitter-cli, rdt-cli, xhs-cli, yt-dlp, mcporter, gh CLI, etc.) — Agent Reach is just the installer and health checker.
 
 ### ⚠️ Boundaries
 
@@ -140,8 +140,7 @@ agent-reach configure twitter-cookies "PASTED_STRING"
 
 > **代理说明（中国大陆等需要翻墙的网络环境）：**
 >
-> bird CLI 使用 Node.js，在需要代理的网络环境下可通过环境变量配置代理。
-> Agent Reach 安装时会自动安装 `undici`（`npm install -g undici`）以提供代理支持。
+> twitter-cli 和 rdt-cli 使用 Python，在需要代理的网络环境下可通过环境变量配置代理。
 >
 > **你（Agent）需要做的：**
 > 1. 确认用户配了代理：`agent-reach configure proxy http://user:pass@ip:port`
@@ -385,10 +384,10 @@ After installation, use upstream tools directly. See SKILL.md for the full comma
 
 | Platform | Upstream Tool | Example |
 |----------|--------------|---------|
-| Twitter/X | `bird` | `bird search "query" -n 10` |
+| Twitter/X | `twitter` | `twitter search "query" -n 10` |
 | YouTube | `yt-dlp` | `yt-dlp --dump-json URL` |
-| Bilibili | `yt-dlp` | `yt-dlp --dump-json URL` |
-| Reddit | `mcporter` (Exa) | `mcporter call 'exa.web_search_exa(query: "...", includeDomains: ["reddit.com"])'` |
+| Bilibili | `yt-dlp` + `bili` | `bili hot` / `bili search "query" --type video` |
+| Reddit | `rdt` | `rdt search "query"` / `rdt read POST_ID` |
 | GitHub | `gh` | `gh search repos "query"` |
 | Web | `curl` + Jina | `curl -s "https://r.jina.ai/URL"` |
 | Exa Search | `mcporter` | `mcporter call 'exa.web_search_exa(...)'` |
