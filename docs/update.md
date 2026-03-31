@@ -71,15 +71,9 @@ which yt-dlp >/dev/null 2>&1 || pip install yt-dlp 2>/dev/null
 which gh >/dev/null 2>&1 || echo "GitHub CLI not installed — see https://cli.github.com"
 ```
 
-### Step 4: Clean up deprecated tools
+### Step 4: Coexistence (DO NOT uninstall old tools)
 
-```bash
-# Remove bird CLI (repo deleted, replaced by twitter-cli)
-which bird >/dev/null 2>&1 && npm uninstall -g @steipete/bird 2>/dev/null && echo "✅ Removed deprecated bird CLI"
-
-# Note: browser_cookie3 is still supported as fallback, no need to remove
-# Note: miku_ai is no longer needed (WeChat now uses Exa), but no harm keeping it
-```
+**IMPORTANT: Never uninstall any existing tools the user already has installed.** Old tools (bird, browser_cookie3, miku_ai, etc.) may still be working on the user's machine even if their upstream repos are archived or deleted. Agent Reach supports both old and new tools as fallback. Only install new tools alongside existing ones.
 
 ### Step 5: Verify
 
