@@ -59,9 +59,11 @@ mcporter call 'douyin.extract_douyin_text(share_link: "https://v.douyin.com/xxx/
 
 ## Twitter/X (twitter-cli)
 
+### 稳定命令
+
 ```bash
-# 搜索推文
-twitter search "query" --limit 10
+# 首页时间线（最稳定）
+twitter feed -n 20
 
 # 读取单条推文（含回复）
 twitter tweet URL_OR_ID
@@ -70,17 +72,34 @@ twitter tweet URL_OR_ID
 twitter article URL_OR_ID
 
 # 用户时间线
-twitter user-posts @username --limit 20
+twitter user-posts @username -n 20
 
 # 用户资料
 twitter user @username
-
-# 首页时间线
-twitter feed --limit 20
 ```
 
-> **安装**: `pipx install twitter-cli` 或 `uv tool install twitter-cli`
-> **认证**: 设置 `TWITTER_AUTH_TOKEN` + `TWITTER_CT0` 环境变量，或确保浏览器已登录 x.com。
+### 可能不稳定的命令
+
+```bash
+# 搜索推文（Twitter 频繁改 GraphQL 端点，可能 404）
+twitter search "query" -n 10
+# 如果 search 返回 404，升级 twitter-cli：pipx upgrade twitter-cli
+
+# likes（2024 年后只能看自己的，平台限制）
+twitter likes
+```
+
+### 重要注意事项
+
+> **安装**: `pipx install twitter-cli`（确保 v0.8.5+）
+>
+> **认证**: 推荐用 Cookie-Editor 导出后设置环境变量 `TWITTER_AUTH_TOKEN` + `TWITTER_CT0`。自动提取在 SSH/Docker/无头环境不可用。
+>
+> **IP 风控**: 不要在 VPS/数据中心 IP 上频繁调用，尤其是 followers/following，有封号风险。使用住宅代理或本地环境。
+>
+> **search 可能失效**: Twitter 频繁修改 GraphQL API，search 命令可能随时返回 404。如遇到，先 `pipx upgrade twitter-cli`。如果最新版仍不行，说明上游还没跟上 Twitter 的改动，用 `twitter feed` 替代。
+>
+> **输出格式**: 建议用 `--yaml` 或 `--json` 获得结构化输出，对 AI agent 更友好。
 
 ## 微博 / Weibo
 
