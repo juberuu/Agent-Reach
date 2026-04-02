@@ -156,18 +156,17 @@ agent-reach configure twitter-cookies "PASTED_STRING"
 agent-reach configure proxy http://user:pass@ip:port
 ```
 
-**XiaoHongShu / 小红书 (需要 Docker):**
-> "小红书需要一个 MCP 服务。需要你的机器上有 Docker。安装好 Docker 后我来搞定剩下的。"
+**XiaoHongShu / 小红书 (xhs-cli):**
+> "小红书通过 xhs-cli 访问，pipx 一行安装，不需要 Docker。"
 
 ```bash
-docker run -d --name xiaohongshu-mcp -p 18060:18060 xpzouying/xiaohongshu-mcp
-mcporter config add xiaohongshu http://localhost:18060/mcp
+pipx install xiaohongshu-cli
+xhs login
 ```
 
-> 如果在服务器上，建议加代理避免 IP 风控：
-> `docker run -d --name xiaohongshu-mcp -p 18060:18060 -e XHS_PROXY=http://user:pass@ip:port xpzouying/xiaohongshu-mcp`
+> `xhs login` 会自动从浏览器提取 Cookie。如果自动提取失败，可以手动导入：
 >
-> **登录方式（优先用 Cookie-Editor，最简单）：**
+> **手动导入 Cookie（Cookie-Editor 方式）：**
 > 1. 用户在自己的浏览器登录小红书 (xiaohongshu.com)
 > 2. 用 [Cookie-Editor](https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm) 插件导出 Cookie（JSON 或 Header String 格式均可）
 > 3. 把 Cookie 字符串发给 Agent
@@ -181,7 +180,14 @@ mcporter config add xiaohongshu http://localhost:18060/mcp
 > agent-reach configure xhs-cookies "key1=val1; key2=val2; ..."
 > ```
 >
-> **注意：** `http://localhost:18060` 根路径可能返回 404，MCP 服务在 `/mcp` 路径。推荐使用 Cookie-Editor 导出方式，不要依赖 Docker 容器内的 QR 扫码登录。
+> **注意：** 推荐使用 Cookie-Editor 导出方式，不要依赖 QR 扫码登录。
+>
+> **备选方案：Docker MCP**
+> 如果你已经在使用 [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) Docker 方案，它也能正常工作：
+> ```bash
+> docker run -d --name xiaohongshu-mcp -p 18060:18060 xpzouying/xiaohongshu-mcp
+> mcporter config add xiaohongshu http://localhost:18060/mcp
+> ```
 
 **微博 / Weibo (mcp-server-weibo):**
 > "微博已默认安装，装好即用。可搜索微博内容、查看热搜、获取用户动态和评论。"
