@@ -76,7 +76,7 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 | 📺 **YouTube** | Read · **Search** | Zero config | Subtitles + search across 1800+ video sites ([yt-dlp](https://github.com/yt-dlp/yt-dlp) ⭐148K) |
 | 📺 **Bilibili** | Read · **Search** | Zero config / Proxy | Video info + subtitles + search. Local works directly, servers need a proxy ([yt-dlp](https://github.com/yt-dlp/yt-dlp)) |
 | 📡 **RSS** | Read | Zero config | Any RSS/Atom feed ([feedparser](https://github.com/kurtmckee/feedparser) ⭐2.3K) |
-| 📖 **Reddit** | Search · Read | Zero config | Search and read via [rdt-cli](https://github.com/public-clis/rdt-cli) (free, no proxy needed) |
+| 📖 **Reddit** | Search · Read | Cookie | Requires auth since 2024 — `rdt login` after install ([rdt-cli](https://github.com/public-clis/rdt-cli)) |
 
 > **Setup levels:** Zero config = install and go · Auto-configured = handled during install · mcporter = needs MCP service · Cookie = export from browser · Proxy = $1/month
 
@@ -205,7 +205,7 @@ channels/
 ├── youtube.py      → yt-dlp          ← swap to YouTube API, Whisper…
 ├── github.py       → gh CLI          ← swap to REST API, PyGithub…
 ├── bilibili.py     → yt-dlp          ← swap to bilibili-api…
-├── reddit.py       → rdt-cli          ← search + read, no proxy needed
+├── reddit.py       → rdt-cli          ← search + read, cookie auth required
 ├── xiaohongshu.py  → mcporter MCP    ← swap to other XHS tools…
 ├── douyin.py       → mcporter MCP    ← swap to other Douyin tools…
 ├── linkedin.py     → linkedin-mcp    ← swap to LinkedIn API…
@@ -222,7 +222,7 @@ Each channel file only checks whether its upstream tool is installed and working
 |----------|------|-----|
 | Read web pages | [Jina Reader](https://github.com/jina-ai/reader) | 9.8K stars, free, no API key needed |
 | Read tweets | [twitter-cli](https://github.com/public-clis/twitter-cli) | 2.1K stars, cookie auth, search/read/timeline/articles |
-| Reddit | [rdt-cli](https://github.com/public-clis/rdt-cli) | 304 stars, no login needed, search + full posts + comments |
+| Reddit | [rdt-cli](https://github.com/public-clis/rdt-cli) | 304 stars, cookie auth, search + full posts + comments |
 | Video subtitles + search | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | 154K stars, YouTube + Bilibili + 1800 sites |
 | Bilibili enhanced | [bili-cli](https://github.com/public-clis/bilibili-cli) | 590 stars, hot/rank/search/feed |
 | Search the web | [Exa](https://exa.ai) via [mcporter](https://github.com/nicobailon/mcporter) | AI semantic search, MCP integration, no API key |
@@ -268,7 +268,7 @@ Agent Reach uses [twitter-cli](https://github.com/public-clis/twitter-cli) with 
 <details>
 <summary><strong>Reddit returns 403 from server / datacenter IP blocked?</strong></summary>
 
-Agent Reach uses [rdt-cli](https://github.com/public-clis/rdt-cli) for Reddit — no login, no proxy, no API key needed. Install with `pipx install rdt-cli`. Your agent can search with `rdt search "query"` and read full posts + comments with `rdt read POST_ID`.
+Agent Reach uses [rdt-cli](https://github.com/public-clis/rdt-cli) for Reddit. Since 2024, Reddit requires authentication for all API requests. Install with `pipx install rdt-cli`, then run `rdt login` (auto-extracts cookies from your browser). Your agent can then search with `rdt search "query"` and read full posts + comments with `rdt read POST_ID`.
 </details>
 
 <details>
