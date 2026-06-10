@@ -13,6 +13,8 @@ import subprocess
 from .base import Channel
 
 _CREDENTIAL_FILE = "~/.config/rdt-cli/credential.json"
+# Pinned to the 0.4.2 state — PyPI still only has 0.4.1 (upstream issue #10).
+_RDT_GIT_SOURCE = "git+https://github.com/public-clis/rdt-cli.git@5e4fb3720d5c174e976cd425ccc3b879d52cac66"
 
 
 class RedditChannel(Channel):
@@ -31,9 +33,10 @@ class RedditChannel(Channel):
         rdt = shutil.which("rdt")
         if not rdt:
             return "off", (
-                "需要安装 rdt-cli（推荐使用最新版 v0.4.2+）：\n"
-                "  pip install 'rdt-cli>=0.4.2'\n"
-                "或：\n"
+                "需要安装 rdt-cli。PyPI 版本可能暂时落后，推荐直接从 GitHub 安装：\n"
+                f"  pipx install '{_RDT_GIT_SOURCE}'\n"
+                "如已确认 PyPI 版本已更新，也可使用：\n"
+                "  pipx install rdt-cli\n"
                 "  uv tool install rdt-cli\n"
                 "最新源码：https://github.com/public-clis/rdt-cli\n"
                 "安装后运行 `rdt login` 登录（需先在浏览器登录 reddit.com）"
