@@ -152,3 +152,33 @@ def test_check_twitter_cli_broken_falls_back_to_bird():
     assert status == "ok"
     assert "bird" in message
     assert channel.active_backend == "bird CLI (legacy)"
+
+
+def test_unauthenticated_twitter_cli_does_not_block_working_opencli():
+    """warn 候选不得屏蔽排在后面的 ok 候选(Codex review 发现)。"""
+    channel = TwitterChannel()
+    with patch.object(
+        TwitterChannel, "_check_twitter_cli",
+        return_value=("warn", "twitter-cli 已安装但未认证"),
+    ), patch.object(
+        TwitterChannel, "_check_opencli",
+        return_value=("ok", "OpenCLI 可用（复用浏览器登录态）"),
+    ), patch.object(TwitterChannel, "_check_bird", return_value=None):
+        status, msg = channel.check()
+    assert status == "ok"
+    assert channel.active_backend == "OpenCLI"
+
+
+def test_all_warn_falls_back_to_first_warn():
+    channel = TwitterChannel()
+    with patch.object(
+        TwitterChannel, "_check_twitter_cli",
+        return_value=("warn", "twitter-cli 未认证"),
+    ), patch.object(
+        TwitterChannel, "_check_opencli",
+        return_value=("warn", "扩展未连接"),
+    ), patch.object(TwitterChannel, "_check_bird", return_value=None):
+        status, msg = channel.check()
+    assert status == "warn"
+    assert channel.active_backend == "twitter-cli"
+    assert "未认证" in msg

@@ -17,9 +17,14 @@ class TwitterChannel(Channel):
         return "x.com" in d or "twitter.com" in d
 
     def check(self, config=None):
-        """按 backends 顺序真实探测，第一个活着的后端即为 active_backend。"""
+        """Probe candidates in order; first fully-usable backend wins.
+
+        与其他多后端渠道同一套两段式：先收集全部候选状态，第一个 ok 获胜；
+        没有 ok 才轮到第一个 warn——否则「装了但未登录」的 twitter-cli
+        会把排在后面、完整可用的 OpenCLI 挡在门外。
+        """
         self.active_backend = None
-        failures = []
+        findings = []
 
         for backend in self.ordered_backends(config):
             if backend == "twitter-cli":
@@ -32,18 +37,18 @@ class TwitterChannel(Channel):
                 continue
 
             if result is None:
-                continue  # 未安装——继续尝试下一个后端
+                continue  # 未安装——不参与候选
+            findings.append((backend, *result))
 
-            status, message = result
-            if status in ("ok", "warn"):
-                # 工具本身是活的（含已装但未登录的 warn）
-                self.active_backend = backend
-                return status, message
-            # broken/timeout —— 记下处方，继续尝试下一个后端
-            failures.append(message)
+        for wanted in ("ok", "warn"):
+            for backend, status, message in findings:
+                if status == wanted:
+                    self.active_backend = backend
+                    return status, message
 
-        if failures:
-            return "error", "\n".join(failures)
+        if findings:  # 只剩 broken/timeout 候选
+            return "error", "\n".join(m for _, _, m in findings)
+
         return "warn", (
             "Twitter CLI 未安装。安装方式：\n"
             "  pipx install twitter-cli\n"

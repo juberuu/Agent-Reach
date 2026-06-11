@@ -1387,7 +1387,10 @@ def _cmd_uninstall(args):
                 print(f"[dry-run] Would remove {platform_name} skill: {skill_path}")
             else:
                 try:
-                    shutil.rmtree(skill_path)
+                    if os.path.islink(skill_path):
+                        os.unlink(skill_path)
+                    else:
+                        shutil.rmtree(skill_path)
                     print(f"  Removed {platform_name} skill: {skill_path}")
                     removed_any = True
                 except Exception as e:
@@ -1762,7 +1765,7 @@ def _cmd_watch():
     if not err and resp and resp.status_code == 200:
         data = resp.json()
         latest = data.get("tag_name", "").lstrip("v")
-        if latest and latest != __version__:
+        if latest and _is_newer_version(latest, __version__):
             update_available = True
             new_version = latest
             release_body = data.get("body", "")

@@ -19,15 +19,18 @@ def check_all(config: Config) -> Dict[str, dict]:
     for ch in get_all_channels():
         try:
             status, message = ch.check(config)
+            active = getattr(ch, "active_backend", None)
         except Exception as e:  # noqa: BLE001 — doctor must survive any channel
-            status, message = "error", f"体检异常：{e}"
+            # Channels are registry singletons: a stale active_backend from a
+            # previous check must not leak into an errored result.
+            status, message, active = "error", f"体检异常：{e}", None
         results[ch.name] = {
             "status": status,
             "name": ch.description,
             "message": message,
             "tier": ch.tier,
             "backends": ch.backends,
-            "active_backend": getattr(ch, "active_backend", None),
+            "active_backend": active,
         }
     return results
 

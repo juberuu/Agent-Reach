@@ -104,3 +104,23 @@ class TestDoctor:
         assert "1/3 个渠道可用" in plain
         # Inactive optional channels should be summarized in one line
         assert "可选渠道可以解锁" in plain
+
+
+def test_stale_active_backend_does_not_leak_into_errored_result(monkeypatch):
+    """渠道单例上一轮的 active_backend 不得泄漏进本轮异常结果(Codex review 发现)。"""
+    from agent_reach import doctor
+
+    class _ExplodingChannel:
+        name = "boom"
+        description = "爆炸渠道"
+        tier = 0
+        backends = ["a", "b"]
+        active_backend = "a"  # 上一轮成功的残留
+
+        def check(self, config=None):
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(doctor, "get_all_channels", lambda: [_ExplodingChannel()])
+    results = doctor.check_all(config=None)
+    assert results["boom"]["status"] == "error"
+    assert results["boom"]["active_backend"] is None
