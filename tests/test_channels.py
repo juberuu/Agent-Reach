@@ -946,9 +946,60 @@ class TestXiaoHongShuChannel:
 
 
 class TestBilibiliChannel:
-    def test_reports_error_with_reinstall_hint_when_ytdlp_broken(self, monkeypatch):
-        """yt-dlp which 命中但 exec 失败（venv 断链）→ error + 重装处方。"""
-        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/yt-dlp")
+    """多后端：bili-cli > OpenCLI > 搜索 API。yt-dlp 已退出 B站（412 实锤）。"""
+
+    @staticmethod
+    def _isolate(monkeypatch, opencli=None, api_ok=False):
+        import agent_reach.channels.bilibili as bilibili_mod
+        monkeypatch.setattr(
+            bilibili_mod.BilibiliChannel, "_check_opencli", lambda self: opencli
+        )
+        monkeypatch.setattr(bilibili_mod, "_search_api_ok", lambda: api_ok)
+
+    def test_bili_cli_ok_is_active_backend(self, monkeypatch):
+        self._isolate(monkeypatch)
+        monkeypatch.setattr(
+            shutil, "which",
+            lambda cmd: "/usr/local/bin/bili" if cmd == "bili" else None,
+        )
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 0, "bili, version 0.6.2", "")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.bilibili import BilibiliChannel
+        ch = BilibiliChannel()
+        status, msg = ch.check()
+        assert status == "ok"
+        assert "bili-cli 可用" in msg
+        assert ch.active_backend == "bili-cli"
+
+    def test_bili_broken_falls_back_to_api_with_hint_kept(self, monkeypatch):
+        """bili 断链 → API 兜底获胜，但重装处方必须保留在消息里。"""
+        self._isolate(monkeypatch, api_ok=True)
+        monkeypatch.setattr(
+            shutil, "which",
+            lambda cmd: "/usr/local/bin/bili" if cmd == "bili" else None,
+        )
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError(cmd[0])
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.bilibili import BilibiliChannel
+        ch = BilibiliChannel()
+        status, msg = ch.check()
+        assert status == "ok"  # 搜索 API 兜底
+        assert ch.active_backend == "B站搜索 API"
+        assert "备选后端异常" in msg
+        assert "pipx reinstall bilibili-cli" in msg
+
+    def test_bili_broken_and_no_fallback_reports_error(self, monkeypatch):
+        self._isolate(monkeypatch, api_ok=False)
+        monkeypatch.setattr(
+            shutil, "which",
+            lambda cmd: "/usr/local/bin/bili" if cmd == "bili" else None,
+        )
 
         def fake_run(cmd, **kwargs):
             raise FileNotFoundError(cmd[0])
@@ -958,48 +1009,36 @@ class TestBilibiliChannel:
         ch = BilibiliChannel()
         status, msg = ch.check()
         assert status == "error"
-        assert "无法执行" in msg
-        assert "uv tool install --force yt-dlp" in msg
-        assert "pipx reinstall yt-dlp" in msg
+        assert "uv tool install --force bilibili-cli" in msg
         assert ch.active_backend is None
 
-    def test_active_backend_set_when_ytdlp_and_bili_ok(self, monkeypatch):
-        monkeypatch.setattr(
-            shutil, "which",
-            lambda cmd: f"/usr/local/bin/{cmd}" if cmd in ("yt-dlp", "bili") else None,
-        )
-
-        def fake_run(cmd, **kwargs):
-            return subprocess.CompletedProcess(cmd, 0, "2026.06.09", "")
-
-        monkeypatch.setattr(subprocess, "run", fake_run)
+    def test_opencli_serves_when_bili_missing(self, monkeypatch):
+        self._isolate(monkeypatch, opencli=("ok", "OpenCLI 可用（字幕）"), api_ok=True)
+        monkeypatch.setattr(shutil, "which", lambda _: None)
         from agent_reach.channels.bilibili import BilibiliChannel
         ch = BilibiliChannel()
         status, msg = ch.check()
         assert status == "ok"
-        assert "bili-cli 可用" in msg
-        assert ch.active_backend == "yt-dlp"
+        assert ch.active_backend == "OpenCLI"
 
-    def test_bili_broken_does_not_count_as_available(self, monkeypatch):
-        """bili-cli 断链时不计为可用，降级走搜索 API；yt-dlp 仍是 active_backend。"""
-        monkeypatch.setattr(
-            shutil, "which",
-            lambda cmd: f"/usr/local/bin/{cmd}" if cmd in ("yt-dlp", "bili") else None,
-        )
-
-        def fake_run(cmd, **kwargs):
-            if "yt-dlp" in cmd[0]:
-                return subprocess.CompletedProcess(cmd, 0, "2026.06.09", "")
-            raise FileNotFoundError(cmd[0])
-
-        monkeypatch.setattr(subprocess, "run", fake_run)
-        import agent_reach.channels.bilibili as bilibili_mod
-        monkeypatch.setattr(bilibili_mod, "_search_api_ok", lambda: True)
-        ch = bilibili_mod.BilibiliChannel()
+    def test_api_only_still_ok_with_install_nudge(self, monkeypatch):
+        self._isolate(monkeypatch, api_ok=True)
+        monkeypatch.setattr(shutil, "which", lambda _: None)
+        from agent_reach.channels.bilibili import BilibiliChannel
+        ch = BilibiliChannel()
         status, msg = ch.check()
-        assert status == "ok"  # 搜索 API 兜底
-        assert "不计为可用" in msg
-        assert ch.active_backend == "yt-dlp"
+        assert status == "ok"
+        assert ch.active_backend == "B站搜索 API"
+        assert "bilibili-cli" in msg
+
+    def test_off_when_everything_unreachable(self, monkeypatch):
+        self._isolate(monkeypatch, api_ok=False)
+        monkeypatch.setattr(shutil, "which", lambda _: None)
+        from agent_reach.channels.bilibili import BilibiliChannel
+        ch = BilibiliChannel()
+        status, msg = ch.check()
+        assert status == "off"
+        assert ch.active_backend is None
 
 
 class TestYouTubeChannel:

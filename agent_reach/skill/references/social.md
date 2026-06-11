@@ -89,11 +89,17 @@ twitter user @username
 ```bash
 # 搜索推文（Twitter 频繁改 GraphQL 端点，可能 404）
 twitter search "query" -n 10
-# 如果 search 返回 404，升级 twitter-cli：pipx upgrade twitter-cli
 
 # likes（2024 年后只能看自己的，平台限制）
 twitter likes
 ```
+
+### search 失败时的重试链（按序执行，成功即停）
+
+1. 直接重试一次（偶发失败常见）：`twitter search "query" -n 10`
+2. 升级后再试：`pipx upgrade twitter-cli && twitter search "query" -n 10`
+3. 换 OpenCLI 备选（桌面，复用浏览器登录态）：`opencli twitter search "query" -f yaml`
+4. 都不行就改用 `twitter feed` / `twitter user-posts @somebody` 等稳定命令绕路
 
 ### 重要注意事项
 
@@ -103,21 +109,25 @@ twitter likes
 >
 > **IP 风控**: 不要在 VPS/数据中心 IP 上频繁调用，尤其是 followers/following，有封号风险。使用住宅代理或本地环境。
 >
-> **search 可能失效**: Twitter 频繁修改 GraphQL API，search 命令可能随时返回 404。如遇到，先 `pipx upgrade twitter-cli`。如果最新版仍不行，说明上游还没跟上 Twitter 的改动，用 `twitter feed` 替代。
+> **OpenCLI 备选**: 桌面装了 OpenCLI 的话，`opencli twitter search/article/user-posts -f yaml` 全套可用（浏览器登录态，无需 cookie 环境变量）。
 >
 > **输出格式**: 建议用 `--yaml` 或 `--json` 获得结构化输出，对 AI agent 更友好。
 
 ## B站 / Bilibili
 
-```bash
-# 获取视频元数据
-yt-dlp --dump-json "https://www.bilibili.com/video/BVxxx"
+> ⚠️ **不要用 yt-dlp 读 B站**（风控已全面 412 拦截，实测无解）。用 bili-cli / OpenCLI。
 
-# 下载字幕
-yt-dlp --write-sub --write-auto-sub --sub-lang "zh-Hans,zh,en" --convert-subs vtt --skip-download -o "/tmp/%(id)s" "URL"
+```bash
+# 搜索 / 热门 / 视频详情（bili-cli，只读无需登录）
+bili search "query" --type video -n 5
+bili hot -n 10
+bili video BVxxx
+
+# 字幕（OpenCLI，需桌面 Chrome）
+opencli bilibili subtitle BVxxx
 ```
 
-> **注意**: 服务器 IP 可能遇到 412 错误。使用 `--cookies-from-browser chrome` 或配置代理。
+> 详细命令（音频转写、API 直连兜底）见 [references/video.md](video.md)。
 
 ## V2EX (公开 API)
 

@@ -8,7 +8,7 @@ from agent_reach.probe import probe_command
 class TwitterChannel(Channel):
     name = "twitter"
     description = "Twitter/X 推文"
-    backends = ["twitter-cli", "bird CLI (legacy)"]
+    backends = ["twitter-cli", "OpenCLI", "bird CLI (legacy)"]
     tier = 1
 
     def can_handle(self, url: str) -> bool:
@@ -24,6 +24,8 @@ class TwitterChannel(Channel):
         for backend in self.ordered_backends(config):
             if backend == "twitter-cli":
                 result = self._check_twitter_cli()
+            elif backend == "OpenCLI":
+                result = self._check_opencli()
             elif backend == "bird CLI (legacy)":
                 result = self._check_bird()
             else:
@@ -83,6 +85,22 @@ class TwitterChannel(Channel):
             "twitter-cli 已安装但认证检查失败。运行：\n"
             "  twitter -v status 查看详细信息"
         )
+
+    def _check_opencli(self):
+        """OpenCLI candidate. None = not installed."""
+        from agent_reach.backends import opencli_status
+
+        st = opencli_status()
+        if not st.installed:
+            return None
+        if st.broken:
+            return "error", st.hint
+        if st.ready:
+            return "ok", (
+                "OpenCLI 可用（复用浏览器登录态）。用法："
+                "opencli twitter search/article/user-posts -f yaml"
+            )
+        return "warn", st.hint
 
     def _check_bird(self):
         """探测 bird/birdx（legacy 回退）。返回 None 表示均未安装，否则返回 (status, message)。"""
