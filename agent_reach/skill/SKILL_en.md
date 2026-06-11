@@ -1,16 +1,20 @@
 ---
 name: agent-reach
 description: >
-  MUST USE when user asks to search, browse, read, or interact with content from any supported platform:
+  MUST USE when user wants to research/search/look up/find anything on the
+  internet — e.g. "research this topic", "do a deep dive on X", "search the
+  web for X", "see what people say about X", "look this up".
+
+  Also MUST USE when user mentions any platform or shares any URL/link:
   Twitter/X, Reddit, YouTube, GitHub, Bilibili, XiaoHongShu,
-  Xiaoyuzhou Podcast, LinkedIn, V2EX, Xueqiu (stocks), RSS, or any web URL.
+  Xiaoyuzhou Podcast, LinkedIn/jobs/recruiting, V2EX, Xueqiu (stocks), RSS.
 
-  Also MUST USE for: web search, look up, research, find, share a URL/link, jobs/recruiting.
-  Routes to CLI tools: xhs-cli, twitter-cli, rdt-cli, gh, yt-dlp, curl+Jina, mcporter.
-  13 platforms, zero config for 6 channels.
+  13 platforms, multi-backend routing (OpenCLI / per-platform CLIs / APIs).
+  Zero config for 6 channels. Run `agent-reach doctor --json` to see which
+  backend serves each platform right now.
 
-  Triggers: "search twitter", "search xiaohongshu", "watch this video",
-  "search the web", "look this up", "research", "youtube transcript",
+  Triggers: "research", "deep dive", "search twitter", "search xiaohongshu",
+  "watch this video", "search the web", "look this up", "youtube transcript",
   "search reddit", "read this link", "bilibili", "V2EX",
   "xiaoyuzhou", "podcast", "xueqiu", "stock quote", "雪球", "股票".
 metadata:
@@ -62,23 +66,29 @@ yt-dlp --write-sub --write-auto-sub --sub-lang "zh-Hans,zh,en" --skip-download -
 yt-dlp --dump-json "ytsearch5:query"         # search
 ```
 
-## Bilibili (yt-dlp)
+## Bilibili (bili-cli / OpenCLI)
+
+> ⚠️ Do NOT use yt-dlp for bilibili — its risk control 412-blocks yt-dlp in
+> every configuration (verified 2026-06). yt-dlp is for YouTube only.
 
 ```bash
-yt-dlp --dump-json "https://www.bilibili.com/video/BVxxx"
-yt-dlp --write-sub --write-auto-sub --sub-lang "zh-Hans,zh,en" --convert-subs vtt --skip-download -o "/tmp/%(id)s" "URL"
+bili video BVxxx                         # video detail, no login needed
+bili search "query" --type video -n 5    # search
+bili hot -n 10                           # trending
+opencli bilibili subtitle BVxxx          # subtitles (desktop Chrome)
 ```
 
-> Server IPs may get 412. Use `--cookies-from-browser chrome` or configure a proxy.
+## Reddit (login required — no zero-config path)
 
-## Reddit
+> Anonymous .json endpoints are 403-blocked and official API registration is
+> approval-gated (2025-11). Every backend needs a logged-in session.
+> Check `agent-reach doctor --json` for the active backend.
 
 ```bash
-curl -s "https://www.reddit.com/r/SUBREDDIT/hot.json?limit=10" -H "User-Agent: agent-reach/1.0"
-curl -s "https://www.reddit.com/search.json?q=QUERY&limit=10" -H "User-Agent: agent-reach/1.0"
+opencli reddit search "query" -f yaml    # desktop, browser session
+rdt search "query" --limit 10            # legacy/server, cookie login
+rdt read POST_ID                         # post + comments
 ```
-
-> Server IPs may get 403. Search via Exa instead, or configure a proxy.
 
 ## GitHub (gh CLI)
 
@@ -90,13 +100,20 @@ gh issue list -R owner/repo --state open
 gh issue view 123 -R owner/repo
 ```
 
-## XiaoHongShu (mcporter)
+## XiaoHongShu (multi-backend — check doctor for active backend)
 
 ```bash
-mcporter call 'xiaohongshu.search_feeds(keyword: "query")'
-mcporter call 'xiaohongshu.get_feed_detail(feed_id: "xxx", xsec_token: "yyy")'
-mcporter call 'xiaohongshu.get_feed_detail(feed_id: "xxx", xsec_token: "yyy", load_all_comments: true)'
-mcporter call 'xiaohongshu.publish_content(title: "Title", content: "Body text", images: ["/path/img.jpg"], tags: ["tag"])'
+# Desktop preferred: OpenCLI (reuses browser session, zero config)
+opencli xiaohongshu search "query" -f yaml
+opencli xiaohongshu note "NOTE_URL" -f yaml
+
+# Server: xiaohongshu-mcp via mcporter (QR login; always pass --timeout 120000)
+mcporter call 'xiaohongshu.search_feeds(keyword: "query")' --timeout 120000
+mcporter call 'xiaohongshu.get_feed_detail(feed_id: "xxx", xsec_token: "yyy")' --timeout 120000
+
+# Legacy fallback: xhs-cli (upstream unmaintained since 2026-03)
+xhs search "query"
+xhs read NOTE_ID_OR_URL
 ```
 
 > Requires login. Use Cookie-Editor to import cookies.

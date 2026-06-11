@@ -5,6 +5,10 @@
 </p>
 
 <p align="center">
+  The most reliable access path for each platform — chosen, installed, and health-checked for you. Backends come and go; you won't notice.
+</p>
+
+<p align="center">
   <a href="../LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-green.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+"></a>
   <a href="https://github.com/Panniantong/agent-reach/stargazers"><img src="https://img.shields.io/github/stars/Panniantong/agent-reach?style=for-the-badge" alt="GitHub Stars"></a>
@@ -51,7 +55,7 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 |---|---|
 | 💰 **Completely free** | All tools are open source, all APIs are free. The only possible cost is a server proxy ($1/month) — local computers don't need one |
 | 🔒 **Privacy safe** | Cookies stay local. Never uploaded. Fully open source — audit anytime |
-| 🔄 **Kept up to date** | Upstream tools (yt-dlp, twitter-cli, rdt-cli, Jina Reader, etc.) are tracked and updated regularly |
+| 🔄 **Kept up to date** | Every platform routes through a primary + fallback backend list. When an access path dies, we switch to the next — you won't notice (June 2026: Bilibili 412-blocked yt-dlp → switched to bili-cli, zero action on your side) |
 | 🤖 **Works with any Agent** | Claude Code, OpenClaw, Cursor, Windsurf… any Agent that can run commands |
 | 🩺 **Built-in diagnostics** | `agent-reach doctor` — one command shows what works, what doesn't, and how to fix it |
 
@@ -63,7 +67,7 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 |----------|-------------|:-----:|-------|
 | 🌐 **Web** | Read | Zero config | Any URL → clean Markdown ([Jina Reader](https://github.com/jina-ai/reader) ⭐9.8K) |
 | 🐦 **Twitter/X** | Read · Search | Cookie | Cookie unlocks search, timeline, tweet reading, articles ([twitter-cli](https://github.com/public-clis/twitter-cli)) |
-| 📕 **XiaoHongShu** | Read · Search · **Post · Comment · Like** | Cookie | `pipx install xiaohongshu-cli` + `xhs login` ([xhs-cli](https://github.com/jackwener/xiaohongshu-cli)) |
+| 📕 **XiaoHongShu** | Read · Search · **Post · Comment · Like** | OpenCLI / MCP | Desktop: [OpenCLI](https://github.com/jackwener/opencli) (reuses browser session); Server: [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) (QR login); legacy xhs-cli still works |
 | 💼 **LinkedIn** | Jina Reader (public pages) | Full profiles, companies, job search | Tell your Agent "help me set up LinkedIn" |
 | 💻 **V2EX** | Hot topics · Node topics · Topic detail + replies · User profile | Zero config | Public JSON API, no auth required. Great for tech community content |
 | 📈 **Xueqiu (雪球)** | Stock quotes · Search · Hot posts · Hot stocks | Browser cookie | Tell your Agent "help me set up Xueqiu" |
@@ -71,9 +75,9 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 | 🔍 **Web Search** | Search | Auto-configured | Auto-configured during install, free, no API key ([Exa](https://exa.ai) via [mcporter](https://github.com/nicepkg/mcporter)) |
 | 📦 **GitHub** | Read · Search | Zero config | [gh CLI](https://cli.github.com) powered. Public repos work immediately. `gh auth login` unlocks Fork, Issue, PR |
 | 📺 **YouTube** | Read · **Search** | Zero config | Subtitles + search across 1800+ video sites ([yt-dlp](https://github.com/yt-dlp/yt-dlp) ⭐148K) |
-| 📺 **Bilibili** | Read · **Search** | Zero config / Proxy | Video info + subtitles + search. Local works directly, servers need a proxy ([yt-dlp](https://github.com/yt-dlp/yt-dlp)) |
+| 📺 **Bilibili** | Read · **Search** | Zero config | Search + video detail via [bili-cli](https://github.com/public-clis/bilibili-cli) (no login needed); subtitles via [OpenCLI](https://github.com/jackwener/opencli). yt-dlp is 412-blocked by Bilibili and no longer used here |
 | 📡 **RSS** | Read | Zero config | Any RSS/Atom feed ([feedparser](https://github.com/kurtmckee/feedparser) ⭐2.3K) |
-| 📖 **Reddit** | Search · Read | Cookie | Requires auth since 2024 — `rdt login` after install ([rdt-cli](https://github.com/public-clis/rdt-cli)) |
+| 📖 **Reddit** | Search · Read | OpenCLI / Cookie | No zero-config path (anonymous endpoints blocked). Desktop: [OpenCLI](https://github.com/jackwener/opencli) via browser session; or [rdt-cli](https://github.com/public-clis/rdt-cli) + cookie |
 
 > **Setup levels:** Zero config = install and go · Auto-configured = handled during install · mcporter = needs MCP service · Cookie = export from browser · Proxy = $1/month
 
@@ -164,7 +168,7 @@ Tell your Agent "help me configure Twitter cookies" — it'll guide you through 
 
 Bilibili blocks server IPs. Get a proxy ([Webshare](https://webshare.io) recommended, $1/month) and send the address to your Agent.
 
-> Reddit now works free via rdt-cli without any proxy. Local computers don't need a proxy for Bilibili either.
+> Reddit needs a logged-in session — rdt-cli works after `rdt login` (still free, no proxy needed). Local computers don't need a proxy for Bilibili either.
 
 ---
 
@@ -188,7 +192,7 @@ $ agent-reach doctor
   ⬜ Web semantic search — sign up at exa.ai for free key
 
 🔧 Configurable:
-  ✅ Reddit posts and comments — search and read via rdt-cli (free, no proxy)
+  ⬜ Reddit posts and comments — needs login: rdt-cli after `rdt login`, or OpenCLI browser session
   ⬜ XiaoHongShu notes — needs cookie. Export from browser
 
 Status: 6/9 channels available
@@ -198,52 +202,50 @@ Status: 6/9 channels available
 
 ## Design Philosophy
 
-**Agent Reach is a scaffolding tool, not a framework.**
+**Agent Reach is a capability layer, not yet another tool.**
 
-Every time you spin up a new Agent, you spend time finding tools, installing deps, and debugging configs — what reads Twitter? How do you bypass Reddit blocks? How do you extract YouTube subtitles? Every time, you re-do the same work.
+It sits one level above any specific implementation — it handles **selection, installation, health checks, and routing**, not the reading itself. Reading is done by your Agent calling upstream tools directly; there is no wrapper layer.
 
-Agent Reach does one simple thing: **it makes those tool selection and configuration decisions for you.**
+Every time you spin up a new Agent, you spend time finding tools, installing deps, and debugging configs — what reads Twitter? How do you log into Reddit? What replaces a discontinued XiaoHongShu CLI? Every time, you re-do the same work. Agent Reach does one simple thing: **the most reliable access path for each platform, chosen, installed, and health-checked for you. Access paths come and go (in March 2026 a batch of single-platform CLIs went unmaintained — we re-routed), so you don't have to care.**
 
-After installation, your Agent calls the upstream tools directly (twitter-cli, rdt-cli, xhs-cli, yt-dlp, mcporter, gh CLI, etc.) — no wrapper layer in between.
+### 🔌 Every platform = an ordered backend list (primary + fallbacks)
 
-### 🔌 Every Channel is Pluggable
-
-Each platform maps to an upstream tool. **Don't like one? Swap it out.**
+Switching access paths means reordering the list, not rewriting code. `agent-reach doctor` tells you **which backend each platform is currently using**.
 
 ```
 channels/
-├── web.py          → Jina Reader     ← swap to Firecrawl, Crawl4AI…
-├── twitter.py      → twitter-cli      ← swap to official API…
-├── youtube.py      → yt-dlp          ← swap to YouTube API, Whisper…
-├── github.py       → gh CLI          ← swap to REST API, PyGithub…
-├── bilibili.py     → yt-dlp          ← swap to bilibili-api…
-├── reddit.py       → rdt-cli          ← search + read, cookie auth required
-├── xiaohongshu.py  → mcporter MCP    ← swap to other XHS tools…
-├── linkedin.py     → linkedin-mcp    ← swap to LinkedIn API…
-├── rss.py          → feedparser      ← swap to atoma…
-├── exa_search.py   → mcporter MCP    ← swap to Tavily, SerpAPI…
+├── web.py          → Jina Reader
+├── twitter.py      → twitter-cli ▸ OpenCLI ▸ bird
+├── youtube.py      → yt-dlp
+├── github.py       → gh CLI
+├── bilibili.py     → bili-cli ▸ OpenCLI ▸ search API (yt-dlp retired, 412-blocked)
+├── reddit.py       → OpenCLI ▸ rdt-cli (no zero-config path, login required)
+├── xiaohongshu.py  → OpenCLI ▸ xiaohongshu-mcp ▸ xhs-cli
+├── linkedin.py     → linkedin-mcp ▸ Jina Reader
+├── rss.py          → feedparser
+├── exa_search.py   → Exa via mcporter
 └── __init__.py     → Channel registry (for doctor checks)
 ```
 
-Each channel file only checks whether its upstream tool is installed and working (`check()` method for `agent-reach doctor`). The actual reading and searching is done by calling the upstream tools directly.
+Each channel file **actually probes** its candidate backends in order (not just checking that a command exists) — the first fully working one becomes the active backend, and broken ones come with a fix prescription. The actual reading and searching is done by the Agent calling the upstream tools directly.
 
 ### Current Tool Choices
 
-| Scenario | Tool | Why |
-|----------|------|-----|
-| Read web pages | [Jina Reader](https://github.com/jina-ai/reader) | 9.8K stars, free, no API key needed |
-| Read tweets | [twitter-cli](https://github.com/public-clis/twitter-cli) | 2.1K stars, cookie auth, search/read/timeline/articles |
-| Reddit | [rdt-cli](https://github.com/public-clis/rdt-cli) | 304 stars, cookie auth, search + full posts + comments |
-| Video subtitles + search | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | 154K stars, YouTube + Bilibili + 1800 sites |
-| Bilibili enhanced | [bili-cli](https://github.com/public-clis/bilibili-cli) | 590 stars, hot/rank/search/feed |
-| Search the web | [Exa](https://exa.ai) via [mcporter](https://github.com/nicobailon/mcporter) | AI semantic search, MCP integration, no API key |
-| GitHub | [gh CLI](https://cli.github.com) | Official tool, full API after auth |
-| Read RSS | [feedparser](https://github.com/kurtmckee/feedparser) | Python ecosystem standard, 2.3K stars |
-| XiaoHongShu | [xhs-cli](https://github.com/jackwener/xiaohongshu-cli) | 1.5K stars, pipx install, search/read/comment/post |
-| LinkedIn | [linkedin-scraper-mcp](https://github.com/stickerdaniel/linkedin-mcp-server) | 1.2K stars, MCP server, browser automation |
-| Xiaoyuzhou Podcast | `transcribe.sh` | `bash ~/.agent-reach/tools/xiaoyuzhou/transcribe.sh <URL>` |
+| Scenario | Primary | Fallback | Why |
+|----------|---------|----------|-----|
+| Read web pages | [Jina Reader](https://github.com/jina-ai/reader) | — | Free, no API key needed |
+| Read tweets | [twitter-cli](https://github.com/public-clis/twitter-cli) | [OpenCLI](https://github.com/jackwener/opencli) | Reliable search in real-world tests; OpenCLI falls back on your browser session |
+| Reddit | [OpenCLI](https://github.com/jackwener/opencli) (desktop) | [rdt-cli](https://github.com/public-clis/rdt-cli) | Anonymous endpoints blocked, official API gated — logged-in sessions are the only route left |
+| YouTube subtitles + search | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | — | 154K stars, still the best for YouTube (no longer used for Bilibili) |
+| Bilibili | [bili-cli](https://github.com/public-clis/bilibili-cli) | OpenCLI ▸ search API | yt-dlp is 412-blocked by Bilibili (verified June 2026); bili-cli searches and reads without login |
+| Search the web | [Exa](https://exa.ai) via [mcporter](https://github.com/nicobailon/mcporter) | — | AI semantic search, MCP integration, no API key |
+| GitHub | [gh CLI](https://cli.github.com) | — | Official tool, full API after auth |
+| Read RSS | [feedparser](https://github.com/kurtmckee/feedparser) | — | Python ecosystem standard |
+| XiaoHongShu | [OpenCLI](https://github.com/jackwener/opencli) (desktop) | [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) (server) ▸ xhs-cli | The xhs-cli author moved to OpenCLI (24K stars); browser sessions mean zero friction |
+| LinkedIn | [linkedin-scraper-mcp](https://github.com/stickerdaniel/linkedin-mcp-server) | Jina Reader | MCP server, browser automation |
+| Xiaoyuzhou Podcast | `transcribe.sh` | — | `bash ~/.agent-reach/tools/xiaoyuzhou/transcribe.sh <URL>` |
 
-> 📌 These are the *current* choices. Don't like one? Swap out the file. That's the whole point of scaffolding.
+> 📌 These are the *current* choices, re-verified regularly on real machines. When a path dies we switch to the next — `agent-reach doctor` always tells you which one is active.
 
 ---
 
@@ -276,7 +278,7 @@ Agent Reach uses [twitter-cli](https://github.com/public-clis/twitter-cli) with 
 <details>
 <summary><strong>Reddit returns 403 from server / datacenter IP blocked?</strong></summary>
 
-Agent Reach uses [rdt-cli](https://github.com/public-clis/rdt-cli) for Reddit. Since 2024, Reddit requires authentication for all API requests. Install with `pipx install rdt-cli`, then run `rdt login` (auto-extracts cookies from your browser). Your agent can then search with `rdt search "query"` and read full posts + comments with `rdt read POST_ID`.
+Reddit requires a logged-in session for everything (anonymous endpoints are blocked, and official API registration has been approval-gated since 2025-11). On desktop, the preferred path is OpenCLI riding your browser's reddit.com session. Otherwise install rdt-cli from the pinned git source (`pipx install 'git+https://github.com/public-clis/rdt-cli.git'` — PyPI lags), then `rdt login`. Your agent can then search with `rdt search "query"` and read full posts + comments with `rdt read POST_ID`.
 </details>
 
 <details>
@@ -288,7 +290,7 @@ Yes! Agent Reach is an installer + configuration tool. Any AI coding agent that 
 <details>
 <summary><strong>Is Agent Reach free? Any API costs?</strong></summary>
 
-100% free and open source. All backends (twitter-cli, rdt-cli, xhs-cli, yt-dlp, Jina Reader, Exa) are free tools that don't require paid API keys. The only optional cost is a residential proxy (~$1/month) if you need Bilibili access from a server. Reddit works free via rdt-cli without any proxy.
+100% free and open source. All backends (twitter-cli, rdt-cli, xhs-cli, yt-dlp, Jina Reader, Exa) are free tools that don't require paid API keys. The only optional cost is a residential proxy (~$1/month) for some server scenarios. Reddit costs nothing but needs a logged-in session (rdt-cli after `rdt login`, or OpenCLI reusing your browser session).
 </details>
 
 <details>
