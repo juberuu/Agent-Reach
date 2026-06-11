@@ -1635,6 +1635,35 @@ def _github_get_with_retry(url, timeout=10, retries=3, sleeper=time.sleep):
     return None, "unknown", retries
 
 
+#: Full update = package + upstream tools + skill. The one-liner walks an
+#: agent through all three (docs/update.md); bare pip only updates the package.
+_UPDATE_INSTRUCTIONS = (
+    "更新方式（推荐，复制这句话给你的 AI Agent，会完整更新本体+上游工具+skill）：\n"
+    "  帮我更新 Agent Reach：https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/update.md\n"
+    "仅更新本体（不含上游工具和 skill）：\n"
+    "  pip install --upgrade https://github.com/Panniantong/agent-reach/archive/main.zip"
+)
+
+
+def _is_newer_version(remote: str, local: str) -> bool:
+    """True if remote is strictly newer than local (semantic compare).
+
+    A plain != would tell users "update available" when their local build is
+    AHEAD of the latest release (e.g. installed from main during a release
+    window) — and walk them into a downgrade.
+    """
+    def parse(v):
+        try:
+            return tuple(int(x) for x in v.strip().split("."))
+        except ValueError:
+            return None
+
+    r, l = parse(remote), parse(local)
+    if r is None or l is None:
+        return remote != local  # unparseable — fall back to old behavior
+    return r > l
+
+
 def _cmd_check_update():
     """Check for newer versions on GitHub."""
     from agent_reach import __version__
@@ -1654,7 +1683,7 @@ def _cmd_check_update():
         latest = data.get("tag_name", "").lstrip("v")
         body = data.get("body", "")
 
-        if latest and latest != __version__:
+        if latest and _is_newer_version(latest, __version__):
             print(f"最新版本: v{latest} ← 有更新！")
             if body:
                 print()
@@ -1663,8 +1692,7 @@ def _cmd_check_update():
                 for line in body.strip().split("\n")[:20]:
                     print(f"  {line}")
             print()
-            print("更新命令:")
-            print("  pip install --upgrade https://github.com/Panniantong/agent-reach/archive/main.zip")
+            print(_UPDATE_INSTRUCTIONS)
             return "update_available"
         print(f"✅ 已是最新版本")
         return "up_to_date"
@@ -1686,8 +1714,7 @@ def _cmd_check_update():
         date = commit.get("commit", {}).get("committer", {}).get("date", "")[:10]
         print(f"最新提交: {sha} ({date}) {msg}")
         print()
-        print("更新命令:")
-        print("  pip install --upgrade https://github.com/Panniantong/agent-reach/archive/main.zip")
+        print(_UPDATE_INSTRUCTIONS)
         return "unknown"
 
     commit_err = _classify_github_response_error(resp2)
@@ -1760,7 +1787,8 @@ def _cmd_watch():
         if release_body:
             for line in release_body.strip().split("\n")[:10]:
                 print(f"    {line}")
-        print(f"  更新: pip install --upgrade https://github.com/Panniantong/agent-reach/archive/main.zip")
+        print("  更新（一句话发给 Agent 即可完整更新）：")
+        print("    帮我更新 Agent Reach：https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/update.md")
 
 
 if __name__ == "__main__":

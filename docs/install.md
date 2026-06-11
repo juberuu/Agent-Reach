@@ -20,7 +20,7 @@ Copy this to your AI Agent:
 
 ### Goal
 
-Install Agent Reach and all upstream tools so your user's agent has full internet access. After installation, you'll use the upstream tools directly (twitter-cli, rdt-cli, xhs-cli, yt-dlp, mcporter, gh CLI, etc.) — Agent Reach is just the installer and health checker.
+Install Agent Reach and all upstream tools so your user's agent has full internet access. After installation, you'll use the upstream tools directly (OpenCLI, twitter-cli, bili-cli, rdt-cli, yt-dlp, mcporter, gh CLI, etc.) — Agent Reach is the selector, installer, health checker and router, never a wrapper.
 
 ### ⚠️ Boundaries
 
@@ -96,12 +96,13 @@ After installing the basics, **ask the user** which additional channels they nee
 >
 > 还有这些可选渠道，你需要哪些？
 >
+> - 🌟 **OpenCLI**（桌面推荐）— 一次安装，小红书/Reddit/B站字幕/Twitter 备选全解锁（复用浏览器登录态，零配置；只需在 Chrome 商店点一次"添加扩展"）
 > - 🐦 **Twitter/X** — 搜推文、看时间线（需要登录 Cookie）
 > - 📈 **雪球** — 股票行情、热门帖子（需要登录 Cookie）
 > - 🎙️ **小宇宙播客** — 音频转文字（需要免费 Groq Key）
-> - 📕 **小红书** — 阅读、搜索、发帖（需要登录）
-> - 📖 **Reddit** — 搜索和阅读帖子
-> - 📺 **B站完整版** — 热门、排行、搜索
+> - 📕 **小红书** — 搜索、阅读、评论（桌面走 OpenCLI；服务器用 xiaohongshu-mcp 扫码）
+> - 📖 **Reddit** — 搜索和阅读帖子（必须登录态：桌面 OpenCLI 或 rdt-cli + Cookie）
+> - 📺 **B站完整版** — 热门、排行、搜索、视频详情（bili-cli，无需登录）
 > - 💼 **LinkedIn** — Profile、职位搜索
 >
 > 告诉我你要哪些，比如"帮我装小红书和 Twitter"。或者说"全部装"。
@@ -109,11 +110,11 @@ After installing the basics, **ask the user** which additional channels they nee
 Based on the user's choice, run:
 
 ```bash
-agent-reach install --env=auto --channels=twitter,xiaohongshu   # Example: user chose Twitter + XHS
+agent-reach install --env=auto --channels=opencli,xiaohongshu   # Example: desktop user chose XHS (OpenCLI-backed)
 agent-reach install --env=auto --channels=all              # User wants everything
 ```
 
-Supported channel names: `twitter`, `xiaoyuzhou`, `xueqiu`, `xiaohongshu`, `reddit`, `bilibili`, `linkedin`, `all`
+Supported channel names: `opencli`, `twitter`, `xiaoyuzhou`, `xueqiu`, `xiaohongshu`, `reddit`, `bilibili`, `linkedin`, `all`
 
 ### Step 3: Fix what's broken
 
@@ -159,44 +160,43 @@ agent-reach configure twitter-cookies "PASTED_STRING"
 >
 > 如果用户报告 "fetch failed"，参考 [troubleshooting.md](troubleshooting.md)
 
-**Reddit & Bilibili full access (server users):**
-> "Reddit and Bilibili block server IPs. To unlock full access, I need a residential proxy. You can get one at https://webshare.io ($1/month). Send me the proxy address."
+**Reddit (login is mandatory — no zero-config path):**
+> Reddit 的匿名接口已被封、官方 API 需人工审批。桌面用户首选 OpenCLI（浏览器里登录过 reddit.com 即可用）；服务器/存量用户用 rdt-cli：
 
 ```bash
-agent-reach configure proxy http://user:pass@ip:port
+pipx install 'git+https://github.com/public-clis/rdt-cli.git'   # PyPI 落后，从 GitHub 装
+rdt login   # 自动提取浏览器 Cookie；服务器无浏览器时按 doctor 提示手动写 Cookie
 ```
 
-**XiaoHongShu / 小红书 (xhs-cli):**
-> "小红书通过 xhs-cli 访问，pipx 一行安装，不需要 Docker。"
-
-```bash
-pipx install xiaohongshu-cli
-xhs login
-```
-
-> `xhs login` 会自动从浏览器提取 Cookie。如果自动提取失败，可以手动导入：
->
-> **手动导入 Cookie（Cookie-Editor 方式）：**
-> 1. 用户在自己的浏览器登录小红书 (xiaohongshu.com)
-> 2. 用 [Cookie-Editor](https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm) 插件导出 Cookie（JSON 或 Header String 格式均可）
-> 3. 把 Cookie 字符串发给 Agent
-> 4. Agent 运行命令完成登录：
->
+> 中国大陆访问 Reddit 需要代理；服务器 IP 被风控时可配住宅代理（如 https://webshare.io，约 $1/月）：
 > ```bash
-> # JSON 格式（Cookie-Editor → Export → JSON）
-> agent-reach configure xhs-cookies '[{"name":"web_session","value":"xxx","domain":".xiaohongshu.com",...}]'
->
-> # 或 Header String 格式（Cookie-Editor → Export → Header String）
-> agent-reach configure xhs-cookies "key1=val1; key2=val2; ..."
+> agent-reach configure proxy http://user:pass@ip:port
 > ```
+
+**XiaoHongShu / 小红书（多后端，按环境选）:**
+
+> **桌面电脑（推荐 OpenCLI）：**
+> "小红书走 OpenCLI——复用你浏览器里的登录态，平时刷过小红书就直接能用，零配置。"
+
+```bash
+agent-reach install --channels opencli
+```
+
+> 装完后引导用户做唯一一步手动操作（Chrome 安全限制，无法代劳）：
+> 1. 打开 https://chromewebstore.google.com/detail/opencli/ildkmabpimmkaediidaifkhjpohdnifk
+> 2. 点「添加至 Chrome」
+> 3. 运行 `opencli doctor` 验证（显示 Extension: connected 即成功）
 >
-> **注意：** 推荐使用 Cookie-Editor 导出方式，不要依赖 QR 扫码登录。
+> **服务器 / 无桌面环境（xiaohongshu-mcp）：**
+> 1. 从 https://github.com/xpzouying/xiaohongshu-mcp/releases 下载对应平台 binary 到 `~/.agent-reach/tools/`
+> 2. 启动服务（首次运行会自动下载约 150MB 无头浏览器，耐心等完成）
+> 3. 让用户扫码登录（agent 调 `get_login_qrcode` 工具取二维码）
+> 4. 接入：`mcporter config add xiaohongshu http://localhost:18060/mcp`
+> 5. 调用时务必带 `--timeout 120000`
 >
-> **备选方案：Docker MCP**
-> 如果你已经在使用 [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) Docker 方案，它也能正常工作：
+> **存量用户（xhs-cli）：** 已装好的 xhs-cli 继续作为备选后端工作（上游 2026-03 起停更，不推荐新装）。`xhs login` 自动提取浏览器 Cookie；失败时用 Cookie-Editor 导出后：
 > ```bash
-> docker run -d --name xiaohongshu-mcp -p 18060:18060 xpzouying/xiaohongshu-mcp
-> mcporter config add xiaohongshu http://localhost:18060/mcp
+> agent-reach configure xhs-cookies "key1=val1; key2=val2; ..."
 > ```
 
 **雪球 / Xueqiu (股票行情 + 热门帖子):**
@@ -292,7 +292,7 @@ If the user agrees, create a **cron job** (daily, `sessionTarget: "isolated"`, `
 运行 agent-reach watch 命令。
 如果输出包含"全部正常"，不需要通知用户，静默结束。
 如果输出包含问题（❌ ⚠️）或新版本（🆕），把完整报告发给用户，并建议修复方案。
-如果有新版本可用，问用户是否要升级（升级命令：pip install --upgrade https://github.com/Panniantong/agent-reach/archive/main.zip）。
+如果有新版本可用，问用户是否要升级（把这句话发给用户的 Agent 即可完整更新：帮我更新 Agent Reach：https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/update.md）。
 ```
 
 If the user wants a different agent to handle it, let them choose.
@@ -319,14 +319,16 @@ After installation, use upstream tools directly. See SKILL.md for the full comma
 
 | Platform | Upstream Tool | Example |
 |----------|--------------|---------|
-| Twitter/X | `twitter` | `twitter search "query" -n 10` |
+| Twitter/X | `twitter`（备选 `opencli`） | `twitter search "query" -n 10` |
 | YouTube | `yt-dlp` | `yt-dlp --dump-json URL` |
-| Bilibili | `yt-dlp` + `bili` | `bili hot` / `bili search "query" --type video` |
-| Reddit | `rdt` | `rdt search "query"` / `rdt read POST_ID` |
+| Bilibili | `bili`（字幕走 `opencli`） | `bili search "query" --type video` / `opencli bilibili subtitle BVxxx` |
+| Reddit | `opencli`（备选 `rdt`） | `opencli reddit search "query" -f yaml` / `rdt read POST_ID` |
 | GitHub | `gh` | `gh search repos "query"` |
 | Web | `curl` + Jina | `curl -s "https://r.jina.ai/URL"` |
 | Exa Search | `mcporter` | `mcporter call 'exa.web_search_exa(...)'` |
-| 小红书 | `mcporter` | `mcporter call 'xiaohongshu.search_feeds(...)'` |
+| 小红书 | `opencli`（服务器 `mcporter`） | `opencli xiaohongshu search "query" -f yaml` |
 | 小宇宙播客 | `transcribe.sh` | `bash ~/.agent-reach/tools/xiaoyuzhou/transcribe.sh <URL>` |
 | LinkedIn | `mcporter` | `mcporter call 'linkedin.get_person_profile(...)'` |
 | RSS | `feedparser` | `python3 -c "import feedparser; ..."` |
+
+> 多后端平台以 `agent-reach doctor --json` 的 `active_backend` 为准。

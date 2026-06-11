@@ -24,7 +24,7 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 
 ### Goal
 
-Update Agent Reach to the latest version, install any new upstream tools, migrate from deprecated tools, and verify everything works. The user should not need to do anything manually.
+Update Agent Reach to the latest version, refresh upstream tools, migrate from retired backends, and verify everything works. The user should not need to do anything manually (except things only a human can do, like clicking a browser-extension install button).
 
 ### Step 1: Check current version
 
@@ -32,7 +32,7 @@ Update Agent Reach to the latest version, install any new upstream tools, migrat
 agent-reach check-update
 ```
 
-If it says "已是最新版本", skip to Step 5 (verify). Otherwise continue.
+If it says "已是最新版本", skip to Step 4 (verify). Otherwise continue.
 
 ### Step 2: Update Agent Reach package
 
@@ -40,40 +40,47 @@ If it says "已是最新版本", skip to Step 5 (verify). Otherwise continue.
 pip install --upgrade https://github.com/Panniantong/agent-reach/archive/main.zip
 ```
 
-### Step 3: Install / migrate upstream tools
+> If pip complains about `externally-managed-environment` (PEP 668), the user
+> originally installed via pipx or a venv — use the matching command:
+> `pipx install --force https://github.com/Panniantong/agent-reach/archive/main.zip`
+> or activate `~/.agent-reach-venv` first.
 
-Run these commands to ensure all upstream CLI tools are installed. Skip any that are already installed.
+### Step 3: Refresh upstream tools
+
+Run these to keep installed tools current. **Only upgrade what is already
+installed — do not install new tools the user never asked for** (the one
+exception: OpenCLI on desktop, see below).
 
 ```bash
-# === Required tools (core functionality) ===
+# Python-based CLIs the user already has (upgrade keeps signatures fresh)
+which twitter >/dev/null 2>&1 && { pipx upgrade twitter-cli 2>/dev/null || uv tool upgrade twitter-cli 2>/dev/null; }
+which bili    >/dev/null 2>&1 && { pipx upgrade bilibili-cli 2>/dev/null || uv tool upgrade bilibili-cli 2>/dev/null; }
+which xhs     >/dev/null 2>&1 && { pipx upgrade xiaohongshu-cli 2>/dev/null || uv tool upgrade xiaohongshu-cli 2>/dev/null; }
+which yt-dlp  >/dev/null 2>&1 && { pipx upgrade yt-dlp 2>/dev/null || uv tool upgrade yt-dlp 2>/dev/null || pip install -U yt-dlp 2>/dev/null; }
 
-# Twitter/X — twitter-cli (replaces deprecated bird CLI)
-which twitter >/dev/null 2>&1 || pipx install twitter-cli 2>/dev/null || uv tool install twitter-cli 2>/dev/null
+# rdt-cli is pinned to a git source (PyPI lags upstream)
+which rdt >/dev/null 2>&1 && pipx install --force 'git+https://github.com/public-clis/rdt-cli.git' 2>/dev/null
 
-# Reddit — rdt-cli (replaces Exa-based approach; PyPI lags, install from GitHub)
-which rdt >/dev/null 2>&1 || pipx install 'git+https://github.com/public-clis/rdt-cli.git' 2>/dev/null || uv tool install --from 'git+https://github.com/public-clis/rdt-cli.git' rdt-cli 2>/dev/null
-
-# XiaoHongShu — xhs-cli (replaces Docker MCP)
-which xhs >/dev/null 2>&1 || pipx install xiaohongshu-cli 2>/dev/null || uv tool install xiaohongshu-cli 2>/dev/null
-
-# === Optional enhancements ===
-
-# Bilibili — bili-cli (adds hot/rank/search on top of yt-dlp)
-which bili >/dev/null 2>&1 || pipx install bilibili-cli 2>/dev/null || uv tool install bilibili-cli 2>/dev/null
-
-# mcporter + Exa (for WeChat, web search)
-which mcporter >/dev/null 2>&1 || npm install -g mcporter 2>/dev/null
-
-# yt-dlp (YouTube + Bilibili video)
-which yt-dlp >/dev/null 2>&1 || pip install yt-dlp 2>/dev/null
-
-# gh CLI (GitHub)
-which gh >/dev/null 2>&1 || echo "GitHub CLI not installed — see https://cli.github.com"
+# npm-based
+which mcporter >/dev/null 2>&1 && npm update -g mcporter 2>/dev/null
+which opencli  >/dev/null 2>&1 && npm update -g @jackwener/opencli 2>/dev/null
 ```
+
+**Desktop users without OpenCLI**: since v1.5.0 OpenCLI is the preferred
+backend for 小红书/Reddit (and adds B站 subtitles) by riding the user's
+browser session. Offer it once:
+
+> "这次更新引入了 OpenCLI 后端（复用你的浏览器登录态，小红书/Reddit 零配置）。要装吗？装完只需你在 Chrome 商店点一次『添加扩展』。"
+
+If yes: `agent-reach install --channels opencli` and guide them through the
+extension click. If no, everything keeps working on existing backends.
 
 ### Step 4: Coexistence (DO NOT uninstall old tools)
 
-**IMPORTANT: Never uninstall any existing tools the user already has installed.** Old tools (bird, browser_cookie3, miku_ai, etc.) may still be working on the user's machine even if their upstream repos are archived or deleted. Agent Reach supports both old and new tools as fallback. Only install new tools alongside existing ones.
+**Never uninstall tools the user already has.** Retired backends (e.g. yt-dlp
+no longer serves Bilibili; xhs-cli is no longer installed by default) keep
+working as fallbacks where they still function. Agent Reach routes around
+them automatically — removal is the user's call, not yours.
 
 ### Step 5: Verify
 
@@ -82,51 +89,27 @@ agent-reach version
 agent-reach doctor
 ```
 
+Running `agent-reach doctor` (text mode) also auto-syncs the bundled skill
+(SKILL.md + references) into every detected agent skill directory — no
+separate skill-update step is needed.
+
 Check the doctor output:
-- All channels should show ✅ or ⚠️ (with clear instructions)
-- If any channel that was working before now shows ❌, investigate:
-  - Twitter: needs `twitter-cli` + browser cookies (run `xhs login` pattern)
-  - Reddit: needs `rdt-cli` (should be installed in Step 3)
-  - XiaoHongShu: needs `xhs-cli` + login (run `xhs login`)
-  - WeChat: should work via Exa (zero config)
 
-### Step 6: Update SKILL.md (if installed)
+- Every channel shows ✅ / [!] with a clear message, and multi-backend
+  channels (小红书/Reddit/B站/Twitter) report `当前后端：…`
+- If a previously-working channel now shows [X]/error, the message contains
+  the exact fix (e.g. a venv-reinstall prescription) — run it, then re-check
+- `--json` gives the same data machine-readably (`active_backend` per channel)
 
-```bash
-agent-reach install --skill-only 2>/dev/null || python3 -c "
-import importlib.resources, os
-try:
-    skill_pkg = importlib.resources.files('agent_reach').joinpath('skill')
-except Exception:
-    from pathlib import Path
-    skill_pkg = Path(os.path.dirname(os.path.abspath(__file__))).parent / 'agent_reach' / 'skill'
-
-skill_md = skill_pkg.joinpath('SKILL.md').read_text(encoding='utf-8')
-refs_pkg = skill_pkg.joinpath('references')
-
-for base in [os.path.expanduser('~/.openclaw/skills/agent-reach'),
-             os.path.expanduser('~/.claude/skills/agent-reach'),
-             os.path.expanduser('~/.agents/skills/agent-reach')]:
-    if os.path.isdir(base):
-        with open(os.path.join(base, 'SKILL.md'), 'w', encoding='utf-8') as f:
-            f.write(skill_md)
-        refs_dir = os.path.join(base, 'references')
-        os.makedirs(refs_dir, exist_ok=True)
-        for ref in refs_pkg.iterdir():
-            name = ref.name if hasattr(ref, 'name') else str(ref).split('/')[-1]
-            if name.endswith('.md'):
-                with open(os.path.join(refs_dir, name), 'w', encoding='utf-8') as f:
-                    f.write(ref.read_text(encoding='utf-8'))
-        print(f'✅ Updated skill: {base}')
-"
-```
-
-### Step 7: Report to user
+### Step 6: Report to user
 
 Tell the user:
-1. What version they're now on (`agent-reach version`)
-2. How many channels are available (count ✅ in doctor output)
-3. Any channels that need their action (e.g., `xhs login` for XiaoHongShu, browser cookies for Twitter)
-4. What changed in this update (major: Twitter/Reddit/XiaoHongShu upstream tools migrated for better stability)
+
+1. What version they're on now (`agent-reach version`)
+2. How many channels are available, and which backend each multi-backend
+   platform is using (from doctor)
+3. Anything that needs their action (e.g. Chrome extension click, `xhs login`,
+   QR scan for xiaohongshu-mcp on servers)
+4. What changed in this update (release notes shown by `check-update`)
 
 Done.

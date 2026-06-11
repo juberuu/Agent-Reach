@@ -183,3 +183,19 @@ class TestCheckUpdateRetry:
         assert result == "error"
         assert "网络超时" in captured.out
         assert "已重试 3 次" in captured.out
+
+
+class TestVersionCompare:
+    def test_newer_remote_triggers_update(self):
+        assert cli._is_newer_version("1.5.0", "1.4.2") is True
+
+    def test_equal_versions_no_update(self):
+        assert cli._is_newer_version("1.5.0", "1.5.0") is False
+
+    def test_local_ahead_of_release_no_downgrade_prompt(self):
+        """发版窗口期本地装了 main(更新)时,不能提示"有更新"诱导降级。"""
+        assert cli._is_newer_version("1.4.2", "1.5.0") is False
+
+    def test_unparseable_falls_back_to_inequality(self):
+        assert cli._is_newer_version("2026.06-beta", "1.5.0") is True
+        assert cli._is_newer_version("1.5.0", "1.5.0-dev") is True
