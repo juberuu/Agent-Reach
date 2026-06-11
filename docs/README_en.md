@@ -67,7 +67,7 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 |----------|-------------|:-----:|-------|
 | 🌐 **Web** | Read | Zero config | Any URL → clean Markdown ([Jina Reader](https://github.com/jina-ai/reader) ⭐9.8K) |
 | 🐦 **Twitter/X** | Read · Search | Cookie | Cookie unlocks search, timeline, tweet reading, articles ([twitter-cli](https://github.com/public-clis/twitter-cli)) |
-| 📕 **XiaoHongShu** | Read · Search · **Post · Comment · Like** | OpenCLI / MCP | Desktop: [OpenCLI](https://github.com/jackwener/opencli) (reuses browser session); Server: [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) (QR login); legacy xhs-cli still works |
+| 📕 **XiaoHongShu** | Read · Search · Comments | OpenCLI / MCP | Desktop: [OpenCLI](https://github.com/jackwener/opencli) (reuses browser session); Server: [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) (QR login); legacy xhs-cli still works |
 | 💼 **LinkedIn** | Jina Reader (public pages) | Full profiles, companies, job search | Tell your Agent "help me set up LinkedIn" |
 | 💻 **V2EX** | Hot topics · Node topics · Topic detail + replies · User profile | Zero config | Public JSON API, no auth required. Great for tech community content |
 | 📈 **Xueqiu (雪球)** | Stock quotes · Search · Hot posts · Hot stocks | Browser cookie | Tell your Agent "help me set up Xueqiu" |
@@ -193,7 +193,7 @@ $ agent-reach doctor
 
 🔧 Configurable:
   ⬜ Reddit posts and comments — needs login: rdt-cli after `rdt login`, or OpenCLI browser session
-  ⬜ XiaoHongShu notes — needs cookie. Export from browser
+  ⬜ XiaoHongShu notes — desktop: OpenCLI (browser session); server: xiaohongshu-mcp (QR)
 
 Status: 6/9 channels available
 ```
@@ -302,7 +302,7 @@ Agent Reach uses twitter-cli which accesses Twitter via cookie auth — same as 
 <details>
 <summary><strong>How to read XiaoHongShu / 小红书 content programmatically?</strong></summary>
 
-Install `pipx install xiaohongshu-cli`, then `xhs login` (auto-extracts cookies from browser). Your agent can then use `xhs search "query"` to search notes, `xhs read NOTE_ID` to read details, `xhs comments NOTE_ID` to view comments. No Docker needed.
+On desktop, prefer **OpenCLI** (`agent-reach install --channels opencli`) — it reuses your browser's logged-in session, so if you've browsed XiaoHongShu you're set; one Chrome Web Store click installs the extension. Then `opencli xiaohongshu search "query"` / `opencli xiaohongshu note URL`. On servers use [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) (bundled headless browser, QR login). Existing xhs-cli installs keep working as a fallback backend (upstream unmaintained since 2026-03, not recommended for new setups).
 </details>
 
 ---
