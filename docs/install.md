@@ -164,7 +164,8 @@ agent-reach configure twitter-cookies "PASTED_STRING"
 > Reddit 的匿名接口已被封、官方 API 需人工审批。桌面用户首选 OpenCLI（浏览器里登录过 reddit.com 即可用）；服务器/存量用户用 rdt-cli：
 
 ```bash
-pipx install 'git+https://github.com/public-clis/rdt-cli.git'   # PyPI 落后，从 GitHub 装
+# PyPI 落后，从 GitHub 装（与代码内 _RDT_GIT_SOURCE 同一钉定版本）
+pipx install 'git+https://github.com/public-clis/rdt-cli.git@5e4fb3720d5c174e976cd425ccc3b879d52cac66'
 rdt login   # 自动提取浏览器 Cookie；服务器无浏览器时按 doctor 提示手动写 Cookie
 ```
 

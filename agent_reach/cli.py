@@ -66,7 +66,8 @@ def main():
     p_install.add_argument("--env", choices=["local", "server", "auto"], default="auto",
                            help="Environment: local, server, or auto-detect")
     p_install.add_argument("--proxy", default="",
-                           help="Residential proxy for Reddit/Bilibili (http://user:pass@ip:port)")
+                           help="Network proxy saved for agents to export as HTTP(S)_PROXY "
+                                "in restricted networks (http://user:pass@ip:port)")
     p_install.add_argument("--safe", action="store_true",
                            help="Safe mode: skip automatic system changes, show what's needed instead")
     p_install.add_argument("--dry-run", action="store_true",
@@ -1526,9 +1527,9 @@ def _cmd_setup():
     print()
 
     # Step 3: Reddit — rdt-cli
-    print("【信息】Reddit — 通过 rdt-cli 搜索和阅读，无需配置")
+    print("【信息】Reddit — 必须登录态（无零配置路径）。桌面推荐 OpenCLI；或 rdt-cli：")
     print(f"  安装：pipx install '{_RDT_GIT_SOURCE}'")
-    print("  然后运行：rdt login")
+    print("  然后运行：rdt login（需先在浏览器登录 reddit.com）")
     print()
 
     # Step 4: Groq (Whisper)

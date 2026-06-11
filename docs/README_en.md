@@ -164,11 +164,11 @@ Don't use it? Don't configure it. Every step is optional.
 
 Tell your Agent "help me configure Twitter cookies" — it'll guide you through exporting from your browser. Local computers can auto-import.
 
-### 🌐 Proxy — $1/month, servers only
+### 🌐 Proxy — $1/month, restricted networks only
 
-Bilibili blocks server IPs. Get a proxy ([Webshare](https://webshare.io) recommended, $1/month) and send the address to your Agent.
+Most users need no proxy. If your network blocks Reddit/Twitter (e.g. mainland China) get one ([Webshare](https://webshare.io) recommended, $1/month) and send the address to your Agent — it saves it and exports HTTP(S)_PROXY when calling those tools.
 
-> Reddit needs a logged-in session — rdt-cli works after `rdt login` (still free, no proxy needed). Local computers don't need a proxy for Bilibili either.
+> Reddit needs a logged-in session either way — OpenCLI rides your browser session, or rdt-cli after `rdt login`. Bilibili works via bili-cli without a proxy.
 
 ---
 
@@ -184,7 +184,7 @@ $ agent-reach doctor
   ✅ GitHub repos and code — public repos readable and searchable
   ✅ Twitter/X tweets — readable. Cookie unlocks search and posting
   ✅ YouTube video subtitles — yt-dlp
-  ⚠️  Bilibili video info — server IPs may be blocked, configure proxy
+  ✅ Bilibili search & video detail — bili-cli (subtitles via OpenCLI)
   ✅ RSS/Atom feeds — feedparser
   ✅ Web pages (any URL) — Jina Reader API
 
