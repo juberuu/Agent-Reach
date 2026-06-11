@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Reddit — search and read via rdt-cli (public-clis/rdt-cli).
+"""Reddit — multi-backend: OpenCLI / rdt-cli. Login is mandatory.
 
-NOTE: Reddit requires authentication since 2024. All API requests
-(including public subreddit reads) return HTTP 403 without a valid
-session cookie. Run `rdt login` after installation to authenticate.
+Honest tiering (live-verified 2026-06): there is NO zero-config path.
+Anonymous .json endpoints are blocked (403 anti-bot, all variants), and
+the official API closed self-service registration in 2025-11 (manual
+approval, individual scripts rarely granted — PRAW is only an option for
+users who already hold credentials). Every working backend rides a
+logged-in session: OpenCLI reuses the browser's, rdt-cli imports cookies.
 """
 
 import json
@@ -32,8 +35,8 @@ _RDT_BROKEN_HINT = (
 class RedditChannel(Channel):
     name = "reddit"
     description = "Reddit 帖子和评论"
-    backends = ["rdt-cli"]
-    tier = 1  # Reddit requires login since 2024 (rdt login) — not zero-config
+    backends = ["OpenCLI", "rdt-cli"]
+    tier = 1  # no zero-config path exists — see module docstring
 
     def can_handle(self, url: str) -> bool:
         from urllib.parse import urlparse
@@ -42,19 +45,59 @@ class RedditChannel(Channel):
         return "reddit.com" in d or "redd.it" in d
 
     def check(self, config=None):
+        """Probe candidates in order; first fully-usable backend wins."""
         self.active_backend = None
+        findings = []
 
+        for backend in self.ordered_backends(config):
+            if backend == "OpenCLI":
+                result = self._check_opencli()
+            else:
+                result = self._check_rdt()
+            if result is None:
+                continue
+            findings.append((backend, *result))
+
+        for wanted in ("ok", "warn"):
+            for backend, status, message in findings:
+                if status == wanted:
+                    self.active_backend = backend
+                    return status, message
+
+        if findings:
+            return "error", "\n".join(m for _, _, m in findings)
+
+        return "off", (
+            "未安装任何 Reddit 后端。注意：Reddit 没有零配置路径"
+            "（匿名 .json 已被封，官方 API 需人工审批），必须用登录态。推荐：\n"
+            "  桌面：agent-reach install --channels opencli\n"
+            "       （复用 Chrome 登录态，登录过 reddit.com 即可用）\n"
+            f"  服务器/存量：pipx install '{_RDT_GIT_SOURCE}'\n"
+            "       然后 `rdt login` 或手动写入 Cookie（见 doctor 提示）\n"
+            "中国大陆访问 Reddit 需要代理"
+        )
+
+    def _check_opencli(self):
+        """OpenCLI candidate. None = not installed."""
+        from agent_reach.backends import opencli_status
+
+        st = opencli_status()
+        if not st.installed:
+            return None
+        if st.broken:
+            return "error", st.hint
+        if st.ready:
+            return "ok", (
+                "OpenCLI 可用（复用浏览器登录态）。用法："
+                "opencli reddit search/read/subreddit/hot -f yaml"
+            )
+        return "warn", st.hint
+
+    def _check_rdt(self):
+        """rdt-cli candidate. None = not installed."""
         rdt = shutil.which("rdt")
         if not rdt:
-            return "off", (
-                "需要安装 rdt-cli。PyPI 版本可能暂时落后，推荐直接从 GitHub 安装：\n"
-                f"  pipx install '{_RDT_GIT_SOURCE}'\n"
-                "如已确认 PyPI 版本已更新，也可使用：\n"
-                "  pipx install rdt-cli\n"
-                "  uv tool install rdt-cli\n"
-                "最新源码：https://github.com/public-clis/rdt-cli\n"
-                "安装后运行 `rdt login` 登录（需先在浏览器登录 reddit.com）"
-            )
+            return None
 
         # 不走 probe_command：实测 `rdt status --json` 成功时（rc=0）也会向 stderr
         # 打网络重试日志，probe 把 stdout+stderr 合并后 JSON 解析必炸。
@@ -83,9 +126,7 @@ class RedditChannel(Channel):
             tail = detail[-1] if detail else "无输出"
             return "error", f"rdt 异常退出（exit {r.returncode}）：{tail}。运行 `rdt status` 查看详情"
 
-        # 进程正常退出 → rdt 本身是活的（无论登录与否），后端即为可用
-        self.active_backend = "rdt-cli"
-
+        # 进程正常退出 → rdt 本身是活的（无论登录与否）
         try:
             data = json.loads(r.stdout or "")
         except json.JSONDecodeError:
@@ -101,7 +142,10 @@ class RedditChannel(Channel):
 
         if authenticated:
             suffix = f"（已登录：{username}）" if username else ""
-            return "ok", (f"rdt-cli 可用{suffix}（搜索帖子、阅读全文、查看评论）")
+            return "ok", (
+                f"rdt-cli 可用{suffix}（搜索帖子、阅读全文、查看评论；"
+                "上游 2026-03 起停更，桌面用户建议迁移到 OpenCLI）"
+            )
 
         return "warn", (
             "rdt-cli 已安装但未登录。Reddit 自 2024 年起要求认证，"

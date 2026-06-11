@@ -774,7 +774,24 @@ def _install_opencli_deps():
 
 
 def _install_reddit_deps():
-    """Install rdt-cli for Reddit search + reading."""
+    """Set up Reddit — desktop prefers OpenCLI, rdt-cli for servers/legacy.
+
+    No zero-config path exists (anonymous .json blocked, official API
+    approval-gated since 2025-11) — every backend needs a logged-in session.
+    """
+    if _detect_environment() != "server":
+        _install_opencli_deps()
+        print("  Reddit 走 OpenCLI（浏览器里登录过 reddit.com 即可用）")
+        import shutil
+        if shutil.which("rdt"):
+            print("  ✅ 检测到存量 rdt-cli，将作为备选后端继续可用")
+        return
+
+    _install_rdt_cli()
+
+
+def _install_rdt_cli():
+    """Install rdt-cli (pinned git source — PyPI lags upstream)."""
     import shutil
     import subprocess
 

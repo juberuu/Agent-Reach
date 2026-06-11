@@ -60,7 +60,7 @@ class TestCLI:
         assert auth_token == "token123"
         assert ct0 == "ct0abc"
 
-    def test_install_reddit_deps_prefers_github_source(self, monkeypatch, capsys):
+    def test_install_rdt_cli_prefers_github_source(self, monkeypatch, capsys):
         state = {"rdt_installed": False}
         commands = []
 
@@ -79,11 +79,27 @@ class TestCLI:
         monkeypatch.setattr(shutil, "which", fake_which)
         monkeypatch.setattr(subprocess, "run", fake_run)
 
-        cli._install_reddit_deps()
+        cli._install_rdt_cli()
 
         out = capsys.readouterr().out
         assert commands == [["pipx", "install", cli._RDT_GIT_SOURCE]]
         assert "✅ rdt-cli installed" in out
+
+    def test_install_reddit_deps_routes_by_environment(self, monkeypatch):
+        """桌面 → OpenCLI;服务器 → rdt-cli(钉 git 源)。"""
+        calls = []
+        monkeypatch.setattr(cli, "_install_opencli_deps", lambda: calls.append("opencli"))
+        monkeypatch.setattr(cli, "_install_rdt_cli", lambda: calls.append("rdt"))
+        monkeypatch.setattr(shutil, "which", lambda _: None)
+
+        monkeypatch.setattr(cli, "_detect_environment", lambda: "local")
+        cli._install_reddit_deps()
+        assert calls == ["opencli"]
+
+        calls.clear()
+        monkeypatch.setattr(cli, "_detect_environment", lambda: "server")
+        cli._install_reddit_deps()
+        assert calls == ["rdt"]
 
 
 class TestCheckUpdateRetry:

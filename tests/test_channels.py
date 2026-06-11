@@ -647,17 +647,36 @@ class TestXueqiuChannel:
 
 
 class TestRedditChannel:
-    def test_reports_off_when_not_installed(self, monkeypatch):
+    """多后端：OpenCLI > rdt-cli，没有零配置路径。"""
+
+    @staticmethod
+    def _isolate(monkeypatch, opencli=None):
+        """隔离 OpenCLI 候选（None = 未安装），聚焦 rdt-cli 路径。"""
+        from agent_reach.channels.reddit import RedditChannel
+        monkeypatch.setattr(RedditChannel, "_check_opencli", lambda self: opencli)
+
+    def test_reports_off_when_nothing_installed(self, monkeypatch):
+        self._isolate(monkeypatch)
         monkeypatch.setattr(shutil, "which", lambda _: None)
         from agent_reach.channels.reddit import RedditChannel
         status, msg = RedditChannel().check()
         assert status == "off"
-        assert "rdt-cli" in msg
-        assert "public-clis/rdt-cli" in msg
+        # 诚实口径：明说没有零配置路径，推荐 OpenCLI + rdt git 源
+        assert "零配置" in msg
+        assert "opencli" in msg
         assert "git+https://github.com/public-clis/rdt-cli.git" in msg
-        assert "rdt-cli>=0.4.2" not in msg
+
+    def test_opencli_ready_wins(self, monkeypatch):
+        self._isolate(monkeypatch, opencli=("ok", "OpenCLI 可用（复用浏览器登录态）"))
+        monkeypatch.setattr(shutil, "which", lambda _: None)
+        from agent_reach.channels.reddit import RedditChannel
+        ch = RedditChannel()
+        status, msg = ch.check()
+        assert status == "ok"
+        assert ch.active_backend == "OpenCLI"
 
     def test_reports_ok_when_authenticated(self, monkeypatch):
+        self._isolate(monkeypatch)
         monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
         fake_output = json.dumps({
             "ok": True,
@@ -677,6 +696,7 @@ class TestRedditChannel:
         assert ch.active_backend == "rdt-cli"
 
     def test_reports_warn_when_not_authenticated(self, monkeypatch):
+        self._isolate(monkeypatch)
         monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
         fake_output = json.dumps({
             "ok": True,
@@ -701,6 +721,7 @@ class TestRedditChannel:
 
     def test_reports_error_when_status_check_fails(self, monkeypatch):
         """rdt 非零退出且输出不可解析 → 工具异常（error），不再算 warn。"""
+        self._isolate(monkeypatch)
         monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
 
         def fake_run(cmd, **kwargs):
@@ -716,6 +737,7 @@ class TestRedditChannel:
 
     def test_reports_error_with_reinstall_hint_when_broken(self, monkeypatch):
         """which 命中但 exec 抛 FileNotFoundError（venv 断链）→ error + 重装处方。"""
+        self._isolate(monkeypatch)
         monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
 
         def fake_run(cmd, **kwargs):
@@ -733,6 +755,7 @@ class TestRedditChannel:
 
     def test_reports_error_with_reinstall_hint_on_exit_127(self, monkeypatch):
         """退出码 127（找到但跑不动）同样按断链处理。"""
+        self._isolate(monkeypatch)
         monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
 
         def fake_run(cmd, **kwargs):
