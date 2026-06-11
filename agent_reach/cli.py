@@ -226,10 +226,11 @@ def _cmd_install(args):
     # Apply explicit flags
     if args.proxy:
         if dry_run:
-            print(f"[dry-run] Would configure proxy for Bilibili")
+            print(f"[dry-run] Would save network proxy")
         else:
-            config.set("bilibili_proxy", args.proxy)
-            print(f"✅ Proxy configured for Bilibili")
+            config.set("proxy", args.proxy)
+            config.set("bilibili_proxy", args.proxy)  # legacy key
+            print(f"✅ 代理已保存（Agent 访问受限网络时使用）")
 
     # ── Install core system dependencies (lightweight, always) ──
     print()
@@ -298,9 +299,9 @@ def _cmd_install(args):
     # Environment-specific advice
     if env == "server":
         print()
-        print("Tip: Bilibili may block server IPs.")
-        print("   Reddit: rdt-cli works without proxy (pipx install rdt-cli).")
-        print("   For Bilibili full access: agent-reach configure proxy http://user:pass@ip:port")
+        print("Tip: 部分平台对服务器 IP 有风控。")
+        print("   Reddit 必须登录态（rdt-cli + Cookie，见 doctor 提示），中国大陆网络还需代理。")
+        print("   保存代理供 Agent 使用：agent-reach configure proxy http://user:pass@ip:port")
         print("   Cheap option: https://www.webshare.io ($1/month)")
 
     # Test channels
@@ -1036,9 +1037,14 @@ def _cmd_configure(args):
         return
 
     if args.key == "proxy":
+        # Generic network proxy for restricted environments. Nothing reads
+        # this key at runtime — agents read it back and export HTTP(S)_PROXY
+        # before invoking upstream tools (see docs/install.md). The legacy
+        # bilibili_proxy key is kept in sync for older configs.
+        config.set("proxy", value)
         config.set("bilibili_proxy", value)
-        print(f"✅ Proxy configured for Bilibili!")
-        print("  Note: Reddit 已改为通过 rdt-cli 访问，无需代理。")
+        print("✅ 代理已保存（供 Agent 在访问 Reddit/Twitter 等需要代理的网络时设置 HTTP_PROXY/HTTPS_PROXY）")
+        print("  Note: B站走 bili-cli，国内网络无需代理。")
 
     elif args.key == "twitter-cookies":
         # Accept two formats:

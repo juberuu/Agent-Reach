@@ -58,8 +58,8 @@ which bili    >/dev/null 2>&1 && { pipx upgrade bilibili-cli 2>/dev/null || uv t
 which xhs     >/dev/null 2>&1 && { pipx upgrade xiaohongshu-cli 2>/dev/null || uv tool upgrade xiaohongshu-cli 2>/dev/null; }
 which yt-dlp  >/dev/null 2>&1 && { pipx upgrade yt-dlp 2>/dev/null || uv tool upgrade yt-dlp 2>/dev/null || pip install -U yt-dlp 2>/dev/null; }
 
-# rdt-cli is pinned to a git source (PyPI lags upstream)
-which rdt >/dev/null 2>&1 && pipx install --force 'git+https://github.com/public-clis/rdt-cli.git' 2>/dev/null
+# rdt-cli is pinned to a git source (PyPI lags upstream) — same pin as the code's _RDT_GIT_SOURCE
+which rdt >/dev/null 2>&1 && pipx install --force 'git+https://github.com/public-clis/rdt-cli.git@5e4fb3720d5c174e976cd425ccc3b879d52cac66' 2>/dev/null
 
 # npm-based
 which mcporter >/dev/null 2>&1 && npm update -g mcporter 2>/dev/null

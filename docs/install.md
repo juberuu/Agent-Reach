@@ -312,7 +312,7 @@ If the user wants a different agent to handle it, let them choose.
 | `agent-reach watch` | Quick health + update check (for scheduled tasks) |
 | `agent-reach check-update` | Check for new versions |
 | `agent-reach configure twitter-cookies "..."` | Unlock Twitter search + posting |
-| `agent-reach configure proxy URL` | Unlock Reddit + Bilibili on servers |
+| `agent-reach configure proxy URL` | 保存代理地址（Agent 访问 Reddit/Twitter 等受限网络时读取它设置 HTTP_PROXY/HTTPS_PROXY，不是自动解锁开关） |
 | `agent-reach configure groq-key gsk_xxx` | Unlock Xiaoyuzhou podcast transcription |
 
 After installation, use upstream tools directly. See SKILL.md for the full command reference:

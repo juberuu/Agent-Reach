@@ -53,6 +53,10 @@ def probe_command(
 ) -> ProbeResult:
     """Actually execute `cmd *args` and classify the result.
 
+    Intended for SIDE-EFFECT-FREE health probes only (version/status
+    commands): retries re-run the command verbatim with no backoff, so a
+    non-idempotent command would repeat its effect.
+
     package: pip/pipx package name used in the broken-install hint
              (defaults to cmd).
     """

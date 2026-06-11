@@ -58,9 +58,16 @@ def _require(binary: str) -> None:
         raise MissingDependency(f"{binary} not found in PATH")
 
 
-def _run(cmd: List[str]) -> None:
-    """Run a subprocess, raising TranscribeError on nonzero exit."""
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+def _run(cmd: List[str], timeout: int = 600) -> None:
+    """Run a subprocess, raising TranscribeError on nonzero exit or timeout.
+
+    cmd carries user-supplied URLs/paths into yt-dlp/ffmpeg — a stalled
+    network read or a hung probe must not block the CLI forever.
+    """
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise TranscribeError(f"{cmd[0]} timed out after {timeout}s")
     if proc.returncode != 0:
         raise TranscribeError(
             f"{cmd[0]} failed (exit {proc.returncode}): {proc.stderr.strip()[:300]}"
@@ -82,7 +89,8 @@ def download_audio(url: str, out_dir: Path) -> Path:
             "-o",
             str(template),
             url,
-        ]
+        ],
+        timeout=1800,  # long podcasts over slow networks — generous but bounded
     )
     files = sorted(out_dir.glob("source.*"))
     if not files:
