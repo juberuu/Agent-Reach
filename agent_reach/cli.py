@@ -199,6 +199,7 @@ def _cmd_install(args):
         "xiaohongshu": _install_xhs_deps,
         "reddit":      _install_reddit_deps,
         "bilibili":    _install_bili_deps,
+        "opencli":     _install_opencli_deps,  # cross-channel backend, desktop only
         # xueqiu: cookie-only, no install step
         # linkedin: manual setup, no auto-install
     }
@@ -252,6 +253,10 @@ def _cmd_install(args):
     if requested_channels and not dry_run and not safe_mode:
         print()
         print("Installing optional channels...")
+        if env == "server" and "opencli" in requested_channels:
+            # OpenCLI rides a real desktop Chrome session — useless headless
+            requested_channels.discard("opencli")
+            print("  -- OpenCLI 需要桌面环境 + Chrome，服务器环境跳过")
         for ch_name in sorted(requested_channels):
             installer = CHANNEL_INSTALLERS.get(ch_name)
             if installer:
@@ -714,6 +719,55 @@ def _install_xhs_deps():
             except Exception:
                 pass
     print("  [!]  xhs-cli install failed. Run: pipx install xiaohongshu-cli")
+
+
+def _install_opencli_deps():
+    """Install OpenCLI — cross-platform backend riding the user's Chrome session.
+
+    Desktop-only. The npm package installs automatically; the Chrome
+    extension CANNOT be installed programmatically (Chrome security model),
+    so we print a one-click guide instead.
+    """
+    import shutil
+    import subprocess
+
+    from agent_reach.backends import (
+        OPENCLI_EXTENSION_URL,
+        OPENCLI_PACKAGE,
+        opencli_status,
+        opencli_summary,
+    )
+
+    print("Setting up OpenCLI (browser-session backend, desktop only)...")
+    st = opencli_status()
+    if st.installed and not st.broken:
+        print(f"  ✅ {opencli_summary(st)}")
+        if not st.ready:
+            print(f"  {st.hint}")
+        return
+
+    if not shutil.which("npm"):
+        print("  [!]  OpenCLI requires Node.js ≥ 20. Install Node first:")
+        print("       https://nodejs.org  （或 brew install node）")
+        return
+
+    try:
+        subprocess.run(
+            ["npm", "install", "-g", OPENCLI_PACKAGE],
+            capture_output=True, encoding="utf-8", errors="replace", timeout=300,
+        )
+    except Exception:
+        pass
+
+    st = opencli_status()
+    if st.installed and not st.broken:
+        print("  ✅ OpenCLI installed")
+        print("  最后一步（必须手动，Chrome 安全限制）：安装浏览器扩展")
+        print(f"    1. 打开 {OPENCLI_EXTENSION_URL}")
+        print("    2. 点「添加至 Chrome」")
+        print("    3. 运行 `opencli doctor` 验证连接")
+    else:
+        print(f"  [!]  OpenCLI install failed. Run: npm install -g {OPENCLI_PACKAGE}")
 
 
 def _install_reddit_deps():
