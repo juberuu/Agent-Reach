@@ -11,3 +11,4 @@ build/
 
 # Claude Code personal permission settings — local only, never commit
 .claude/settings.local.json
+uv.lock

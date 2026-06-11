@@ -2,8 +2,8 @@
 """Xiaoyuzhou Podcast (小宇宙播客) — transcribe podcasts via Groq Whisper API."""
 
 import os
-import shutil
 from agent_reach.config import Config
+from agent_reach.probe import probe_command
 from .base import Channel
 
 
@@ -19,12 +19,20 @@ class XiaoyuzhouChannel(Channel):
         return "xiaoyuzhoufm.com" in d
 
     def check(self, config=None):
-        # Check ffmpeg
-        if not shutil.which("ffmpeg"):
+        self.active_backend = None
+
+        # Check ffmpeg — really execute it: a stale pip-installed ffmpeg shim
+        # passes shutil.which() but cannot run
+        probe = probe_command("ffmpeg", ["-version"], timeout=10, package="ffmpeg")
+        if probe.status == "missing":
             return "off", (
                 "需要 ffmpeg（音频转码和切片）。安装：\n"
                 "  Ubuntu/Debian: apt install -y ffmpeg\n"
                 "  macOS: brew install ffmpeg"
+            )
+        if not probe.ok:
+            return "error", (
+                "ffmpeg 无法执行，重装：brew install ffmpeg（macOS）/ apt install ffmpeg（Linux）"
             )
 
         # Check script exists
@@ -51,4 +59,5 @@ class XiaoyuzhouChannel(Channel):
                 "  2. 运行: agent-reach configure groq-key gsk_xxxxx"
             )
 
+        self.active_backend = "groq-whisper"
         return "ok", "完整可用（播客下载 + Whisper 转录）"

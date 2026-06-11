@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """XiaoHongShu — check if xhs-cli (xiaohongshu-cli) is available."""
 
-import shutil
-import subprocess
+from agent_reach.probe import probe_command
+
 from .base import Channel
 
 
@@ -127,8 +127,12 @@ class XiaoHongShuChannel(Channel):
         return "xiaohongshu.com" in d or "xhslink.com" in d
 
     def check(self, config=None):
-        xhs = shutil.which("xhs")
-        if not xhs:
+        self.active_backend = None
+        probe = probe_command(
+            "xhs", ["status"], timeout=10, package="xiaohongshu-cli"
+        )
+
+        if probe.status == "missing":
             return "off", (
                 "需要安装 xhs-cli：\n"
                 "  pipx install xiaohongshu-cli\n"
@@ -136,27 +140,27 @@ class XiaoHongShuChannel(Channel):
                 "  uv tool install xiaohongshu-cli\n"
                 "安装后运行 `xhs login` 登录"
             )
+        if probe.status == "broken":
+            return "error", "xhs 命令存在但无法执行\n" + probe.hint
+        if probe.status == "timeout":
+            return "warn", "xhs-cli 已安装但状态检测超时\n" + probe.hint
 
-        try:
-            r = subprocess.run(
-                [xhs, "status"], capture_output=True,
-                encoding="utf-8", errors="replace", timeout=10,
+        # 进程是活的（执行成功或运行后非零退出）——按输出内容分类
+        if probe.ok and "ok: true" in probe.output:
+            self.active_backend = self.backends[0]
+            return "ok", (
+                "完整可用（搜索、阅读、评论、发帖、热门、"
+                "收藏、关注、用户查询）"
             )
-            output = (r.stdout or "") + (r.stderr or "")
-            if r.returncode == 0 and "ok: true" in output:
-                return "ok", (
-                    "完整可用（搜索、阅读、评论、发帖、热门、"
-                    "收藏、关注、用户查询）"
-                )
-            if "not_authenticated" in output or "expired" in output:
-                return "warn", (
-                    "xhs-cli 已安装但未登录。运行：\n"
-                    "  xhs login\n"
-                    "（自动从浏览器提取 Cookie，或扫码登录）"
-                )
+        if "not_authenticated" in probe.output or "expired" in probe.output:
+            self.active_backend = self.backends[0]
             return "warn", (
-                "xhs-cli 已安装但状态异常。运行：\n"
-                "  xhs -v status 查看详细信息"
+                "xhs-cli 已安装但未登录。运行：\n"
+                "  xhs login\n"
+                "（自动从浏览器提取 Cookie，或扫码登录）"
             )
-        except Exception:
-            return "warn", "xhs-cli 已安装但连接失败"
+        self.active_backend = self.backends[0]
+        return "warn", (
+            "xhs-cli 已安装但状态异常。运行：\n"
+            "  xhs -v status 查看详细信息"
+        )

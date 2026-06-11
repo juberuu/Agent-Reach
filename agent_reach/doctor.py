@@ -10,18 +10,35 @@ from agent_reach.channels import get_all_channels
 
 
 def check_all(config: Config) -> Dict[str, dict]:
-    """Check all channels and return status dict."""
+    """Check all channels and return status dict.
+
+    A single misbehaving channel must never take the whole report down,
+    so per-channel exceptions degrade to status="error".
+    """
     results = {}
     for ch in get_all_channels():
-        status, message = ch.check(config)
+        try:
+            status, message = ch.check(config)
+        except Exception as e:  # noqa: BLE001 — doctor must survive any channel
+            status, message = "error", f"体检异常：{e}"
         results[ch.name] = {
             "status": status,
             "name": ch.description,
             "message": message,
             "tier": ch.tier,
             "backends": ch.backends,
+            "active_backend": getattr(ch, "active_backend", None),
         }
     return results
+
+
+def _name_msg(r: dict, escape) -> str:
+    """Render one channel line; show the active backend when there is a choice."""
+    text = f"[bold]{escape(r['name'])}[/bold] — {escape(r['message'])}"
+    active = r.get("active_backend")
+    if active and len(r.get("backends", [])) > 1:
+        text += f" [dim]（当前后端：{escape(active)}）[/dim]"
+    return text
 
 
 def format_report(results: Dict[str, dict]) -> str:
@@ -44,7 +61,7 @@ def format_report(results: Dict[str, dict]) -> str:
     lines.append("[bold]✅ 装好即用：[/bold]")
     for key, r in results.items():
         if r["tier"] == 0:
-            name_msg = f"[bold]{escape(r['name'])}[/bold] — {escape(r['message'])}"
+            name_msg = _name_msg(r, escape)
             if r["status"] == "ok":
                 lines.append(f"  [green]✅[/green] {name_msg}")
             elif r["status"] == "warn":
@@ -60,8 +77,7 @@ def format_report(results: Dict[str, dict]) -> str:
         lines.append("")
         lines.append("[bold]可选渠道（已安装）：[/bold]")
         for key, r in tier1_active.items():
-            name_msg = f"[bold]{escape(r['name'])}[/bold] — {escape(r['message'])}"
-            lines.append(f"  [green]✅[/green] {name_msg}")
+            lines.append(f"  [green]✅[/green] {_name_msg(r, escape)}")
 
     # Tier 2 — optional complex setup
     tier2 = {k: r for k, r in results.items() if r["tier"] == 2}
@@ -72,8 +88,7 @@ def format_report(results: Dict[str, dict]) -> str:
             lines.append("")
             lines.append("[bold]可选渠道（已安装）：[/bold]")
         for key, r in tier2_active.items():
-            name_msg = f"[bold]{escape(r['name'])}[/bold] — {escape(r['message'])}"
-            lines.append(f"  [green]✅[/green] {name_msg}")
+            lines.append(f"  [green]✅[/green] {_name_msg(r, escape)}")
 
     lines.append("")
     status_color = "green" if ok_count == total else ("yellow" if ok_count > 0 else "red")

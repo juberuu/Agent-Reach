@@ -670,9 +670,11 @@ class TestRedditChannel:
 
         monkeypatch.setattr(subprocess, "run", fake_run)
         from agent_reach.channels.reddit import RedditChannel
-        status, msg = RedditChannel().check()
+        ch = RedditChannel()
+        status, msg = ch.check()
         assert status == "ok"
         assert "testuser" in msg
+        assert ch.active_backend == "rdt-cli"
 
     def test_reports_warn_when_not_authenticated(self, monkeypatch):
         monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
@@ -687,14 +689,18 @@ class TestRedditChannel:
 
         monkeypatch.setattr(subprocess, "run", fake_run)
         from agent_reach.channels.reddit import RedditChannel
-        status, msg = RedditChannel().check()
+        ch = RedditChannel()
+        status, msg = ch.check()
         assert status == "warn"
         assert "403" in msg
         assert "rdt login" in msg
         assert "Cookie-Editor" in msg
         assert "chromewebstore.google.com" in msg
+        # 未登录是业务态：进程活着，后端仍然算可用
+        assert ch.active_backend == "rdt-cli"
 
-    def test_reports_warn_when_status_check_fails(self, monkeypatch):
+    def test_reports_error_when_status_check_fails(self, monkeypatch):
+        """rdt 非零退出且输出不可解析 → 工具异常（error），不再算 warn。"""
         monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
 
         def fake_run(cmd, **kwargs):
@@ -702,8 +708,43 @@ class TestRedditChannel:
 
         monkeypatch.setattr(subprocess, "run", fake_run)
         from agent_reach.channels.reddit import RedditChannel
-        status, msg = RedditChannel().check()
-        assert status == "warn"
+        ch = RedditChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "rdt 异常退出" in msg
+        assert ch.active_backend is None
+
+    def test_reports_error_with_reinstall_hint_when_broken(self, monkeypatch):
+        """which 命中但 exec 抛 FileNotFoundError（venv 断链）→ error + 重装处方。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError("/usr/local/bin/rdt")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.reddit import RedditChannel
+        ch = RedditChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "无法执行" in msg
+        assert "pipx install --force" in msg  # rdt 专用 git 源重装处方
+        assert "git+https://github.com/public-clis/rdt-cli.git" in msg
+        assert ch.active_backend is None
+
+    def test_reports_error_with_reinstall_hint_on_exit_127(self, monkeypatch):
+        """退出码 127（找到但跑不动）同样按断链处理。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/rdt")
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 127, "", "")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.reddit import RedditChannel
+        ch = RedditChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "pipx install --force" in msg
+        assert ch.active_backend is None
 
     def test_can_handle_reddit_urls(self):
         from agent_reach.channels.reddit import RedditChannel
@@ -723,9 +764,11 @@ class TestXiaoHongShuChannel:
 
         monkeypatch.setattr(subprocess, "run", fake_run)
 
-        status, msg = XiaoHongShuChannel().check()
+        ch = XiaoHongShuChannel()
+        status, msg = ch.check()
         assert status == "ok"
         assert "完整可用" in msg
+        assert ch.active_backend == "xhs-cli (xiaohongshu-cli)"
 
     def test_reports_warn_when_not_authenticated(self, monkeypatch):
         monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/xhs")
@@ -735,12 +778,261 @@ class TestXiaoHongShuChannel:
 
         monkeypatch.setattr(subprocess, "run", fake_run)
 
-        status, msg = XiaoHongShuChannel().check()
+        ch = XiaoHongShuChannel()
+        status, msg = ch.check()
         assert status == "warn"
         assert "xhs login" in msg
+        # 未登录是业务态：工具进程活着，后端仍可用
+        assert ch.active_backend == "xhs-cli (xiaohongshu-cli)"
 
     def test_reports_off_when_not_installed(self, monkeypatch):
         monkeypatch.setattr(shutil, "which", lambda _: None)
-        status, msg = XiaoHongShuChannel().check()
+        ch = XiaoHongShuChannel()
+        status, msg = ch.check()
         assert status == "off"
         assert "xiaohongshu-cli" in msg
+        assert ch.active_backend is None
+
+    def test_reports_error_with_reinstall_hint_when_broken(self, monkeypatch):
+        """which 命中但 exec 抛 FileNotFoundError（venv 断链）→ error + 重装处方。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/xhs")
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError("/usr/local/bin/xhs")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+
+        ch = XiaoHongShuChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "无法执行" in msg
+        assert "uv tool install --force xiaohongshu-cli" in msg
+        assert "pipx reinstall xiaohongshu-cli" in msg
+        assert ch.active_backend is None
+
+
+class TestBilibiliChannel:
+    def test_reports_error_with_reinstall_hint_when_ytdlp_broken(self, monkeypatch):
+        """yt-dlp which 命中但 exec 失败（venv 断链）→ error + 重装处方。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/yt-dlp")
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError(cmd[0])
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.bilibili import BilibiliChannel
+        ch = BilibiliChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "无法执行" in msg
+        assert "uv tool install --force yt-dlp" in msg
+        assert "pipx reinstall yt-dlp" in msg
+        assert ch.active_backend is None
+
+    def test_active_backend_set_when_ytdlp_and_bili_ok(self, monkeypatch):
+        monkeypatch.setattr(
+            shutil, "which",
+            lambda cmd: f"/usr/local/bin/{cmd}" if cmd in ("yt-dlp", "bili") else None,
+        )
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 0, "2026.06.09", "")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.bilibili import BilibiliChannel
+        ch = BilibiliChannel()
+        status, msg = ch.check()
+        assert status == "ok"
+        assert "bili-cli 可用" in msg
+        assert ch.active_backend == "yt-dlp"
+
+    def test_bili_broken_does_not_count_as_available(self, monkeypatch):
+        """bili-cli 断链时不计为可用，降级走搜索 API；yt-dlp 仍是 active_backend。"""
+        monkeypatch.setattr(
+            shutil, "which",
+            lambda cmd: f"/usr/local/bin/{cmd}" if cmd in ("yt-dlp", "bili") else None,
+        )
+
+        def fake_run(cmd, **kwargs):
+            if "yt-dlp" in cmd[0]:
+                return subprocess.CompletedProcess(cmd, 0, "2026.06.09", "")
+            raise FileNotFoundError(cmd[0])
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        import agent_reach.channels.bilibili as bilibili_mod
+        monkeypatch.setattr(bilibili_mod, "_search_api_ok", lambda: True)
+        ch = bilibili_mod.BilibiliChannel()
+        status, msg = ch.check()
+        assert status == "ok"  # 搜索 API 兜底
+        assert "不计为可用" in msg
+        assert ch.active_backend == "yt-dlp"
+
+
+class TestYouTubeChannel:
+    def test_reports_error_with_reinstall_hint_when_broken(self, monkeypatch):
+        """yt-dlp which 命中但 exec 抛 FileNotFoundError → error + 重装处方。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/yt-dlp")
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError(cmd[0])
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.youtube import YouTubeChannel
+        ch = YouTubeChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "无法执行" in msg
+        assert "uv tool install --force yt-dlp" in msg
+        assert ch.active_backend is None
+
+
+class TestGitHubChannel:
+    def test_reports_error_with_reinstall_hint_when_broken(self, monkeypatch):
+        """gh which 命中但 exec 失败 → error + brew 重装处方（gh 不是 pip 包）。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/gh")
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError(cmd[0])
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.github import GitHubChannel
+        ch = GitHubChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "无法执行" in msg
+        assert "brew reinstall gh" in msg
+        assert ch.active_backend is None
+
+    def test_active_backend_set_when_authenticated(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/gh")
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 0, "Logged in to github.com", "")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.github import GitHubChannel
+        ch = GitHubChannel()
+        status, msg = ch.check()
+        assert status == "ok"
+        assert ch.active_backend == "gh CLI"
+
+    def test_active_backend_set_when_unauthenticated(self, monkeypatch):
+        """gh auth status 非零退出是正常业务态（未登录）：warn 但后端可用。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/gh")
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 1, "", "You are not logged in")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.github import GitHubChannel
+        ch = GitHubChannel()
+        status, msg = ch.check()
+        assert status == "warn"
+        assert "gh auth login" in msg
+        assert ch.active_backend == "gh CLI"
+
+
+class TestLinkedInChannel:
+    def test_reports_error_with_reinstall_hint_when_broken(self, monkeypatch):
+        """mcporter which 命中但 exec 失败 → error + npm 重装处方。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/mcporter")
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError(cmd[0])
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.linkedin import LinkedInChannel
+        ch = LinkedInChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "npm install -g mcporter" in msg
+        assert ch.active_backend is None
+
+    def test_active_backend_set_when_linkedin_configured(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/mcporter")
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 0, "linkedin  http://localhost:3000/mcp", "")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.linkedin import LinkedInChannel
+        ch = LinkedInChannel()
+        status, msg = ch.check()
+        assert status == "ok"
+        assert ch.active_backend == "linkedin-scraper-mcp"
+
+    def test_off_without_backend_when_linkedin_not_configured(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/mcporter")
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 0, "exa  https://mcp.exa.ai/mcp", "")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.linkedin import LinkedInChannel
+        ch = LinkedInChannel()
+        status, msg = ch.check()
+        assert status == "off"
+        assert ch.active_backend is None
+
+
+class TestExaSearchChannel:
+    def test_reports_error_with_reinstall_hint_when_broken(self, monkeypatch):
+        """mcporter which 命中但 exec 失败 → error + npm 重装处方。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/mcporter")
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError(cmd[0])
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.exa_search import ExaSearchChannel
+        ch = ExaSearchChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "npm install -g mcporter" in msg
+        assert ch.active_backend is None
+
+    def test_active_backend_set_when_exa_configured(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/mcporter")
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 0, "exa  https://mcp.exa.ai/mcp", "")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.exa_search import ExaSearchChannel
+        ch = ExaSearchChannel()
+        status, msg = ch.check()
+        assert status == "ok"
+        assert ch.active_backend == "Exa via mcporter"
+
+
+class TestXiaoyuzhouChannel:
+    def test_reports_error_with_reinstall_hint_when_ffmpeg_broken(self, monkeypatch):
+        """ffmpeg which 命中但 exec 失败（pip 假 ffmpeg 断链）→ error + 重装处方。"""
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/ffmpeg")
+
+        def fake_run(cmd, **kwargs):
+            raise FileNotFoundError(cmd[0])
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        from agent_reach.channels.xiaoyuzhou import XiaoyuzhouChannel
+        ch = XiaoyuzhouChannel()
+        status, msg = ch.check()
+        assert status == "error"
+        assert "无法执行" in msg
+        assert "brew install ffmpeg" in msg
+        assert ch.active_backend is None
+
+    def test_active_backend_set_when_fully_configured(self, monkeypatch):
+        monkeypatch.setattr(shutil, "which", lambda _: "/usr/local/bin/ffmpeg")
+
+        def fake_run(cmd, **kwargs):
+            return subprocess.CompletedProcess(cmd, 0, "ffmpeg version 7.0", "")
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        monkeypatch.setattr("os.path.isfile", lambda p: True)  # transcribe.sh 已安装
+        monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
+        from agent_reach.channels.xiaoyuzhou import XiaoyuzhouChannel
+        ch = XiaoyuzhouChannel()
+        status, msg = ch.check()
+        assert status == "ok"
+        assert ch.active_backend == "groq-whisper"

@@ -8,13 +8,15 @@ from agent_reach.config import Config
 
 
 class _StubChannel:
-    def __init__(self, name, description, tier, status, message, backends=None):
+    def __init__(self, name, description, tier, status, message, backends=None,
+                 active_backend=None):
         self.name = name
         self.description = description
         self.tier = tier
         self._status = status
         self._message = message
         self.backends = backends or []
+        self.active_backend = active_backend
 
     def check(self, config=None):
         return self._status, self._message
@@ -31,7 +33,8 @@ class TestDoctor:
             doctor,
             "get_all_channels",
             lambda: [
-                _StubChannel("web", "网页", 0, "ok", "可抓取网页", ["requests"]),
+                _StubChannel("web", "网页", 0, "ok", "可抓取网页", ["requests"],
+                             active_backend="requests"),
                 _StubChannel("github", "GitHub", 0, "warn", "gh 未安装", ["gh"]),
                 _StubChannel("exa_search", "全网语义搜索", 1, "off", "mcporter 未配置", ["Exa"]),
             ],
@@ -46,6 +49,7 @@ class TestDoctor:
                 "message": "可抓取网页",
                 "tier": 0,
                 "backends": ["requests"],
+                "active_backend": "requests",
             },
             "github": {
                 "status": "warn",
@@ -53,6 +57,7 @@ class TestDoctor:
                 "message": "gh 未安装",
                 "tier": 0,
                 "backends": ["gh"],
+                "active_backend": None,
             },
             "exa_search": {
                 "status": "off",
@@ -60,6 +65,7 @@ class TestDoctor:
                 "message": "mcporter 未配置",
                 "tier": 1,
                 "backends": ["Exa"],
+                "active_backend": None,
             },
         }
 

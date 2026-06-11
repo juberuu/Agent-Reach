@@ -17,6 +17,8 @@ class WebChannel(Channel):
         return True  # Fallback — handles any URL
 
     def check(self, config=None):
+        # 恒可用兜底渠道：无本地命令、不做网络探测（doctor 已有多个渠道触网），保持零开销
+        self.active_backend = self.backends[0]
         return "ok", "通过 Jina Reader 读取任意网页（curl https://r.jina.ai/URL）"
 
     def read(self, url: str) -> str:

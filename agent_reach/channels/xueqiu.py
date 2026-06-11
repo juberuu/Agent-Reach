@@ -162,12 +162,14 @@ class XueqiuChannel(Channel):
     # ------------------------------------------------------------------ #
 
     def check(self, config=None):
+        self.active_backend = None
         try:
             data = _get_json(
                 "https://stock.xueqiu.com/v5/stock/batch/quote.json?symbol=SH000001"
             )
             items = (data.get("data") or {}).get("items") or []
             if items:
+                self.active_backend = self.backends[0]
                 return "ok", "公开 API 可用（行情、搜索、热帖、热股）"
             return "warn", "API 响应异常（返回数据为空）"
         except Exception as e:

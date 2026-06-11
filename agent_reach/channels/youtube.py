@@ -3,6 +3,7 @@
 
 import shutil
 
+from agent_reach.probe import probe_command
 from agent_reach.utils.paths import get_ytdlp_config_path, render_ytdlp_fix_command
 from agent_reach.utils.text import read_utf8_text
 
@@ -32,8 +33,20 @@ class YouTubeChannel(Channel):
         return "youtube.com" in d or "youtu.be" in d
 
     def check(self, config=None):
-        if not shutil.which("yt-dlp"):
+        # 真跑 yt-dlp --version 探活，区分未装 / venv 断链 / 跑不动
+        probe = probe_command("yt-dlp", ["--version"], timeout=10, package="yt-dlp")
+        if probe.status == "missing":
+            self.active_backend = None
             return "off", "yt-dlp 未安装。安装：pip install yt-dlp"
+        if probe.status == "broken":
+            self.active_backend = None
+            return "error", f"yt-dlp 已安装但无法执行\n{probe.hint}"
+        if not probe.ok:  # timeout / error：装了但跑不动
+            self.active_backend = None
+            detail = probe.hint or probe.output or probe.status
+            return "error", f"yt-dlp 无法正常运行：{detail}"
+        # yt-dlp 本体是活的；后面的 JS runtime/转写检查只影响 ok/warn，不影响后端归属
+        self.active_backend = "yt-dlp"
         # Check JS runtime
         has_js = shutil.which("deno") or shutil.which("node")
         if not has_js:

@@ -41,8 +41,10 @@ class V2EXChannel(Channel):
             _get_json(
                 "https://www.v2ex.com/api/topics/show.json?node_name=python&page=1"
             )
+            self.active_backend = self.backends[0]
             return "ok", "公开 API 可用（热门主题、节点浏览、主题详情、用户信息）"
         except Exception as e:
+            self.active_backend = None
             return "warn", f"V2EX API 连接失败（可能需要代理）：{e}"
 
     # ------------------------------------------------------------------ #

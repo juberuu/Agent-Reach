@@ -364,8 +364,11 @@ def _install_skill():
     def _copy_skill_dir(target: str) -> bool:
         """Copy entire skill directory (locale-specific SKILL.md + references/)."""
         try:
-            # Clear existing installation
-            if os.path.exists(target):
+            # Clear existing installation. A symlinked skill dir (dotfiles
+            # setups) breaks shutil.rmtree — unlink the link itself instead.
+            if os.path.islink(target):
+                os.unlink(target)
+            elif os.path.exists(target):
                 shutil.rmtree(target)
             os.makedirs(target, exist_ok=True)
 
@@ -454,7 +457,10 @@ def _uninstall_skill():
         skill_path = os.path.expanduser(skill_path_template)
         if os.path.isdir(skill_path):
             try:
-                shutil.rmtree(skill_path)
+                if os.path.islink(skill_path):
+                    os.unlink(skill_path)
+                else:
+                    shutil.rmtree(skill_path)
                 print(f"  Removed {platform_name} skill: {skill_path}")
                 removed = True
             except Exception as e:
