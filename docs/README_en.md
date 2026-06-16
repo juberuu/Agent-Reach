@@ -12,11 +12,14 @@
   <a href="../LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-green.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+"></a>
   <a href="https://github.com/Panniantong/agent-reach/stargazers"><img src="https://img.shields.io/github/stars/Panniantong/agent-reach?style=for-the-badge" alt="GitHub Stars"></a>
+  <a href="https://trendshift.io/repositories/24387"><img src="https://trendshift.io/api/badge/repositories/24387" alt="Trendshift GitHub Trending #1 Repository of the Day"></a>
 </p>
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> · <a href="../README.md">中文</a> · <a href="README_ja.md">日本語</a> · <a href="README_ko.md">한국어</a> · <a href="#supported-platforms">Platforms</a> · <a href="#design-philosophy">Philosophy</a>
 </p>
+
+> **No token or crypto affiliation:** Agent Reach has no official token, coin, investment product, fee-claim program, wallet connection, or Solana/Pump.fun project. Any crypto project using the Agent Reach name, GitHub URL, or author identity is not affiliated with this repository. Do not connect a wallet or claim fees based on messages, posts, or links that say otherwise.
 
 ---
 
@@ -153,6 +156,12 @@ No configuration needed — just tell your Agent:
 - "Search GitHub for LLM frameworks" → `gh search repos "LLM framework"`
 
 **No commands to remember.** The Agent reads SKILL.md and knows what to call.
+
+---
+
+## Capability Boundary: Reading Content vs Operating Web Pages
+
+Some tasks go beyond "reading": operating logged-in web pages, submitting forms, isolating multiple accounts, running parallel browser sessions, or handing off high-friction steps in automation flows such as login, verification, and risk-control prompts. For these "hands-on" browser actions, Agent Reach can be paired with browser automation tools like [BrowserAct](https://www.browseract.ai/Agent) — 30+ prebuilt platform skills, supporting mainstream Agents such as Claude Code, OpenClaw, and Cursor.
 
 ---
 
