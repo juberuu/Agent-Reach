@@ -75,7 +75,7 @@ def main():
     p_install.add_argument("--channels", default="",
                            help="Comma-separated optional channels to install "
                                 "(twitter,xiaoyuzhou,xueqiu,xiaohongshu,"
-                                "reddit,bilibili,linkedin,all)")
+                                "reddit,facebook,instagram,bilibili,linkedin,all)")
 
     # ── configure ──
     p_conf = sub.add_parser("configure", help="Set a config value or auto-extract from browser")
@@ -199,11 +199,14 @@ def _cmd_install(args):
         "xiaoyuzhou":  _install_xiaoyuzhou_deps,
         "xiaohongshu": _install_xhs_deps,
         "reddit":      _install_reddit_deps,
+        "facebook":    _install_opencli_deps,
+        "instagram":   _install_opencli_deps,
         "bilibili":    _install_bili_deps,
         "opencli":     _install_opencli_deps,  # cross-channel backend, desktop only
         # xueqiu: cookie-only, no install step
         # linkedin: manual setup, no auto-install
     }
+    OPENCLI_ONLY_CHANNELS = {"opencli", "facebook", "instagram"}
     COOKIE_CHANNELS = {"twitter", "xueqiu", "bilibili"}
 
     requested_channels = set()
@@ -223,6 +226,12 @@ def _cmd_install(args):
         print(f"Environment: Server/VPS (auto-detected)")
     else:
         print(f"Environment: Local computer (auto-detected)")
+
+    server_skipped_opencli_channels = set()
+    if env == "server" and requested_channels:
+        # OpenCLI rides a real desktop Chrome session — useless headless
+        server_skipped_opencli_channels = requested_channels & OPENCLI_ONLY_CHANNELS
+        requested_channels -= server_skipped_opencli_channels
 
     # Apply explicit flags
     if args.proxy:
@@ -251,18 +260,21 @@ def _cmd_install(args):
     else:
         _install_mcporter()
 
+    if server_skipped_opencli_channels:
+        print()
+        print("  -- OpenCLI 需要桌面环境 + Chrome，服务器环境跳过："
+              f"{', '.join(sorted(server_skipped_opencli_channels))}")
+
     # ── Install optional channels (only if --channels specified) ──
     if requested_channels and not dry_run and not safe_mode:
         print()
         print("Installing optional channels...")
-        if env == "server" and "opencli" in requested_channels:
-            # OpenCLI rides a real desktop Chrome session — useless headless
-            requested_channels.discard("opencli")
-            print("  -- OpenCLI 需要桌面环境 + Chrome，服务器环境跳过")
+        ran_installers = set()
         for ch_name in sorted(requested_channels):
             installer = CHANNEL_INSTALLERS.get(ch_name)
-            if installer:
+            if installer and installer not in ran_installers:
                 installer()
+                ran_installers.add(installer)
 
     if requested_channels and dry_run:
         print()
@@ -327,7 +339,7 @@ def _cmd_install(args):
             # First install — hint about optional channels
             print()
             print("More channels available! Use --channels to install:")
-            print("   agent-reach install --channels=twitter,xiaohongshu,reddit,...")
+            print("   agent-reach install --channels=twitter,xiaohongshu,reddit,facebook,instagram,...")
             print("   agent-reach install --channels=all  (install everything)")
 
         # Star reminder

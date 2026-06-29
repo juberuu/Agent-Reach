@@ -3,10 +3,12 @@
 
 import shutil
 import subprocess
+from argparse import Namespace
 from unittest.mock import patch
 
 import pytest
 import requests
+
 import agent_reach.cli as cli
 from agent_reach.cli import main
 
@@ -100,6 +102,60 @@ class TestCLI:
         monkeypatch.setattr(cli, "_detect_environment", lambda: "server")
         cli._install_reddit_deps()
         assert calls == ["rdt"]
+
+    def test_install_facebook_instagram_routes_to_opencli_once(self, monkeypatch, capsys):
+        calls = []
+
+        monkeypatch.setattr(cli, "_detect_environment", lambda: "local")
+        monkeypatch.setattr(cli, "_install_system_deps", lambda: None)
+        monkeypatch.setattr(cli, "_install_mcporter", lambda: None)
+        monkeypatch.setattr(cli, "_install_opencli_deps", lambda: calls.append("opencli"))
+        monkeypatch.setattr(cli, "_install_skill", lambda: None)
+        monkeypatch.setattr(
+            "agent_reach.doctor.check_all",
+            lambda config: {
+                "facebook": {
+                    "status": "ok",
+                    "name": "Facebook",
+                    "message": "ok",
+                    "tier": 1,
+                    "backends": ["OpenCLI"],
+                    "active_backend": "OpenCLI",
+                }
+            },
+        )
+        monkeypatch.setattr("agent_reach.doctor.format_report", lambda results: "report")
+
+        cli._cmd_install(
+            Namespace(
+                env="auto",
+                proxy="",
+                safe=False,
+                dry_run=False,
+                channels="facebook,instagram,opencli",
+            )
+        )
+
+        assert calls == ["opencli"]
+        assert "Installation complete" in capsys.readouterr().out
+
+    def test_install_server_dry_run_skips_opencli_only_channels(self, monkeypatch, capsys):
+        monkeypatch.setattr(cli, "_install_system_deps_dryrun", lambda: None)
+
+        cli._cmd_install(
+            Namespace(
+                env="server",
+                proxy="",
+                safe=False,
+                dry_run=True,
+                channels="facebook,instagram,opencli,bilibili",
+            )
+        )
+
+        out = capsys.readouterr().out
+        assert "服务器环境跳过：facebook, instagram, opencli" in out
+        assert "[dry-run] Would install optional channels: bilibili" in out
+        assert "facebook, instagram, opencli, bilibili" not in out
 
 
 class TestCheckUpdateRetry:

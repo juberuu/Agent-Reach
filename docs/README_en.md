@@ -71,6 +71,8 @@ Update Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/ma
 | 🌐 **Web** | Read | Zero config | Any URL → clean Markdown ([Jina Reader](https://github.com/jina-ai/reader) ⭐9.8K) |
 | 🐦 **Twitter/X** | Read · Search | Cookie | Cookie unlocks search, timeline, tweet reading, articles ([twitter-cli](https://github.com/public-clis/twitter-cli)) |
 | 📕 **XiaoHongShu** | Read · Search · Comments | OpenCLI / MCP | Desktop: [OpenCLI](https://github.com/jackwener/opencli) (reuses browser session); Server: [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) (QR login); legacy xhs-cli still works |
+| 📘 **Facebook** | Search · Profiles · Feed · Groups list | OpenCLI | Desktop only: [OpenCLI](https://github.com/jackwener/opencli) reuses your logged-in Chrome session |
+| 📷 **Instagram** | User search · Profiles · Recent posts · Explore | OpenCLI | Desktop only: [OpenCLI](https://github.com/jackwener/opencli) reuses your logged-in Chrome session |
 | 💼 **LinkedIn** | Jina Reader (public pages) | Full profiles, companies, job search | Tell your Agent "help me set up LinkedIn" |
 | 💻 **V2EX** | Hot topics · Node topics · Topic detail + replies · User profile | Zero config | Public JSON API, no auth required. Great for tech community content |
 | 📈 **Xueqiu (雪球)** | Stock quotes · Search · Hot posts · Hot stocks | Browser cookie | Tell your Agent "help me set up Xueqiu" |
@@ -203,6 +205,7 @@ $ agent-reach doctor
 🔧 Configurable:
   ⬜ Reddit posts and comments — needs login: rdt-cli after `rdt login`, or OpenCLI browser session
   ⬜ XiaoHongShu notes — desktop: OpenCLI (browser session); server: xiaohongshu-mcp (QR)
+  ⬜ Facebook / Instagram — desktop: OpenCLI browser session
 
 Status: 6/9 channels available
 ```
@@ -229,6 +232,8 @@ channels/
 ├── github.py       → gh CLI
 ├── bilibili.py     → bili-cli ▸ OpenCLI ▸ search API (yt-dlp retired, 412-blocked)
 ├── reddit.py       → OpenCLI ▸ rdt-cli (no zero-config path, login required)
+├── facebook.py     → OpenCLI (desktop browser session)
+├── instagram.py    → OpenCLI (desktop browser session)
 ├── xiaohongshu.py  → OpenCLI ▸ xiaohongshu-mcp ▸ xhs-cli
 ├── linkedin.py     → linkedin-mcp ▸ Jina Reader
 ├── rss.py          → feedparser
@@ -245,6 +250,8 @@ Each channel file **actually probes** its candidate backends in order (not just 
 | Read web pages | [Jina Reader](https://github.com/jina-ai/reader) | — | Free, no API key needed |
 | Read tweets | [twitter-cli](https://github.com/public-clis/twitter-cli) | [OpenCLI](https://github.com/jackwener/opencli) | Reliable search in real-world tests; OpenCLI falls back on your browser session |
 | Reddit | [OpenCLI](https://github.com/jackwener/opencli) (desktop) | [rdt-cli](https://github.com/public-clis/rdt-cli) | Anonymous endpoints blocked, official API gated — logged-in sessions are the only route left |
+| Facebook | [OpenCLI](https://github.com/jackwener/opencli) (desktop) | — | Graph/Groups API access is heavily restricted; browser sessions are the practical route |
+| Instagram | [OpenCLI](https://github.com/jackwener/opencli) (desktop) | Official Graph API (Business/Creator + review) | Instaloader-style paths are unstable; OpenCLI reuses the real browser session |
 | YouTube subtitles + search | [yt-dlp](https://github.com/yt-dlp/yt-dlp) | — | 154K stars, still the best for YouTube (no longer used for Bilibili) |
 | Bilibili | [bili-cli](https://github.com/public-clis/bilibili-cli) | OpenCLI ▸ search API | yt-dlp is 412-blocked by Bilibili (verified June 2026); bili-cli searches and reads without login |
 | Search the web | [Exa](https://exa.ai) via [mcporter](https://github.com/nicobailon/mcporter) | — | AI semantic search, MCP integration, no API key |
@@ -312,6 +319,12 @@ Agent Reach uses twitter-cli which accesses Twitter via cookie auth — same as 
 <summary><strong>How to read XiaoHongShu / 小红书 content programmatically?</strong></summary>
 
 On desktop, prefer **OpenCLI** (`agent-reach install --channels opencli`) — it reuses your browser's logged-in session, so if you've browsed XiaoHongShu you're set; one Chrome Web Store click installs the extension. Then `opencli xiaohongshu search "query"` / `opencli xiaohongshu note URL`. On servers use [xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp) (bundled headless browser, QR login). Existing xhs-cli installs keep working as a fallback backend (upstream unmaintained since 2026-03, not recommended for new setups).
+</details>
+
+<details>
+<summary><strong>How to read Facebook / Instagram with an AI agent?</strong></summary>
+
+On desktop, use **OpenCLI**: `agent-reach install --channels facebook,instagram`. Install the OpenCLI Chrome extension, log into facebook.com / instagram.com in Chrome, then the Agent can call `opencli facebook search "query" -f yaml`, `opencli facebook groups -f yaml`, `opencli instagram search "username or keyword" -f yaml` for user search, or `opencli instagram user USERNAME -f yaml` for a specific user's recent posts. Server/headless environments are not recommended for these two channels.
 </details>
 
 ---
