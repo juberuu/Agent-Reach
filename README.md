@@ -9,10 +9,14 @@
 </p>
 
 <p align="center">
+  <a href="https://trendshift.io/repositories/24387"><img src="https://trendshift.io/api/badge/repositories/24387" alt="Trendshift GitHub Trending #1 Repository of the Day"></a>
+  <a href="https://trendshift.io/repositories/24387"><img src="https://trendshift.io/api/badge/trendshift/repositories/24387/weekly" alt="Trendshift #6 Repository of the Week"></a>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-green.svg?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+"></a>
   <a href="https://github.com/Panniantong/agent-reach/stargazers"><img src="https://img.shields.io/github/stars/Panniantong/agent-reach?style=for-the-badge" alt="GitHub Stars"></a>
-  <a href="https://trendshift.io/repositories/24387"><img src="https://trendshift.io/api/badge/repositories/24387" alt="Trendshift GitHub Trending #1 Repository of the Day"></a>
 </p>
 
 <p align="center">
@@ -286,22 +290,19 @@ Star 一下，下次需要的时候能找到。⭐
 - 📧 **Email:** pnt01@foxmail.com
 - 🐦 **Twitter/X:** [@Neo_Reidlab](https://x.com/Neo_Reidlab)
 
-### 正在整理 AI Agent 的真实实践
+## 业务合作 / Agent 落地
 
-我最近在整理 AI Agent / AI workflow 在真实场景里的做法、问题和机会。
+我正在承接 Agent 相关的定制与落地合作。
 
-Agent Reach 是我自己的一个开源尝试：让 Agent 更方便地读取互联网、做 research、做市场雷达、做数据采集，也因此接触到很多有意思的场景。
+如果你在企业生产、运营、市场、投研、数据处理、内容处理或其他业务流程里，有希望用 Agent 自动化的环节，欢迎加我微信交流。
 
-如果你也在关注或尝试类似方向，欢迎加我微信交流：
+不需要你已经想清楚方案。只要你有真实流程、真实问题或真实需求，我可以一起判断 Agent 能不能解决、怎么做。
 
-- 你在业务里遇到过具体的信息获取、搜索、监控、分析或自动化问题
-- 你正在尝试用 Agent 改造市场、销售、运营、投研、内容、数据等工作流
-- 你在做 AI Agent、浏览器自动化、数据采集、垂直行业工具或相关产品
-- 你对 Agent 如何真正落地有自己的观察、案例或困惑
+加好友请备注：`业务 + 你想让 Agent 帮你做什么`
 
-加好友请备注：`AI Agent + 你关注的方向`。
+Builder 也欢迎备注：`Builder + 你在做什么`
 
-我会优先回复备注清楚、有具体场景或具体问题的朋友。合适的话，也会邀请进相关交流群。
+只是想进交流群，备注：`加群`
 
 <p align="center">
   <img src="docs/wechat-group-qr.jpg" width="280" alt="WeChat QR">
