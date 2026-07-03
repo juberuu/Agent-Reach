@@ -10,7 +10,6 @@
 
 <p align="center">
   <a href="https://trendshift.io/repositories/24387"><img src="https://trendshift.io/api/badge/repositories/24387" alt="Trendshift GitHub Trending #1 Repository of the Day"></a>
-  <a href="https://trendshift.io/repositories/24387"><img src="https://trendshift.io/api/badge/trendshift/repositories/24387/weekly" alt="Trendshift #6 Repository of the Week"></a>
 </p>
 
 <p align="center">
