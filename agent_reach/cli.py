@@ -1161,9 +1161,11 @@ def _cmd_configure(args):
                     print("[!] twitter-cli not installed. Run: pipx install twitter-cli")
                 else:
                     import os
+
+                    from agent_reach.channels.twitter import twitter_cli_child_env
+
                     env = os.environ.copy()
-                    env["TWITTER_AUTH_TOKEN"] = auth_token
-                    env["TWITTER_CT0"] = ct0
+                    env.update(twitter_cli_child_env(config))
                     result = subprocess.run(
                         [twitter_bin, "status"],
                         capture_output=True, encoding="utf-8", errors="replace", timeout=15,
@@ -1559,7 +1561,7 @@ def _cmd_doctor(args=None):
         from rich import print as rprint
     except ImportError:
         rprint = print
-    config = Config()
+    config = Config(read_only=True)
     results = check_all(config)
 
     if args is not None and getattr(args, "json", False):

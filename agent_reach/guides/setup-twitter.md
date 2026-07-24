@@ -42,7 +42,14 @@ twitter search "test" -n 1
 agent-reach configure twitter-cookies "粘贴的 cookie JSON"
 ```
 
-这会自动提取 `auth_token` 和 `ct0`，并写入环境变量。
+这会提取 `auth_token` 和 `ct0`，安全保存到
+`~/.agent-reach/config.yaml`。之后 `agent-reach doctor` 会只把凭据注入
+自己的 `twitter status` 子进程，不会修改当前 Shell 的环境变量。
+
+`twitter` 是独立的上游命令，不会读取 Agent Reach 的配置文件。直接运行
+`twitter search/read/...` 时，需要让 twitter-cli 从浏览器登录态提取，
+或按下节在当前 Shell 设置环境变量；已经存在的环境变量优先于 Agent Reach
+保存的值。
 
 ## 手动设置 Cookie
 
@@ -53,8 +60,8 @@ agent-reach configure twitter-cookies "粘贴的 cookie JSON"
 2. 设置环境变量：
 
 ```bash
-export AUTH_TOKEN="你的auth_token"
-export CT0="你的ct0"
+export TWITTER_AUTH_TOKEN="你的auth_token"
+export TWITTER_CT0="你的ct0"
 ```
 
 3. 测试：

@@ -4,9 +4,11 @@
 from agent_reach.probe import probe_command
 
 from .base import Channel
+from .mcporter import McporterConfigError, configured_server_names
 
 #: mcporter 是 npm 包，断链处方与默认的 pipx/uv 不同
 _MCPORTER_BROKEN_HINT = "mcporter 无法执行（node 环境损坏），重装：\n  npm install -g mcporter"
+_LINKEDIN_SERVER_NAMES = {"linkedin", "linkedin-scraper", "linkedin-scraper-mcp"}
 
 
 class LinkedInChannel(Channel):
@@ -21,7 +23,12 @@ class LinkedInChannel(Channel):
 
     def check(self, config=None):
         self.active_backend = None
-        probe = probe_command("mcporter", ["config", "list"], timeout=10, package="mcporter")
+        probe = probe_command(
+            "mcporter",
+            ["config", "list", "--json"],
+            timeout=10,
+            package="mcporter",
+        )
         if probe.status == "missing":
             return "off", (
                 "基本内容可通过 Jina Reader 读取。完整功能需要：\n"
@@ -33,7 +40,11 @@ class LinkedInChannel(Channel):
             return "error", _MCPORTER_BROKEN_HINT
         if not probe.ok:  # timeout / error
             return "error", f"mcporter 执行异常：{probe.hint or probe.output or probe.status}"
-        if "linkedin" in probe.output.lower():
+        try:
+            server_names = configured_server_names(probe.output)
+        except McporterConfigError as exc:
+            return "error", f"mcporter 配置检查失败：{exc}"
+        if server_names & _LINKEDIN_SERVER_NAMES:
             self.active_backend = "linkedin-scraper-mcp"
             return "ok", "完整可用（Profile、公司、职位搜索）"
         return "off", (

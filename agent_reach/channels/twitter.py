@@ -1,8 +1,33 @@
 # -*- coding: utf-8 -*-
 """Twitter/X — check if twitter-cli or bird CLI is available."""
 
-from .base import Channel
+import os
+
 from agent_reach.probe import probe_command
+
+from .base import Channel
+
+
+def twitter_cli_child_env(config=None) -> dict[str, str]:
+    """Return saved credentials missing from the current process environment.
+
+    The returned mapping is meant for a single child process.  Existing shell
+    variables remain authoritative and ``os.environ`` is never mutated.
+    """
+    if config is None:
+        return {}
+
+    child_env = {}
+    for env_name, config_key in (
+        ("TWITTER_AUTH_TOKEN", "twitter_auth_token"),
+        ("TWITTER_CT0", "twitter_ct0"),
+    ):
+        if env_name in os.environ:
+            continue
+        value = config.get(config_key)
+        if value:
+            child_env[env_name] = str(value)
+    return child_env
 
 
 class TwitterChannel(Channel):
@@ -28,7 +53,7 @@ class TwitterChannel(Channel):
 
         for backend in self.ordered_backends(config):
             if backend == "twitter-cli":
-                result = self._check_twitter_cli()
+                result = self._check_twitter_cli(config)
             elif backend == "OpenCLI":
                 result = self._check_opencli()
             elif backend == "bird CLI (legacy)":
@@ -56,7 +81,7 @@ class TwitterChannel(Channel):
             "  uv tool install twitter-cli"
         )
 
-    def _check_twitter_cli(self):
+    def _check_twitter_cli(self, config=None):
         """探测 twitter-cli。返回 None 表示未安装，否则返回 (status, message)。
 
         `twitter status` 才是健康信号：已登录时输出 "ok: true"，
@@ -64,7 +89,12 @@ class TwitterChannel(Channel):
         所以 probe 的 error 状态也要看 output 内容再分类。
         """
         probe = probe_command(
-            "twitter", ["status"], timeout=15, retries=1, package="twitter-cli"
+            "twitter",
+            ["status"],
+            timeout=15,
+            retries=1,
+            package="twitter-cli",
+            env=twitter_cli_child_env(config),
         )
         if probe.status == "missing":
             return None

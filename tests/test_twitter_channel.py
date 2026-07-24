@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from unittest.mock import patch, Mock
+import os
+from unittest.mock import Mock, patch
 
 from agent_reach.channels.twitter import TwitterChannel
 
@@ -27,6 +28,61 @@ def test_check_twitter_cli_found_and_auth_ok():
     assert "twitter-cli" in message
     assert "完整可用" in message
     assert channel.active_backend == "twitter-cli"
+
+
+def test_check_uses_credentials_saved_by_agent_reach_only_in_child_env(monkeypatch):
+    """Saved cookies must make the independent doctor probe authenticated."""
+    channel = TwitterChannel()
+    config = Mock()
+    config.get.side_effect = lambda key: {
+        "twitter_auth_token": "saved-auth-token",
+        "twitter_ct0": "saved-ct0",
+    }.get(key)
+    monkeypatch.delenv("TWITTER_AUTH_TOKEN", raising=False)
+    monkeypatch.delenv("TWITTER_CT0", raising=False)
+
+    with patch(
+        "shutil.which",
+        side_effect=lambda name: "/usr/local/bin/twitter" if name == "twitter" else None,
+    ), patch(
+        "subprocess.run",
+        return_value=_cp(stdout="ok: true\n", returncode=0),
+    ) as run:
+        status, _ = channel.check(config)
+
+    child_env = run.call_args.kwargs["env"]
+    assert status == "ok"
+    assert child_env["TWITTER_AUTH_TOKEN"] == "saved-auth-token"
+    assert child_env["TWITTER_CT0"] == "saved-ct0"
+    assert "TWITTER_AUTH_TOKEN" not in os.environ
+    assert "TWITTER_CT0" not in os.environ
+
+
+def test_existing_twitter_env_takes_priority_over_saved_config(monkeypatch):
+    channel = TwitterChannel()
+    config = Mock()
+    config.get.side_effect = lambda key: {
+        "twitter_auth_token": "saved-auth-token",
+        "twitter_ct0": "saved-ct0",
+    }.get(key)
+    monkeypatch.setenv("TWITTER_AUTH_TOKEN", "shell-auth-token")
+    monkeypatch.setenv("TWITTER_CT0", "shell-ct0")
+
+    with patch(
+        "shutil.which",
+        side_effect=lambda name: "/usr/local/bin/twitter" if name == "twitter" else None,
+    ), patch(
+        "subprocess.run",
+        return_value=_cp(stdout="ok: true\n", returncode=0),
+    ) as run:
+        status, _ = channel.check(config)
+
+    child_env = run.call_args.kwargs["env"]
+    assert status == "ok"
+    assert child_env["TWITTER_AUTH_TOKEN"] == "shell-auth-token"
+    assert child_env["TWITTER_CT0"] == "shell-ct0"
+    assert os.environ["TWITTER_AUTH_TOKEN"] == "shell-auth-token"
+    assert os.environ["TWITTER_CT0"] == "shell-ct0"
 
 
 def test_check_twitter_cli_found_auth_missing():
