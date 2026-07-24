@@ -28,6 +28,9 @@ from agent_reach.config import Config
 # Whisper API limit is 25MB; leave headroom for multipart overhead.
 SIZE_LIMIT_BYTES = 24 * 1024 * 1024
 CHUNK_SECONDS = 600  # 10 min — small enough that boundary cuts rarely lose meaning
+MAX_SOURCE_BYTES = 512 * 1024 * 1024
+MAX_CHUNKS = 24  # 4 hours at the standard 10-minute segment size
+MAX_TOTAL_CHUNK_BYTES = 96 * 1024 * 1024
 
 PROVIDERS = {
     "groq": {
@@ -64,6 +67,15 @@ _BLOCKED_HOSTS = {
 def _require(binary: str) -> None:
     if not shutil.which(binary):
         raise MissingDependency(f"{binary} not found in PATH")
+
+
+def _require_size_at_most(path: Path, limit: int, label: str) -> int:
+    """Return file size or fail before expensive downstream processing."""
+    size = path.stat().st_size
+    if size > limit:
+        limit_mib = limit / (1024 * 1024)
+        raise TranscribeError(f"{label} exceeds safety limit of {limit_mib:g} MiB")
+    return size
 
 
 def _run(cmd: List[str], timeout: int = 600) -> None:
@@ -135,6 +147,9 @@ def download_audio(url: str, out_dir: Path) -> Path:
             "m4a",
             "--audio-quality",
             "0",
+            "--no-playlist",
+            "--max-filesize",
+            str(MAX_SOURCE_BYTES),
             "-o",
             str(template),
             "--",
@@ -144,8 +159,13 @@ def download_audio(url: str, out_dir: Path) -> Path:
     )
     files = sorted(out_dir.glob("source.*"))
     if not files:
-        raise TranscribeError("yt-dlp produced no output file")
-    return files[0]
+        limit_mib = MAX_SOURCE_BYTES // (1024 * 1024)
+        raise TranscribeError(
+            f"yt-dlp produced no output file (source may exceed {limit_mib} MiB limit)"
+        )
+    audio = files[0]
+    _require_size_at_most(audio, MAX_SOURCE_BYTES, "downloaded source")
+    return audio
 
 
 def compress_audio(src: Path, out_dir: Path) -> Path:
@@ -290,11 +310,30 @@ def _transcribe_in_dir(source: str, order: List[str], cfg: Config, work_dir: Pat
     else:
         audio = download_audio(source, work_dir)
 
+    _require_size_at_most(audio, MAX_SOURCE_BYTES, "source")
     compressed = compress_audio(audio, work_dir)
     if compressed.stat().st_size <= SIZE_LIMIT_BYTES:
         chunks = [compressed]
     else:
         chunks = chunk_audio(compressed, work_dir)
+
+    if len(chunks) > MAX_CHUNKS:
+        max_minutes = MAX_CHUNKS * CHUNK_SECONDS // 60
+        raise TranscribeError(
+            f"audio produced {len(chunks)} chunks; safety limit is "
+            f"{MAX_CHUNKS} (~{max_minutes} minutes)"
+        )
+    chunk_sizes = [
+        _require_size_at_most(chunk, SIZE_LIMIT_BYTES, f"chunk {chunk.name}")
+        for chunk in chunks
+    ]
+    total_chunk_bytes = sum(chunk_sizes)
+    if total_chunk_bytes > MAX_TOTAL_CHUNK_BYTES:
+        limit_mib = MAX_TOTAL_CHUNK_BYTES / (1024 * 1024)
+        raise TranscribeError(
+            f"audio chunks total {total_chunk_bytes} bytes; "
+            f"safety limit is {limit_mib:g} MiB"
+        )
 
     pieces: List[str] = []
     for chunk in chunks:

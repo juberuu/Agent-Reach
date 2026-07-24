@@ -161,6 +161,22 @@ class TestFallback:
 
 
 class TestOrchestrator:
+    def test_rejects_oversized_source_before_compression(
+        self, monkeypatch, fake_config, chunk_file
+    ):
+        fake_config.set("groq_api_key", "gsk_test")
+        monkeypatch.setattr(tr, "MAX_SOURCE_BYTES", 4)
+        monkeypatch.setattr(
+            tr,
+            "compress_audio",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                AssertionError("oversized source must fail before ffmpeg")
+            ),
+        )
+
+        with pytest.raises(tr.TranscribeError, match="source.*limit"):
+            tr.transcribe(str(chunk_file), config=fake_config)
+
     def test_local_file_skips_yt_dlp(self, monkeypatch, fake_config, tmp_path, chunk_file):
         fake_config.set("groq_api_key", "gsk_test")
 
@@ -216,6 +232,62 @@ class TestOrchestrator:
             config=fake_config,
         )
         assert text == "part one\npart two"
+
+    def test_rejects_too_many_chunks_before_any_provider_call(
+        self, monkeypatch, fake_config, tmp_path, chunk_file
+    ):
+        fake_config.set("groq_api_key", "gsk_test")
+        monkeypatch.setattr(tr, "SIZE_LIMIT_BYTES", 1)
+        compressed = tmp_path / "compressed.m4a"
+        compressed.write_bytes(b"xx")
+        monkeypatch.setattr(tr, "compress_audio", lambda *_args: compressed)
+
+        chunks = []
+        for index in range(tr.MAX_CHUNKS + 1):
+            chunk = tmp_path / f"chunk_{index:03d}.m4a"
+            chunk.write_bytes(b"x")
+            chunks.append(chunk)
+        monkeypatch.setattr(tr, "chunk_audio", lambda *_args: chunks)
+
+        provider_calls = []
+        monkeypatch.setattr(
+            tr,
+            "_transcribe_with_fallback",
+            lambda *_args: provider_calls.append("called") or "text",
+        )
+
+        with pytest.raises(tr.TranscribeError, match="chunks.*limit"):
+            tr.transcribe(str(chunk_file), out_dir=tmp_path / "work", config=fake_config)
+
+        assert provider_calls == []
+
+    def test_rejects_excessive_total_chunk_bytes_before_provider_calls(
+        self, monkeypatch, fake_config, tmp_path, chunk_file
+    ):
+        fake_config.set("groq_api_key", "gsk_test")
+        monkeypatch.setattr(tr, "SIZE_LIMIT_BYTES", 10)
+        monkeypatch.setattr(tr, "MAX_TOTAL_CHUNK_BYTES", 5)
+        compressed = tmp_path / "compressed.m4a"
+        compressed.write_bytes(b"x" * 11)
+        monkeypatch.setattr(tr, "compress_audio", lambda *_args: compressed)
+
+        first = tmp_path / "chunk_000.m4a"
+        second = tmp_path / "chunk_001.m4a"
+        first.write_bytes(b"aaa")
+        second.write_bytes(b"bbb")
+        monkeypatch.setattr(tr, "chunk_audio", lambda *_args: [first, second])
+
+        provider_calls = []
+        monkeypatch.setattr(
+            tr,
+            "_transcribe_with_fallback",
+            lambda *_args: provider_calls.append("called") or "text",
+        )
+
+        with pytest.raises(tr.TranscribeError, match="total.*limit"):
+            tr.transcribe(str(chunk_file), out_dir=tmp_path / "work", config=fake_config)
+
+        assert provider_calls == []
 
     def test_no_provider_configured_fails_fast(self, fake_config, chunk_file):
         with pytest.raises(tr.NoProviderConfigured):
@@ -298,6 +370,20 @@ class TestOrchestrator:
 
 
 class TestDownloadAudioSafety:
+    def test_rejects_download_that_exceeds_limit(
+        self, monkeypatch, tmp_path
+    ):
+        monkeypatch.setattr(tr, "_require", lambda _binary: None)
+        monkeypatch.setattr(tr, "MAX_SOURCE_BYTES", 4)
+
+        def fake_run(_cmd, timeout=600):
+            (tmp_path / "source.m4a").write_bytes(b"audio")
+
+        monkeypatch.setattr(tr, "_run", fake_run)
+
+        with pytest.raises(tr.TranscribeError, match="downloaded source.*limit"):
+            tr.download_audio("https://example.com/watch?v=123", tmp_path)
+
     def test_rejects_private_network_url_before_yt_dlp(self, monkeypatch, tmp_path):
         monkeypatch.setattr(tr, "_require", lambda binary: None)
 
@@ -323,8 +409,11 @@ class TestDownloadAudioSafety:
 
         assert audio == tmp_path / "source.m4a"
         assert "--" in captured["cmd"]
+        assert "--no-playlist" in captured["cmd"]
         marker_index = captured["cmd"].index("--")
         assert captured["cmd"][marker_index + 1] == "https://example.com/watch?v=123"
+        max_size_index = captured["cmd"].index("--max-filesize")
+        assert captured["cmd"][max_size_index + 1] == str(tr.MAX_SOURCE_BYTES)
 
     def test_preserves_bare_public_urls_supported_by_yt_dlp(self, monkeypatch, tmp_path):
         monkeypatch.setattr(tr, "_require", lambda binary: None)
