@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -47,8 +48,12 @@ def render_ytdlp_fix_command() -> str:
             "  Add-Content -Path $cfg -Value '--js-runtimes node'\n"
             "}"
         )
+    config_dir = shlex.quote(str(config_path.parent))
+    config_file = shlex.quote(str(config_path))
     return (
-        f"mkdir -p '{config_path.parent}' && "
-        f"grep -qxF -- '--js-runtimes node' '{config_path}' 2>/dev/null || "
-        f"printf '%s\n' '--js-runtimes node' >> '{config_path}'"
+        f"mkdir -p {config_dir} && "
+        "{ "
+        f"grep -qxF -- '--js-runtimes node' {config_file} 2>/dev/null || "
+        f"printf '%s\\n' '--js-runtimes node' >> {config_file}; "
+        "}"
     )
