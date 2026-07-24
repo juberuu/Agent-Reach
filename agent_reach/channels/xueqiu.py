@@ -56,12 +56,12 @@ def _inject_cookie_string(cookie_str: str) -> None:
         _cookie_jar.set_cookie(cookie)
 
 
-def _load_cookies_from_config() -> bool:
+def _load_cookies_from_config(config=None) -> bool:
     """Try to load Xueqiu cookies from agent-reach config file (xueqiu_cookie key)."""
     try:
         from ..config import Config
 
-        cfg = Config()
+        cfg = config if config is not None else Config(read_only=True)
         cookie_str = cfg.get("xueqiu_cookie")
         if not cookie_str:
             return False
@@ -71,7 +71,7 @@ def _load_cookies_from_config() -> bool:
         return False
 
 
-def _ensure_cookies() -> None:
+def _ensure_cookies(config=None) -> None:
     """Populate session cookies without touching browser credential stores.
 
     Priority order:
@@ -82,7 +82,7 @@ def _ensure_cookies() -> None:
     global _cookies_initialized
     if _cookies_initialized:
         return
-    if _load_cookies_from_config():
+    if _load_cookies_from_config(config):
         _cookies_initialized = True
         return
     # Fallback: visit homepage to pick up acw_tc anti-DDoS cookie.
@@ -93,9 +93,9 @@ def _ensure_cookies() -> None:
     _cookies_initialized = True
 
 
-def _get_json(url: str) -> Any:
+def _get_json(url: str, config=None) -> Any:
     """Fetch *url* with Xueqiu session cookies and return parsed JSON."""
-    _ensure_cookies()
+    _ensure_cookies(config)
     req = urllib.request.Request(
         url, headers={"User-Agent": _UA, "Referer": _REFERER}
     )
@@ -135,7 +135,8 @@ class XueqiuChannel(Channel):
         try:
             data = _get_json(
                 "https://stock.xueqiu.com/v5/stock/quote.json"
-                "?symbol=SH601138&extend=detail"
+                "?symbol=SH601138&extend=detail",
+                config,
             )
             quote = (data.get("data") or {}).get("quote") or {}
             if quote:

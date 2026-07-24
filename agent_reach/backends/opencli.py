@@ -7,8 +7,10 @@ zero per-platform configuration, desktop-only (no headless).
 
 Probing notes (verified live):
   - `opencli doctor` AUTO-STARTS the daemon — a side effect, so health
-    checks must use `opencli daemon status` (pure query) instead.
-  - Exit codes are always 0; status must be parsed from text output.
+    checks must never use it.
+  - Current OpenCLI startup also mutates ``~/.opencli`` before handling
+    ``daemon status``. Only ``--version`` is a side-effect-free CLI fast path;
+    live daemon state is read from its documented loopback ``/status`` API.
   - "Extension: disconnected" can mean a sleeping service worker, a disabled
     extension, or an extension that was never loaded. Disk files distinguish
     possible installation sources, but only a live daemon connection proves
@@ -16,7 +18,9 @@ Probing notes (verified live):
 """
 
 import glob
+import json
 import os
+import urllib.request
 from dataclasses import dataclass
 
 from agent_reach.probe import probe_command
@@ -43,6 +47,32 @@ _CHROME_PROFILE_ROOTS = (
 )
 
 _OPENCLI_UNPACKED_EXTENSION = "~/.opencli/extension"
+_OPENCLI_DAEMON_STATUS_URL = "http://127.0.0.1:19825/status"
+_MAX_DAEMON_STATUS_BYTES = 64 * 1024
+
+
+def _fetch_daemon_status(timeout: int = 2):
+    """Read OpenCLI's loopback status endpoint without starting the CLI."""
+    request = urllib.request.Request(
+        _OPENCLI_DAEMON_STATUS_URL,
+        headers={"X-OpenCLI": "1"},
+        method="GET",
+    )
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    try:
+        with opener.open(request, timeout=min(timeout, 2)) as response:
+            raw = response.read(_MAX_DAEMON_STATUS_BYTES + 1)
+    except Exception:
+        return None
+    if len(raw) > _MAX_DAEMON_STATUS_BYTES:
+        return None
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict) or payload.get("ok") is not True:
+        return None
+    return payload
 
 
 def _extension_installed_on_disk() -> bool:
@@ -118,23 +148,12 @@ def opencli_status(timeout: int = 10) -> OpenCLIStatus:
 
     st = OpenCLIStatus(installed=True, version=version_probe.output.strip())
 
-    daemon_probe = probe_command(
-        "opencli",
-        ["daemon", "status"],
-        timeout=timeout,
-        package=OPENCLI_PACKAGE,
-        remove_env=_UNSUPPORTED_APP_ENV,
-    )
-    output = daemon_probe.output if daemon_probe.ok else ""
-    # `opencli daemon status` prints lines like:
-    #   Daemon: running (PID 37389) / Daemon: not running
-    #   Extension: connected / Extension: disconnected
-    for line in output.splitlines():
-        line = line.strip().lower()
-        if line.startswith("daemon:"):
-            st.daemon_running = "not running" not in line and "running" in line
-        elif line.startswith("extension:"):
-            st.extension_connected = "disconnected" not in line and "connected" in line
+    daemon_status = _fetch_daemon_status(timeout)
+    if daemon_status is not None:
+        st.daemon_running = True
+        st.extension_connected = bool(
+            daemon_status.get("extensionConnected")
+        )
 
     if not st.extension_connected:
         st.extension_installed = _extension_installed_on_disk()

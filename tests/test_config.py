@@ -187,6 +187,39 @@ class TestConfig:
             Config(config_path=linked_dir / "config.yaml")
         assert list(real_dir.iterdir()) == []
 
+    def test_config_ancestor_symlink_is_rejected(self, tmp_path):
+        real_dir = tmp_path / "real"
+        real_dir.mkdir()
+        linked_root = tmp_path / "linked-root"
+        try:
+            linked_root.symlink_to(real_dir, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks not supported on this platform")
+
+        with pytest.raises(ConfigSecurityError, match="符号链接"):
+            Config(config_path=linked_root / "nested" / "config.yaml")
+
+    def test_config_load_refuses_non_regular_file(self, tmp_path):
+        import os
+
+        if not hasattr(os, "mkfifo"):
+            pytest.skip("FIFOs are not supported on this platform")
+        config_file = tmp_path / "config.yaml"
+        os.mkfifo(config_file)
+
+        with pytest.raises(ConfigSecurityError, match="常规文件"):
+            Config(config_path=config_file)
+
+    def test_config_load_is_bounded(self, tmp_path, monkeypatch):
+        import agent_reach.config as config_module
+
+        config_file = tmp_path / "config.yaml"
+        config_file.write_text("secret: too-long\n", encoding="utf-8")
+        monkeypatch.setattr(config_module, "_MAX_CONFIG_BYTES", 4)
+
+        with pytest.raises(ConfigSecurityError, match="大小上限"):
+            Config(config_path=config_file)
+
     def test_save_preserves_previous_file_on_serialization_failure(
         self, tmp_path, monkeypatch
     ):

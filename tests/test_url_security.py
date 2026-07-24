@@ -14,6 +14,7 @@ from agent_reach.channels.xiaohongshu import XiaoHongShuChannel
 from agent_reach.channels.xiaoyuzhou import XiaoyuzhouChannel
 from agent_reach.channels.xueqiu import XueqiuChannel
 from agent_reach.channels.youtube import YouTubeChannel
+from agent_reach.utils.url import host_matches
 
 
 @pytest.mark.parametrize(
@@ -123,3 +124,16 @@ def test_fixed_domain_channels_reject_suffix_lookalikes_and_userinfo(
     assert not channel.can_handle(f"https://{official_domain}.evil.test/path")
     assert not channel.can_handle(f"https://{official_domain}@evil.test/path")
     assert not channel.can_handle(f"https://user:pass@{official_domain}/path")
+
+
+@pytest.mark.parametrize(
+    "malicious_url",
+    [
+        "https://x.com:not-a-port/path",
+        "https://x.com:65536/path",
+        "https://x.com:-1/path",
+        "https://x.com:999999999999/path",
+    ],
+)
+def test_host_matches_rejects_invalid_ports(malicious_url):
+    assert not host_matches(malicious_url, "x.com")

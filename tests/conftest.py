@@ -22,3 +22,14 @@ def isolated_home(tmp_path, monkeypatch):
     monkeypatch.setattr(Config, "CONFIG_DIR", config_dir)
     monkeypatch.setattr(Config, "CONFIG_FILE", config_dir / "config.yaml")
     return home
+
+
+@pytest.fixture(autouse=True)
+def isolated_xueqiu_cookie_jar(monkeypatch):
+    """Prevent the module-level Xueqiu session from leaking between tests."""
+    from agent_reach.channels import xueqiu
+
+    xueqiu._cookie_jar.clear()
+    monkeypatch.setattr(xueqiu, "_cookies_initialized", False)
+    yield
+    xueqiu._cookie_jar.clear()

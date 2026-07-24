@@ -63,7 +63,7 @@ def test_leaves_non_secret_urls_and_plain_text_unchanged():
     ],
 )
 def test_channel_health_messages_scrub_url_secrets(module, channel, monkeypatch):
-    def fail(_url):
+    def fail(_url, *_args, **_kwargs):
         raise RuntimeError(
             "proxy http://user:pass@proxy.test:8080 refused "
             "https://api.test/data?access_token=top-secret"

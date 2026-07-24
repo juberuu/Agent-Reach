@@ -27,6 +27,10 @@ def host_matches(url: str, *domains: str) -> bool:
     try:
         parsed = urlsplit(url)
         host = (parsed.hostname or "").lower().rstrip(".")
+        # ``hostname`` is permissive: malformed or out-of-range ports only
+        # raise when ``port`` is accessed. Force that validation here so
+        # hostile authorities fail closed.
+        _ = parsed.port
     except (TypeError, ValueError):
         return False
 

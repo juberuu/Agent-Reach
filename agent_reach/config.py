@@ -13,7 +13,14 @@ from typing import Any, Optional
 
 import yaml
 
-from agent_reach.utils.paths import make_private_dir
+from agent_reach.utils.paths import (
+    PrivatePathError,
+    ensure_no_symlink_path,
+    make_private_dir,
+    read_small_text_no_follow,
+)
+
+_MAX_CONFIG_BYTES = 1024 * 1024
 
 
 class ConfigError(RuntimeError):
@@ -29,8 +36,10 @@ class ConfigSecurityError(ConfigError):
 
 
 def _reject_symlink(path: Path, label: str) -> None:
-    if path.is_symlink():
-        raise ConfigSecurityError(f"{label}不能是符号链接：{path}")
+    try:
+        ensure_no_symlink_path(path, label)
+    except PrivatePathError as exc:
+        raise ConfigSecurityError(str(exc)) from exc
 
 
 def _atomic_write_yaml(target: Path, data: dict) -> None:
@@ -123,20 +132,21 @@ class Config:
         """Load config from YAML file."""
         _reject_symlink(self.config_dir, "配置目录")
         _reject_symlink(self.config_path, "配置文件")
-        if self.config_path.exists():
-            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-            try:
-                fd = os.open(self.config_path, flags)
-            except OSError as exc:
-                if self.config_path.is_symlink():
-                    raise ConfigSecurityError(
-                        f"配置文件不能是符号链接：{self.config_path}"
-                    ) from exc
-                raise
-            with os.fdopen(fd, "r", encoding="utf-8") as handle:
-                self.data = yaml.safe_load(handle) or {}
-        else:
+        try:
+            payload = read_small_text_no_follow(
+                self.config_path,
+                max_bytes=_MAX_CONFIG_BYTES,
+            )
+        except PrivatePathError as exc:
+            raise ConfigSecurityError(str(exc)) from exc
+        if payload is None:
             self.data = {}
+            return
+
+        loaded = yaml.safe_load(payload) or {}
+        if not isinstance(loaded, dict):
+            raise ConfigError("配置文件顶层必须是对象")
+        self.data = loaded
 
     def save(self):
         """Save config atomically, refusing mutation in read-only mode."""

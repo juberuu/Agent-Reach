@@ -14,20 +14,22 @@ from agent_reach.probe import ProbeResult
 
 def _status_with(
     version_probe,
-    daemon_probe=None,
+    daemon_status=None,
     ext_on_disk=False,
     unpacked_files=False,
 ):
-    """Run opencli_status with probe_command and disk check patched."""
+    """Run opencli_status with the CLI version and HTTP status patched."""
     calls = []
 
     def fake_probe(cmd, args=("--version",), **kwargs):
         calls.append(list(args))
-        if list(args) == ["--version"]:
-            return version_probe
-        return daemon_probe or ProbeResult("missing")
+        return version_probe
 
     with patch("agent_reach.backends.opencli.probe_command", side_effect=fake_probe), \
+         patch(
+             "agent_reach.backends.opencli._fetch_daemon_status",
+             return_value=daemon_status,
+         ), \
          patch(
              "agent_reach.backends.opencli._extension_installed_on_disk",
              return_value=ext_on_disk,
@@ -54,10 +56,14 @@ def test_broken_node_env_gives_npm_hint():
 
 
 def test_daemon_running_extension_connected_is_ready():
-    daemon_out = "Daemon: running (PID 37389)\nVersion: v1.8.3\nExtension: connected\n"
+    daemon_status = {
+        "ok": True,
+        "pid": 37389,
+        "extensionConnected": True,
+    }
     st, _ = _status_with(
         ProbeResult("ok", output="1.8.3"),
-        ProbeResult("ok", output=daemon_out),
+        daemon_status,
     )
     assert st.installed and st.daemon_running and st.extension_connected
     assert st.ready
@@ -65,10 +71,10 @@ def test_daemon_running_extension_connected_is_ready():
 
 
 def test_extension_never_installed_not_ready_with_store_guide():
-    daemon_out = "Daemon: running (PID 1)\nExtension: disconnected\n"
+    daemon_status = {"ok": True, "pid": 1, "extensionConnected": False}
     st, _ = _status_with(
         ProbeResult("ok", output="1.8.3"),
-        ProbeResult("ok", output=daemon_out),
+        daemon_status,
         ext_on_disk=False,
     )
     assert st.daemon_running and not st.extension_connected
@@ -78,10 +84,10 @@ def test_extension_never_installed_not_ready_with_store_guide():
 
 def test_extension_files_on_disk_are_not_reported_as_loaded_or_ready():
     """A disabled/stale extension leaves files behind, so disk != loaded."""
-    daemon_out = "Daemon: running (PID 1)\nExtension: disconnected\n"
+    daemon_status = {"ok": True, "pid": 1, "extensionConnected": False}
     st, _ = _status_with(
         ProbeResult("ok", output="1.8.3"),
-        ProbeResult("ok", output=daemon_out),
+        daemon_status,
         ext_on_disk=True,
     )
     assert not st.extension_connected
@@ -92,10 +98,10 @@ def test_extension_files_on_disk_are_not_reported_as_loaded_or_ready():
 
 
 def test_unpacked_source_files_are_not_reported_as_loaded_or_ready():
-    daemon_out = "Daemon: running (PID 1)\nExtension: disconnected\n"
+    daemon_status = {"ok": True, "pid": 1, "extensionConnected": False}
     st, _ = _status_with(
         ProbeResult("ok", output="1.8.3"),
-        ProbeResult("ok", output=daemon_out),
+        daemon_status,
         unpacked_files=True,
     )
     assert st.unpacked_extension_files
@@ -108,7 +114,7 @@ def test_unpacked_source_files_are_not_reported_as_loaded_or_ready():
 def test_daemon_not_running_parsed_correctly():
     st, _ = _status_with(
         ProbeResult("ok", output="1.8.3"),
-        ProbeResult("ok", output="Daemon: not running\n"),
+        None,
     )
     assert st.installed
     assert not st.daemon_running
@@ -116,15 +122,13 @@ def test_daemon_not_running_parsed_correctly():
     assert "自动启动" in opencli_summary(st)
 
 
-def test_probe_uses_daemon_status_not_doctor():
-    """`opencli doctor` auto-starts the daemon (side effect) — health checks
-    must only ever call `daemon status`."""
+def test_probe_never_executes_any_daemon_or_doctor_command():
+    """Even `daemon status` mutates ~/.opencli in current upstream releases."""
     _, calls = _status_with(
         ProbeResult("ok", output="1.8.3"),
-        ProbeResult("ok", output="Daemon: not running\n"),
+        None,
     )
-    assert ["daemon", "status"] in calls
-    assert ["doctor"] not in calls
+    assert calls == [["--version"]]
 
 
 def test_opencli_probes_strip_deprecated_app_env_only_from_children(monkeypatch):
@@ -143,11 +147,12 @@ def test_opencli_probes_strip_deprecated_app_env_only_from_children(monkeypatch)
                 "error",
                 output="OPENCLI_DAEMON_PORT is no longer supported",
             )
-        if list(args) == ["--version"]:
-            return ProbeResult("ok", output="1.8.6")
-        return ProbeResult("ok", output="Daemon: not running\n")
+        return ProbeResult("ok", output="1.8.6")
 
     with patch("agent_reach.backends.opencli.probe_command", side_effect=fake_probe), patch(
+        "agent_reach.backends.opencli._fetch_daemon_status",
+        return_value=None,
+    ), patch(
         "agent_reach.backends.opencli._extension_installed_on_disk",
         return_value=False,
     ):
@@ -156,7 +161,6 @@ def test_opencli_probes_strip_deprecated_app_env_only_from_children(monkeypatch)
     assert status.installed and not status.broken
     assert calls == [
         (["--version"], ("OPENCLI_DAEMON_PORT",)),
-        (["daemon", "status"], ("OPENCLI_DAEMON_PORT",)),
     ]
     assert "OPENCLI_DAEMON_PORT" in __import__("os").environ
 

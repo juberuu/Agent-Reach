@@ -43,7 +43,7 @@ def test_check_validates_detail_quote_endpoint():
     with patch.object(
         xq,
         "_get_json",
-        side_effect=lambda url: requested.append(url)
+        side_effect=lambda url, config=None: requested.append(url)
         or {"data": {"quote": {"symbol": "SH601138", "pe_ttm": 38.1}}},
     ):
         status, message = ch.check()
@@ -82,7 +82,11 @@ def test_check_never_reads_browser_cookie_store_implicitly(monkeypatch):
     )
     monkeypatch.setitem(sys.modules, "rookiepy", fake_rookiepy)
     monkeypatch.setattr(xq, "_cookies_initialized", False)
-    monkeypatch.setattr(xq, "_load_cookies_from_config", lambda: False)
+    monkeypatch.setattr(
+        xq,
+        "_load_cookies_from_config",
+        lambda config=None: False,
+    )
 
     class FakeResponse:
         def __enter__(self):
