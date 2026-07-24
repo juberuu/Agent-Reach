@@ -138,6 +138,7 @@ def test_check_does_not_prescribe_unverified_flag_when_version_is_unknown():
     assert status == "warn"
     assert "无法确认" in message
     assert "升级" in message
+    assert "yt-dlp[default]" in message
     assert "--js-runtimes" not in message
     assert ch.active_backend == "yt-dlp"
 

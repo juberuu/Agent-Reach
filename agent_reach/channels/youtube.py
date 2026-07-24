@@ -11,6 +11,7 @@ from agent_reach.utils.text import read_utf8_text
 from .base import Channel
 
 _JS_RUNTIMES_SUPPORTED_FROM = (2025, 11, 12)
+_YTDLP_UPGRADE_COMMAND = 'python -m pip install -U "yt-dlp[default]"'
 
 
 def _parse_ytdlp_version(version: str):
@@ -74,12 +75,12 @@ class YouTubeChannel(Channel):
                     return "warn", (
                         "无法确认 yt-dlp 版本是否支持 JS runtime 配置。"
                         "请先升级并重新运行 doctor：\n"
-                        "  python -m pip install -U yt-dlp"
+                        f"  {_YTDLP_UPGRADE_COMMAND}"
                     )
                 if version < _JS_RUNTIMES_SUPPORTED_FROM:
                     return "warn", (
                         "yt-dlp 版本过旧，不支持 JS runtime 配置。请先升级并重新运行 doctor：\n"
-                        "  python -m pip install -U yt-dlp"
+                        f"  {_YTDLP_UPGRADE_COMMAND}"
                     )
                 return "warn", (
                     f"yt-dlp 已安装但未配置 JS runtime。运行：\n  {render_ytdlp_fix_command()}"
