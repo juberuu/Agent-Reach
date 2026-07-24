@@ -87,7 +87,21 @@ def main():
     p_conf.add_argument("value", nargs="*", help="The value(s) to set")
     p_conf.add_argument("--from-browser", metavar="BROWSER",
                         choices=["chrome", "firefox", "edge", "brave", "opera"],
-                        help="Auto-extract ALL platform cookies from browser (chrome/firefox/edge/brave/opera)")
+                        help="Extract cookies for one explicitly selected platform")
+    p_conf.add_argument(
+        "--platform",
+        choices=["twitter", "xiaohongshu", "bilibili", "xueqiu"],
+        help="Platform to import (required with --from-browser)",
+    )
+    p_conf.add_argument(
+        "--profile",
+        help="Exact browser profile; a missing profile fails instead of falling back",
+    )
+    p_conf.add_argument(
+        "--sync-legacy-twitter",
+        action="store_true",
+        help="With twitter-cookies, also write legacy xfetch/bird credential files",
+    )
 
     # ── doctor ──
     p_doctor = sub.add_parser("doctor", help="Check platform availability")
@@ -131,6 +145,26 @@ def main():
     sub.add_parser("version", help="Show version")
 
     args = parser.parse_args()
+
+    if args.command == "configure" and args.from_browser:
+        if not args.platform:
+            p_conf.error("--platform is required with --from-browser")
+        manual_keys = {
+            "twitter": "twitter-cookies",
+            "xiaohongshu": "xhs-cookies",
+        }
+        if args.platform in manual_keys:
+            p_conf.error(
+                f"{args.platform} requires Cookie-Editor export; use "
+                f"`agent-reach configure {manual_keys[args.platform]} ...`"
+            )
+        if args.sync_legacy_twitter:
+            p_conf.error("--sync-legacy-twitter is only valid with twitter-cookies")
+    elif args.command == "configure":
+        if args.profile or args.platform:
+            p_conf.error("--platform/--profile require --from-browser")
+        if args.sync_legacy_twitter and args.key != "twitter-cookies":
+            p_conf.error("--sync-legacy-twitter is only valid with twitter-cookies")
 
     # Suppress loguru noise unless --verbose
     _configure_logging(getattr(args, "verbose", False))
@@ -207,7 +241,7 @@ def _cmd_install(args):
         # linkedin: manual setup, no auto-install
     }
     OPENCLI_ONLY_CHANNELS = {"opencli", "facebook", "instagram"}
-    COOKIE_CHANNELS = {"twitter", "xueqiu", "bilibili"}
+    COOKIE_CHANNELS = {"twitter", "xueqiu", "bilibili", "xiaohongshu"}
 
     requested_channels = set()
     if args.channels:
@@ -280,34 +314,31 @@ def _cmd_install(args):
         print()
         print(f"[dry-run] Would install optional channels: {', '.join(sorted(requested_channels))}")
 
-    # ── Auto-import cookies (only if cookie-needing channels are requested) ──
+    # ── Cookie setup (explicit only — install never reads browser credentials) ──
     needs_cookies = bool(requested_channels & COOKIE_CHANNELS)
-    if env == "local" and needs_cookies and not safe_mode and not dry_run:
+    if env == "local" and needs_cookies and not dry_run:
         print()
-        print("Importing cookies from browser...")
-        print("  (macOS may ask for your login password to access the Keychain — this is normal,")
-        print("   it only happens once during install. Enter your password or click 'Allow'.)")
-        try:
-            from agent_reach.cookie_extract import configure_from_browser
-            results = configure_from_browser("chrome", config)
-            found = False
-            for platform, success, message in results:
-                if success:
-                    print(f"  ✅ {platform}: {message}")
-                    found = True
-            if not found:
-                results = configure_from_browser("firefox", config)
-                for platform, success, message in results:
-                    if success:
-                        print(f"  ✅ {platform}: {message}")
-                        found = True
-            if not found:
-                print("  -- No cookies found (normal if you haven't logged into these sites)")
-        except Exception:
-            print("  -- Could not read browser cookies (browser might be open or password was denied)")
+        print("Cookie login is never read automatically.")
+        print("Run only the platform command you intend to authorize:")
+        for channel in sorted(requested_channels & COOKIE_CHANNELS):
+            if channel == "twitter":
+                print(
+                    "  agent-reach configure twitter-cookies "
+                    "'<Cookie-Editor Header String>'"
+                )
+            elif channel == "xiaohongshu":
+                print(
+                    "  agent-reach configure xhs-cookies "
+                    "'<Cookie-Editor JSON or Header String>'"
+                )
+            else:
+                print(
+                    "  agent-reach configure --from-browser chrome "
+                    f"--platform {channel}"
+                )
     elif env == "local" and needs_cookies and dry_run:
         print()
-        print("[dry-run] Would try to import cookies from Chrome/Firefox")
+        print("[dry-run] Cookie import remains explicit; install will not read a browser")
 
     # Environment-specific advice
     if env == "server":
@@ -634,18 +665,19 @@ def _install_system_deps():
 
     # ── yt-dlp JS runtime config (YouTube requires external JS runtime) ──
     if shutil.which("node"):
-        ytdlp_config_dir = os.path.expanduser("~/.config/yt-dlp")
-        ytdlp_config = os.path.join(ytdlp_config_dir, "config")
+        from agent_reach.utils.paths import get_ytdlp_config_path
+
+        ytdlp_config = get_ytdlp_config_path()
         needs_config = True
-        if os.path.exists(ytdlp_config):
-            with open(ytdlp_config, "r") as f:
+        if ytdlp_config.exists():
+            with ytdlp_config.open("r", encoding="utf-8") as f:
                 if "--js-runtimes" in f.read():
                     needs_config = False
                     print("  ✅ yt-dlp JS runtime already configured")
         if needs_config:
             try:
-                os.makedirs(ytdlp_config_dir, exist_ok=True)
-                with open(ytdlp_config, "a") as f:
+                ytdlp_config.parent.mkdir(parents=True, exist_ok=True)
+                with ytdlp_config.open("a", encoding="utf-8") as f:
                     f.write("--js-runtimes node\n")
                 print("  ✅ yt-dlp configured to use Node.js as JS runtime (YouTube)")
             except Exception:
@@ -739,7 +771,7 @@ def _install_xhs_deps():
         print("    1. 下载 binary：https://github.com/xpzouying/xiaohongshu-mcp/releases")
         print("       （建议放到 ~/.agent-reach/tools/ 下）")
         print("    2. 启动服务（首次运行会下载约 150MB 浏览器，请等待完成）")
-        print("    3. 扫码登录后接入：mcporter config add xiaohongshu http://localhost:18060/mcp")
+        print("    3. 扫码登录后接入：mcporter config add xiaohongshu http://localhost:18060/mcp --scope home")
         print("    4. 验证：agent-reach doctor")
         return
 
@@ -947,14 +979,22 @@ def _install_mcporter():
         )
         if "exa" not in r.stdout:
             subprocess.run(
-                ["mcporter", "config", "add", "exa", "https://mcp.exa.ai/mcp"],
+                [
+                    "mcporter",
+                    "config",
+                    "add",
+                    "exa",
+                    "https://mcp.exa.ai/mcp",
+                    "--scope",
+                    "home",
+                ],
                 capture_output=True, encoding="utf-8", errors="replace", timeout=10,
             )
             print("  ✅ Exa search configured (free, no API key needed)")
         else:
             print("  ✅ Exa search already configured")
     except Exception:
-        print("  [!]  Could not configure Exa. Run manually: mcporter config add exa https://mcp.exa.ai/mcp")
+        print("  [!]  Could not configure Exa. Run manually: mcporter config add exa https://mcp.exa.ai/mcp --scope home")
 
     # NOTE: xhs-cli is now optional, installed via --channels=xiaohongshu
 
@@ -967,11 +1007,11 @@ def _install_mcporter_safe():
 
     if shutil.which("mcporter"):
         print("  ✅ mcporter already installed")
-        print("  To configure Exa search: mcporter config add exa https://mcp.exa.ai/mcp")
+        print("  To configure Exa search: mcporter config add exa https://mcp.exa.ai/mcp --scope home")
     else:
         print("  -- mcporter not installed")
         print("  To install: npm install -g mcporter")
-        print("  Then configure Exa: mcporter config add exa https://mcp.exa.ai/mcp")
+        print("  Then configure Exa: mcporter config add exa https://mcp.exa.ai/mcp --scope home")
 
 
 def _detect_environment():
@@ -1028,18 +1068,34 @@ def _cmd_configure(args):
         from agent_reach.cookie_extract import configure_from_browser
 
         browser = args.from_browser
-        print(f"Extracting cookies from {browser}...")
+        platform = "xhs" if args.platform == "xiaohongshu" else args.platform
+        print(f"Extracting {args.platform} cookies from {browser}...")
         print()
 
-        results = configure_from_browser(browser, config)
+        results = configure_from_browser(
+            browser,
+            config,
+            platform=platform,
+            profile=args.profile,
+        )
 
         found_any = False
-        for platform, success, message in results:
+        for result in results:
+            if hasattr(result, "platform"):
+                result_platform = result.platform
+                success = result.success
+                message = result.message
+                targets = getattr(result, "targets", ())
+            else:
+                result_platform, success, message = result
+                targets = ()
             if success:
-                print(f"  ✅ {platform}: {message}")
+                print(f"  ✅ {result_platform}: {message}")
+                if targets:
+                    print(f"     写入：{', '.join(targets)}")
                 found_any = True
             else:
-                print(f"  -- {platform}: {message}")
+                print(f"  -- {result_platform}: {message}")
 
         print()
         if found_any:
@@ -1051,7 +1107,10 @@ def _cmd_configure(args):
     # ── Manual configure ──
     if not args.key:
         print("Usage: agent-reach configure <key> <value>")
-        print("   or: agent-reach configure --from-browser chrome")
+        print(
+            "   or: agent-reach configure --from-browser chrome "
+            "--platform twitter"
+        )
         return
 
     value = " ".join(args.value) if args.value else ""
@@ -1079,8 +1138,20 @@ def _cmd_configure(args):
             config.set("twitter_auth_token", auth_token)
             config.set("twitter_ct0", ct0)
 
-            # Sync credentials to twitter-cli env
             print("✅ Twitter cookies configured!")
+            if getattr(args, "sync_legacy_twitter", False):
+                from agent_reach.cookie_extract import (
+                    _sync_bird_env,
+                    _sync_xfetch_session,
+                )
+
+                _sync_xfetch_session(auth_token, ct0)
+                _sync_bird_env(auth_token, ct0)
+                print(
+                    "  Legacy copies written to "
+                    "~/.config/xfetch/session.json and "
+                    "~/.config/bird/credentials.env"
+                )
 
             print("Testing Twitter access...", end=" ")
             try:
@@ -1184,6 +1255,7 @@ def _configure_xhs_cookies(value):
     Format: JSON array of {name, value, domain, path, expires, httpOnly, secure, sameSite}.
     """
     import json
+    import os
     import shutil
     import subprocess
 
@@ -1259,7 +1331,6 @@ def _configure_xhs_cookies(value):
         # Create with 0o600 atomically so the file is never world-readable
         # between open() and a follow-up chmod() (same pattern Config.save()
         # uses in config.py).
-        import os
         import stat
 
         from agent_reach.utils.paths import make_private_dir
@@ -1318,6 +1389,7 @@ def _configure_xhs_cookies(value):
         cookie_path_in_container = "/app/cookies.json"
 
     # Write cookies into the container
+    tmp_path = None
     try:
         # Write to temp file then docker cp
         import tempfile
@@ -1329,7 +1401,6 @@ def _configure_xhs_cookies(value):
             [docker, "cp", tmp_path, f"{container_name}:{cookie_path_in_container}"],
             capture_output=True, encoding="utf-8", timeout=10,
         )
-        os.unlink(tmp_path)
 
         if result.returncode != 0:
             print(f"[X] Failed to copy cookies: {result.stderr}")
@@ -1350,6 +1421,14 @@ def _configure_xhs_cookies(value):
     except Exception as e:
         print(f"[X] Failed to write cookies: {e}")
         return
+    finally:
+        if tmp_path:
+            try:
+                os.unlink(tmp_path)
+            except FileNotFoundError:
+                pass
+            except OSError as e:
+                print(f"  [!] Could not remove temporary cookie file: {e}")
 
     # Verify login status via mcporter
     mcporter = shutil.which("mcporter")
@@ -1489,9 +1568,6 @@ def _cmd_doctor(args=None):
 
     rprint(format_report(results))
 
-    # Auto-install skill if not already present (fixes #154)
-    _install_skill(force=False)
-
 
 def _cmd_setup():
     from agent_reach.config import Config
@@ -1512,7 +1588,7 @@ def _cmd_setup():
     if not shutil.which("mcporter"):
         print("  当前状态: -- mcporter 未安装")
         print("  安装：npm install -g mcporter")
-        print("  然后：mcporter config add exa https://mcp.exa.ai/mcp")
+        print("  然后：mcporter config add exa https://mcp.exa.ai/mcp --scope home")
         print()
     else:
         try:
@@ -1526,17 +1602,25 @@ def _cmd_setup():
                 setup_now = input("  现在自动配置 Exa 吗？[Y/n]: ").strip().lower()
                 if setup_now in ("", "y", "yes"):
                     add_r = subprocess.run(
-                        ["mcporter", "config", "add", "exa", "https://mcp.exa.ai/mcp"],
+                        [
+                            "mcporter",
+                            "config",
+                            "add",
+                            "exa",
+                            "https://mcp.exa.ai/mcp",
+                            "--scope",
+                            "home",
+                        ],
                         capture_output=True, encoding="utf-8", errors="replace", timeout=10,
                     )
                     if add_r.returncode == 0:
                         print("  ✅ Exa 已配置")
                     else:
                         print("  [!] 自动配置失败，请手动执行：")
-                        print("     mcporter config add exa https://mcp.exa.ai/mcp")
+                        print("     mcporter config add exa https://mcp.exa.ai/mcp --scope home")
         except Exception:
             print("  [!] 无法检查 Exa 配置，请手动执行：")
-            print("     mcporter config add exa https://mcp.exa.ai/mcp")
+            print("     mcporter config add exa https://mcp.exa.ai/mcp --scope home")
         print()
 
     # Step 2: GitHub token

@@ -143,7 +143,7 @@ Some channels need credentials only the user can provide. Based on the doctor ou
 > 3. 点击插件 → Export → Header String
 > 4. 把导出的字符串发给 Agent
 >
-> **本地电脑用户**也可以用 `agent-reach configure --from-browser chrome` 一键自动提取（支持 Twitter + 小红书 + 雪球）。OpenCLI 平台（Reddit、小红书桌面后端、Facebook、Instagram）优先复用 Chrome 登录态，不需要把 Cookie 发给 Agent。
+> Twitter 与小红书只接受用户通过 Cookie-Editor 明确导出的内容，不会自动读取浏览器 Cookie。雪球、Bilibili 可按平台显式导入，例如 `agent-reach configure --from-browser chrome --platform xueqiu`；命令不会扫描或保存其他平台。OpenCLI 平台（Reddit、小红书桌面后端、Facebook、Instagram）优先复用 Chrome 登录态，不需要把 Cookie 发给 Agent。
 
 **Twitter search & posting:**
 > "To unlock Twitter search, I need your Twitter cookies. Install the Cookie-Editor Chrome extension, go to x.com/twitter.com, click the extension → Export → Header String, and paste it to me."
@@ -195,7 +195,7 @@ agent-reach install --channels opencli
 > 1. 从 https://github.com/xpzouying/xiaohongshu-mcp/releases 下载对应平台 binary 到 `~/.agent-reach/tools/`
 > 2. 启动服务（首次运行会自动下载约 150MB 无头浏览器，耐心等完成）
 > 3. 让用户扫码登录（agent 调 `get_login_qrcode` 工具取二维码）
-> 4. 接入：`mcporter config add xiaohongshu http://localhost:18060/mcp`
+> 4. 接入：`mcporter config add xiaohongshu http://localhost:18060/mcp --scope home`
 > 5. 调用时务必带 `--timeout 120000`
 >
 > **存量用户（xhs-cli）：** 已装好的 xhs-cli 继续作为备选后端工作（上游 2026-03 起停更，不推荐新装）。`xhs login` 自动提取浏览器 Cookie；失败时用 Cookie-Editor 导出后：
@@ -229,10 +229,10 @@ agent-reach install --channels facebook,instagram
 > "雪球需要登录后的 Cookie。请先在 Chrome 里登录 xueqiu.com，然后运行："
 
 ```bash
-agent-reach configure --from-browser chrome
+agent-reach configure --from-browser chrome --platform xueqiu
 ```
 
-> Cookie 会随其他平台一起自动提取。
+> 只会读取并保存雪球需要的最小 Cookie；不会顺带读取其他平台。
 
 **小宇宙播客 / Xiaoyuzhou Podcast (Groq Whisper):**
 > "小宇宙播客转文字已默认安装，只需要一个免费的 Groq API Key。"
@@ -297,7 +297,7 @@ pip install linkedin-scraper-mcp
 > **登录后启动 MCP 服务：**
 > ```bash
 > linkedin-scraper-mcp --transport streamable-http --port 8001
-> mcporter config add linkedin http://localhost:8001/mcp
+> mcporter config add linkedin http://localhost:8001/mcp --scope home
 > ```
 >
 > 详见 https://github.com/stickerdaniel/linkedin-mcp-server
