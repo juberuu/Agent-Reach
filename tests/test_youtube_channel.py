@@ -4,7 +4,7 @@
 YouTube's readiness is layered: yt-dlp must probe alive (missing / broken /
 unrunnable are distinct), a JS runtime is mandatory (deno works out of the
 box, Node needs an explicit ``--js-runtimes`` config), and transcription
-readiness (whisper provider + ffmpeg) is surfaced for ``doctor`` without
+readiness (whisper provider + ffmpeg/ffprobe) is surfaced for ``doctor`` without
 gating the backend. These tests stub ``probe_command`` / ``shutil.which``
 so every branch runs offline. Follow-up to #331 — extends dedicated
 channel coverage after rss (#360), github (#361), web (#363),
@@ -57,10 +57,13 @@ def test_has_js_runtime_config_false_when_flag_absent(tmp_path):
     assert _has_js_runtime_config(cfg) is False
 
 
-def test_has_js_runtime_config_swallows_oserror():
-    bad = Mock()
-    bad.exists.return_value = True
-    with patch.object(yt, "read_utf8_text", side_effect=OSError("denied")):
+def test_has_js_runtime_config_swallows_oserror(tmp_path):
+    bad = tmp_path / "config"
+    with patch.object(
+        yt,
+        "read_small_text_no_follow",
+        side_effect=OSError("denied"),
+    ):
         assert _has_js_runtime_config(bad) is False
 
 
@@ -71,6 +74,7 @@ def test_check_off_when_ytdlp_missing():
     with patch.object(yt, "probe_command", return_value=ProbeResult("missing")):
         status, message = ch.check()
     assert status == "off"
+    assert "yt-dlp[default]" in message
     assert ch.active_backend is None
 
 
@@ -80,6 +84,7 @@ def test_check_error_when_ytdlp_broken():
         status, message = ch.check()
     assert status == "error"
     assert "relink venv" in message
+    assert "yt-dlp[default]" in message
     assert ch.active_backend is None
 
 
@@ -193,7 +198,7 @@ def test_check_ok_reports_transcription_when_provider_and_ffmpeg_present():
     cfg = Mock()
     cfg.is_configured = lambda key: key == "groq_whisper"
     with patch.object(yt, "probe_command", return_value=ProbeResult("ok")), \
-         patch("shutil.which", side_effect=_which("deno", "ffmpeg")):
+         patch("shutil.which", side_effect=_which("deno", "ffmpeg", "ffprobe")):
         status, message = ch.check(config=cfg)
     assert status == "ok"
     assert "groq" in message
@@ -209,3 +214,15 @@ def test_check_ok_flags_missing_ffmpeg_for_transcription():
         status, message = ch.check(config=cfg)
     assert status == "ok"
     assert "ffmpeg" in message
+
+
+def test_check_ok_flags_missing_ffprobe_for_transcription():
+    ch = YouTubeChannel()
+    cfg = Mock()
+    cfg.is_configured = lambda key: key == "openai_whisper"
+    with patch.object(yt, "probe_command", return_value=ProbeResult("ok")), \
+         patch("shutil.which", side_effect=_which("deno", "ffmpeg")):
+        status, message = ch.check(config=cfg)
+    assert status == "ok"
+    assert "ffprobe" in message
+    assert "可转写音频" not in message

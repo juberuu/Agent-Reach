@@ -5,8 +5,12 @@ import re
 import shutil
 
 from agent_reach.probe import probe_command
-from agent_reach.utils.paths import get_ytdlp_config_path, render_ytdlp_fix_command
-from agent_reach.utils.text import read_utf8_text
+from agent_reach.utils.paths import (
+    PrivatePathError,
+    get_ytdlp_config_path,
+    read_small_text_no_follow,
+    render_ytdlp_fix_command,
+)
 
 from .base import Channel
 
@@ -23,10 +27,12 @@ def _parse_ytdlp_version(version: str):
 def _has_js_runtime_config(config_path) -> bool:
     """Return whether yt-dlp config explicitly enables a JS runtime."""
     try:
-        if not config_path.exists():
-            return False
-        return "--js-runtimes" in read_utf8_text(config_path)
-    except OSError:
+        payload = read_small_text_no_follow(
+            config_path,
+            max_bytes=1024 * 1024,
+        )
+        return payload is not None and "--js-runtimes" in payload
+    except (OSError, UnicodeError, PrivatePathError):
         return False
 
 
@@ -46,10 +52,13 @@ class YouTubeChannel(Channel):
         probe = probe_command("yt-dlp", ["--version"], timeout=10, package="yt-dlp")
         if probe.status == "missing":
             self.active_backend = None
-            return "off", "yt-dlp 未安装。安装：pip install yt-dlp"
+            return "off", f"yt-dlp 未安装。安装：{_YTDLP_UPGRADE_COMMAND}"
         if probe.status == "broken":
             self.active_backend = None
-            return "error", f"yt-dlp 已安装但无法执行\n{probe.hint}"
+            return "error", (
+                "yt-dlp 已安装但无法执行。重装（含 JS 支持）：\n"
+                f"  {_YTDLP_UPGRADE_COMMAND}\n{probe.hint}"
+            )
         if not probe.ok:  # timeout / error：装了但跑不动
             self.active_backend = None
             detail = probe.hint or probe.output or probe.status
@@ -93,8 +102,17 @@ class YouTubeChannel(Channel):
             if config.is_configured("openai_whisper"):
                 providers.append("openai")
             if providers:
-                if not shutil.which("ffmpeg"):
-                    msg += "（音频转写需安装 ffmpeg）"
+                missing_media_tools = [
+                    tool
+                    for tool in ("ffmpeg", "ffprobe")
+                    if not shutil.which(tool)
+                ]
+                if missing_media_tools:
+                    msg += (
+                        "（音频转写需安装 "
+                        + "、".join(missing_media_tools)
+                        + "）"
+                    )
                 else:
                     msg += f"，可转写音频（{'→'.join(providers)}）"
         return "ok", msg

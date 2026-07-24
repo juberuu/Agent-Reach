@@ -61,6 +61,7 @@ _PLATFORM_SPECS_BY_KEY: Dict[str, PlatformSpec] = {
 }
 SUPPORTED_BROWSERS = ("chrome", "firefox", "edge", "brave", "opera")
 PROFILE_SELECTABLE_BROWSERS = ("chrome", "edge", "brave")
+_MAX_XFETCH_SESSION_BYTES = 64 * 1024
 _COOKIE_EDITOR_ONLY = {
     "twitter": "twitter-cookies",
     "xhs": "xhs-cookies",
@@ -330,31 +331,22 @@ def extract_all(
     return results
 
 
-def _open_owner_only(path: str):
-    """Open *path* for writing, atomically creating it with mode 0o600.
+def _read_xfetch_session(path: Path) -> dict:
+    """Read a small regular legacy session file without following symlinks."""
+    import json
 
-    Mirrors the pattern used by Config.save() in config.py: O_WRONLY|O_CREAT|
-    O_TRUNC + an explicit mode argument so the file is never briefly
-    world-readable between open() and a later os.chmod(). On Windows (or any
-    OS that rejects the open flags) we fall back to a plain open().
-    """
-    import os
-    import stat
+    from agent_reach.utils.paths import read_small_text_no_follow
 
-    try:
-        fd = os.open(
-            path,
-            os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-            stat.S_IRUSR | stat.S_IWUSR,  # 0o600
-        )
-        if os.name != "nt":
-            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
-        return os.fdopen(fd, "w", encoding="utf-8")
-    except OSError:
-        handle = open(path, "w", encoding="utf-8")
-        if os.name != "nt":
-            os.chmod(path, 0o600)
-        return handle
+    payload = read_small_text_no_follow(
+        path,
+        max_bytes=_MAX_XFETCH_SESSION_BYTES,
+    )
+    if payload is None:
+        return {}
+    loaded = json.loads(payload)
+    if not isinstance(loaded, dict):
+        raise ValueError("xfetch 会话文件必须是 JSON object")
+    return loaded
 
 
 def _sync_xfetch_session(auth_token: str, ct0: str) -> bool:
@@ -363,22 +355,21 @@ def _sync_xfetch_session(auth_token: str, ct0: str) -> bool:
     import os
 
     try:
-        from agent_reach.utils.paths import make_private_dir
+        from agent_reach.utils.paths import (
+            atomic_write_private_text,
+            make_private_dir,
+        )
 
         xfetch_dir = os.path.join(os.path.expanduser("~"), ".config", "xfetch")
         make_private_dir(xfetch_dir)
-        session_path = os.path.join(xfetch_dir, "session.json")
-        session_data: dict = {}
-        if os.path.exists(session_path):
-            try:
-                with open(session_path, "r", encoding="utf-8") as sf:
-                    session_data = json.load(sf)
-            except (json.JSONDecodeError, OSError):
-                session_data = {}
+        session_path = Path(xfetch_dir) / "session.json"
+        session_data = _read_xfetch_session(session_path)
         session_data["authToken"] = auth_token
         session_data["ct0"] = ct0
-        with _open_owner_only(session_path) as sf:
-            json.dump(session_data, sf, indent=2)
+        atomic_write_private_text(
+            session_path,
+            json.dumps(session_data, indent=2),
+        )
         return True
     except Exception:
         # Non-fatal: agent-reach config is the source of truth, xfetch sync is best-effort
@@ -397,14 +388,19 @@ def _sync_bird_env(auth_token: str, ct0: str) -> bool:
     import shlex
 
     try:
-        from agent_reach.utils.paths import make_private_dir
+        from agent_reach.utils.paths import (
+            atomic_write_private_text,
+            make_private_dir,
+        )
 
         bird_dir = os.path.join(os.path.expanduser("~"), ".config", "bird")
         make_private_dir(bird_dir)
         env_path = os.path.join(bird_dir, "credentials.env")
-        with _open_owner_only(env_path) as f:
-            f.write(f"AUTH_TOKEN={shlex.quote(auth_token)}\n")
-            f.write(f"CT0={shlex.quote(ct0)}\n")
+        atomic_write_private_text(
+            env_path,
+            f"AUTH_TOKEN={shlex.quote(auth_token)}\n"
+            f"CT0={shlex.quote(ct0)}\n",
+        )
         return True
     except Exception:
         # Non-fatal: agent-reach config is the source of truth, bird env sync is best-effort

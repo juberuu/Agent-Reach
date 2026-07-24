@@ -115,34 +115,34 @@ class TestCLI:
         assert auth_token == "token123"
         assert ct0 == "ct0abc"
 
-    def test_twitter_config_verification_preserves_existing_env_priority(
+    def test_twitter_config_does_not_run_unsafe_verification_or_mutate_env(
         self, monkeypatch, capsys
     ):
         monkeypatch.setenv("TWITTER_AUTH_TOKEN", "shell-auth")
         monkeypatch.setenv("TWITTER_CT0", "shell-ct0")
         monkeypatch.setattr(shutil, "which", lambda name: "/bin/twitter")
-        calls = []
-
-        def fake_run(cmd, **kwargs):
-            calls.append((cmd, kwargs))
-            return subprocess.CompletedProcess(cmd, 0, "ok: true\n", "")
-
-        monkeypatch.setattr(subprocess, "run", fake_run)
+        monkeypatch.setattr(
+            subprocess,
+            "run",
+            lambda *_args, **_kwargs: pytest.fail(
+                "configure must not execute twitter status"
+            ),
+        )
 
         cli._cmd_configure(
             Namespace(
                 from_browser=None,
                 key="twitter-cookies",
                 value=["saved-auth", "saved-ct0"],
+                sync_legacy_twitter=False,
             )
         )
 
-        child_env = calls[0][1]["env"]
-        assert child_env["TWITTER_AUTH_TOKEN"] == "shell-auth"
-        assert child_env["TWITTER_CT0"] == "shell-ct0"
+        output = capsys.readouterr().out
+        assert "未实时验证" in output
+        assert "不会执行 `twitter status`" in output
         assert cli.os.environ["TWITTER_AUTH_TOKEN"] == "shell-auth"
         assert cli.os.environ["TWITTER_CT0"] == "shell-ct0"
-        assert "Twitter access works" in capsys.readouterr().out
 
     def test_install_rdt_cli_prefers_github_source(self, monkeypatch, capsys):
         state = {"rdt_installed": False}
