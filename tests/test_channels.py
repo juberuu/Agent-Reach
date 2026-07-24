@@ -406,9 +406,12 @@ class TestXueqiuChannel:
 
         fake_response_data = {
             "data": {
-                "items": [
-                    {"quote": {"symbol": "SH000001", "name": "上证指数", "current": 3200.0}}
-                ]
+                "quote": {
+                    "symbol": "SH601138",
+                    "name": "工业富联",
+                    "current": 52.0,
+                    "pe_ttm": 38.1,
+                }
             }
         }
 
@@ -451,27 +454,26 @@ class TestXueqiuChannel:
 
         fake_data = {
             "data": {
-                "items": [
-                    {
-                        "quote": {
-                            "symbol": "SH600519",
-                            "name": "贵州茅台",
-                            "current": 1800.0,
-                            "percent": 1.5,
-                            "chg": 26.6,
-                            "high": 1810.0,
-                            "low": 1770.0,
-                            "open": 1775.0,
-                            "last_close": 1773.4,
-                            "volume": 12345678,
-                            "amount": 22000000000,
-                            "market_capital": 2260000000000,
-                            "turnover_rate": 0.098,
-                            "pe_ttm": 30.5,
-                            "timestamp": 1700000000000,
-                        }
-                    }
-                ]
+                "quote": {
+                    "symbol": "SH600519",
+                    "name": "贵州茅台",
+                    "current": 1800.0,
+                    "percent": 1.5,
+                    "chg": 26.6,
+                    "high": 1810.0,
+                    "low": 1770.0,
+                    "open": 1775.0,
+                    "last_close": 1773.4,
+                    "volume": 12345678,
+                    "amount": 22000000000,
+                    "market_capital": 2260000000000,
+                    "turnover_rate": 0.098,
+                    "pe_ttm": 30.5,
+                    "pe_forecast": 25.2,
+                    "pb": 8.5,
+                    "eps": 59.0,
+                    "timestamp": 1700000000000,
+                }
             }
         }
 
@@ -670,7 +672,6 @@ class TestXueqiuChannel:
             "_load_cookies_from_config",
             lambda: (xq_mod._inject_cookie_string("xq_a_token=TESTTOKEN; xq_is_login=1") or True),
         )
-        monkeypatch.setattr(xq_mod, "_load_cookies_from_browser", lambda: False)
 
         # Patch opener so no real HTTP call is made
         class FakeResp:
@@ -685,34 +686,26 @@ class TestXueqiuChannel:
         cookie_names = {c.name for c in xq_mod._cookie_jar}
         assert "xq_a_token" in cookie_names
 
-    def test_load_cookies_from_browser_rookiepy_path(self, monkeypatch):
-        import sys
-        import types
-
+    def test_ensure_cookies_uses_public_homepage_fallback(self, monkeypatch):
         import agent_reach.channels.xueqiu as xueqiu_mod
 
-        xueqiu_mod._cookie_jar.clear()
-        fake_rookiepy = types.SimpleNamespace(
-            chrome=lambda domains=None: [
-                {
-                    "name": "xq_a_token",
-                    "value": "TOKEN_FROM_BROWSER",
-                    "domain": ".xueqiu.com",
-                },
-                {
-                    "name": "xq_is_login",
-                    "value": "1",
-                    "domain": ".xueqiu.com",
-                },
-            ]
-        )
-        monkeypatch.setitem(sys.modules, "rookiepy", fake_rookiepy)
+        monkeypatch.setattr(xueqiu_mod, "_cookies_initialized", False)
+        monkeypatch.setattr(xueqiu_mod, "_load_cookies_from_config", lambda: False)
+        requested = []
 
-        assert xueqiu_mod._load_cookies_from_browser() is True
-        assert any(
-            cookie.name == "xq_a_token" and cookie.value == "TOKEN_FROM_BROWSER"
-            for cookie in xueqiu_mod._cookie_jar
+        class FakeResponse:
+            pass
+
+        monkeypatch.setattr(
+            xueqiu_mod._opener,
+            "open",
+            lambda req, timeout=None: requested.append(req.full_url) or FakeResponse(),
         )
+
+        xueqiu_mod._ensure_cookies()
+
+        assert requested == ["https://xueqiu.com"]
+        assert xueqiu_mod._cookies_initialized is True
 
     def test_get_json_sends_referer_and_browser_ua(self, monkeypatch):
         """_get_json() must send Referer and a browser-like User-Agent."""
