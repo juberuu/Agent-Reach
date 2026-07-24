@@ -701,6 +701,7 @@ class TestXueqiuChannel:
             "open",
             lambda req, timeout=None: requested.append(req.full_url) or FakeResponse(),
         )
+        assert {cookie.name for cookie in xueqiu_mod._cookie_jar} == {"xq_a_token"}
 
         xueqiu_mod._ensure_cookies()
 

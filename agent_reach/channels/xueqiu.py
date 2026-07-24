@@ -122,8 +122,9 @@ class XueqiuChannel(Channel):
     # ------------------------------------------------------------------ #
 
     def can_handle(self, url: str) -> bool:
-        d = urllib.parse.urlparse(url).netloc.lower()
-        return "xueqiu.com" in d
+        from agent_reach.utils.url import host_matches
+
+        return host_matches(url, "xueqiu.com")
 
     # ------------------------------------------------------------------ #
     # Health check
@@ -142,10 +143,13 @@ class XueqiuChannel(Channel):
                 return "ok", "公开 API 可用（行情、搜索、热帖、热股）"
             return "warn", "API 响应异常（返回数据为空）"
         except Exception as e:
-            detail = str(e).rstrip(": ")
+            from agent_reach.utils.text import scrub_url_credentials
+
+            detail = scrub_url_credentials(e).rstrip(": ")
             return "warn", (
                 f"Xueqiu API 连接失败：{detail}。"
-                "如需登录 Cookie，请通过显式配置流程保存后重试；"
+                "如需登录 Cookie，请运行：agent-reach configure "
+                "--from-browser chrome --platform xueqiu；"
                 "doctor 不会自动读取浏览器 Cookie。"
             )
 
