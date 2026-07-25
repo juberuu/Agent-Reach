@@ -10,11 +10,12 @@ offline. Follow-up to #331 — extends dedicated channel coverage after rss
 """
 
 import json
+import sys
+import types
 from unittest.mock import patch
 
 from agent_reach.channels import xueqiu as xq
 from agent_reach.channels.xueqiu import XueqiuChannel, _strip_html
-
 
 # --- can_handle ---
 
@@ -36,17 +37,28 @@ def test_strip_html_removes_tags_and_decodes_entities():
 
 # --- check(): single public endpoint, items present/empty/error ---
 
-def test_check_ok_when_items_present():
+def test_check_validates_detail_quote_endpoint():
     ch = XueqiuChannel()
-    with patch.object(xq, "_get_json", return_value={"data": {"items": [{"quote": {}}]}}):
+    requested = []
+    with patch.object(
+        xq,
+        "_get_json",
+        side_effect=lambda url, config=None: requested.append(url)
+        or {"data": {"quote": {"symbol": "SH601138", "pe_ttm": 38.1}}},
+    ):
         status, message = ch.check()
+
     assert status == "ok"
     assert ch.active_backend == ch.backends[0]
+    assert requested == [
+        "https://stock.xueqiu.com/v5/stock/quote.json"
+        "?symbol=SH601138&extend=detail"
+    ]
 
 
-def test_check_warn_when_items_empty():
+def test_check_warn_when_quote_empty():
     ch = XueqiuChannel()
-    with patch.object(xq, "_get_json", return_value={"data": {"items": []}}):
+    with patch.object(xq, "_get_json", return_value={"data": {"quote": {}}}):
         status, message = ch.check()
     assert status == "warn"
     assert "为空" in message
@@ -63,22 +75,64 @@ def test_check_warn_on_exception():
     assert ch.active_backend is None
 
 
+def test_check_never_reads_browser_cookie_store_implicitly(monkeypatch):
+    browser_reads = []
+    fake_rookiepy = types.SimpleNamespace(
+        chrome=lambda *_args, **_kwargs: browser_reads.append("rookiepy") or []
+    )
+    monkeypatch.setitem(sys.modules, "rookiepy", fake_rookiepy)
+    monkeypatch.setattr(xq, "_cookies_initialized", False)
+    monkeypatch.setattr(
+        xq,
+        "_load_cookies_from_config",
+        lambda config=None: False,
+    )
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def read(self):
+            return b'{"data":{"quote":{"symbol":"SH601138","pe_ttm":38.1}}}'
+
+    monkeypatch.setattr(xq._opener, "open", lambda *_args, **_kwargs: FakeResponse())
+
+    status, _message = XueqiuChannel().check()
+
+    assert status == "ok"
+    assert browser_reads == []
+
+
 # --- get_stock_quote: field mapping + missing-data fallback ---
 
 def test_get_stock_quote_maps_fields():
     ch = XueqiuChannel()
-    payload = {"data": {"items": [{"quote": {
+    payload = {"data": {"quote": {
         "symbol": "SH600519", "name": "贵州茅台", "current": 1700.5,
-        "percent": 1.23, "pe_ttm": 30.1,
-    }}]}}
-    with patch.object(xq, "_get_json", return_value=payload):
+        "percent": 1.23, "volume": 1234, "pe_ttm": 30.1,
+        "pe_forecast": 27.4, "pb": 8.2, "eps": 59.0,
+    }}}
+    requested = []
+    with patch.object(
+        xq, "_get_json", side_effect=lambda url: requested.append(url) or payload
+    ):
         q = ch.get_stock_quote("SH600519")
+
+    assert requested == [
+        "https://stock.xueqiu.com/v5/stock/quote.json"
+        "?symbol=SH600519&extend=detail"
+    ]
     assert q["symbol"] == "SH600519"
     assert q["name"] == "贵州茅台"
     assert q["current"] == 1700.5
+    assert q["volume"] == 1234
     assert q["pe_ttm"] == 30.1
-    # keys are always present even when the source omits them
-    assert q["volume"] is None
+    assert q["pe_forecast"] == 27.4
+    assert q["pb"] == 8.2
+    assert q["eps"] == 59.0
 
 
 def test_get_stock_quote_falls_back_when_no_items():
