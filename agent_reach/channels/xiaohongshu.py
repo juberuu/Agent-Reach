@@ -16,7 +16,6 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from agent_reach.backends import opencli_status
 from agent_reach.utils.paths import (
     PrivatePathError,
     read_small_text_no_follow,
@@ -210,6 +209,8 @@ class XiaoHongShuChannel(Channel):
 
     def _check_opencli(self):
         """OpenCLI candidate. None = not installed."""
+        from agent_reach.backends import opencli_status
+
         st = opencli_status()
         if not st.installed:
             return None
